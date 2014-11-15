@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title><![CDATA[liushy]]></title>
+  <subtitle><![CDATA[I'm waitting for you]]></subtitle>
+  <link href="/atom.xml" rel="self"/>
+  <link href="http://liushy.com/"/>
+  <updated>2014-11-15T05:38:30.075Z</updated>
+  <id>http://liushy.com/</id>
+  
+  <author>
+    <name><![CDATA[Liushy]]></name>
+    
+  </author>
+  
+  <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[openwrt-example]]></title>
+    <link href="http://liushy.com/2014/11/14/openwrt-example/"/>
+    <id>http://liushy.com/2014/11/14/openwrt-example/</id>
+    <published>2014-11-14T15:27:00.000Z</published>
+    <updated>2014-11-14T14:29:41.000Z</updated>
+    <content type="html"><![CDATA[<p>这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.     </p>
+<a id="more"></a>     
+
+<p>接下来是添加模块具体步骤：<br>1.进入trunk的package文件夹，创建模块目录：<br>cd trunk/package<br>mkdir example<br>2.进入example目录，创建Mackefile文件和代码路径：<br>cd example<br>touch Mackefile<br>mkdir src<br>Makefile代码如下：  </p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">include $(TOPDIR)/rules.mk   </div><div class="line">include $(INCLUDE_DIR)/kernel.mk   </div><div class="line"></div><div class="line"><span class="constant">PKG_NAME</span>:=example</div><div class="line"><span class="constant">PKG_RELEASE</span>:=1</div><div class="line"></div><div class="line">include $(INCLUDE_DIR)/package.mk</div><div class="line"></div><div class="line">define KernelPackage/example</div><div class="line">  SUBMENU:=Other modules</div><div class="line">  TITLE:=example driver</div><div class="line">  DEPENDS:=@LINUX_2_6</div><div class="line">  FILES:=$(PKG_BUILD_DIR)/*.$(LINUX_KMOD_SUFFIX)</div><div class="line">  KCONFIG:=</div><div class="line">endef</div><div class="line"></div><div class="line">define KernelPackage/example/description</div><div class="line">  Kernel module to example</div><div class="line">endef</div><div class="line"></div><div class="line"><span class="constant">EXTRA_KCONFIG</span>:= \</div><div class="line">	CONFIG_EXAMPLE=m</div><div class="line"></div><div class="line"><span class="constant">EXTRA_CFLAGS</span>:= \</div><div class="line">	<span class="variable">$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(EXTRA_KCONFIG)</span>))) \</div><div class="line">	<span class="variable">$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=y,%,$(filter %=y,$(EXTRA_KCONFIG)</span>))) \</div><div class="line"></div><div class="line"><span class="constant">MAKE_OPTS</span>:= \</div><div class="line">	ARCH=<span class="string">"$(LINUX_KARCH)"</span> \</div><div class="line">	CROSS_COMPILE=<span class="string">"$(TARGET_CROSS)"</span> \</div><div class="line">	SUBDIRS=<span class="string">"$(PKG_BUILD_DIR)"</span> \</div><div class="line">	EXTRA_CFLAGS=<span class="string">"$(EXTRA_CFLAGS)"</span> \</div><div class="line">	<span class="variable">$(EXTRA_KCONFIG)</span></div><div class="line"></div><div class="line">define Build/Prepare</div><div class="line">	mkdir -p <span class="variable">$(PKG_BUILD_DIR)</span></div><div class="line">	<span class="variable">$(CP)</span> ./src/* <span class="variable">$(PKG_BUILD_DIR)</span>/</div><div class="line">endef</div><div class="line"></div><div class="line">define Build/Compile</div><div class="line">	<span class="variable">$(MAKE)</span> -C <span class="string">"$(LINUX_DIR)"</span> \</div><div class="line">		<span class="variable">$(MAKE_OPTS)</span> \</div><div class="line">		modules</div><div class="line">endef</div><div class="line"></div><div class="line">$(eval $(call KernelPackage,example))</div></pre></td></tr></table></figure>
+
+
+
+<p>3.进入src目录，创建代码路径和相关源文件<br>cd src<br>touch example.c Kconfig Makefile<br>example.c代码：    </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;linux/init.h&gt;</span></div><div class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;linux/module.h&gt;</span></div><div class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;linux/kernel.h&gt;</span></div><div class="line"><span class="comment">/* hello_init ---- 初始化函数，当模块装载时被调用，如果成功装载返回0 否则返回非0值 */</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">int</span> __init hello_init(<span class="keyword">void</span>)</div><div class="line">{</div><div class="line">	printk(<span class="string">"I bear a charmed life.\n"</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">}</div><div class="line"><span class="comment">/* hello_exit ---- 退出函数，当模块卸载时被调用 */</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">void</span> __exit hello_exit(<span class="keyword">void</span>)</div><div class="line">{</div><div class="line">	printk(<span class="string">"Out, out, brief candle\n"</span>);</div><div class="line">}</div><div class="line">module_init(hello_init);</div><div class="line">module_exit(hello_exit);</div><div class="line">MODULE_LICENSE(<span class="string">"GPL"</span>);</div><div class="line">MODULE_AUTHOR(<span class="string">"liuxie"</span>);</div></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.     </p>
+]]>
+    
+    </summary>
+    
+      <category term="openwrt" scheme="http://liushy.com/tags/openwrt/"/>
+    
+      <category term="openwrt" scheme="http://liushy.com/categories/openwrt/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[Hello World]]></title>
+    <link href="http://liushy.com/2014/11/14/hello-world/"/>
+    <id>http://liushy.com/2014/11/14/hello-world/</id>
+    <published>2014-11-14T15:23:15.000Z</published>
+    <updated>2014-11-14T08:07:18.000Z</updated>
+    <content type="html"><![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="http://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">trobuleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
+<h2 id="Quick_Start">Quick Start</h2>
+<h3 id="Create_a_new_post">Create a new post</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
+<h3 id="Run_server">Run server</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
+<h3 id="Generate_static_files">Generate static files</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
+<h3 id="Deploy_to_remote_sites">Deploy to remote sites</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
+    </summary>
+    
+  </entry>
+  
+</feed>
