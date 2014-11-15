@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title><![CDATA[liushy]]></title>
-  <subtitle><![CDATA[I'm waitting for you]]></subtitle>
+  <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2014-11-15T05:38:30.075Z</updated>
+  <updated>2014-11-15T07:33:43.385Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
