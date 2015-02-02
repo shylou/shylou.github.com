@@ -7,12 +7,13 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>liushy</title>
+    <title>基于floodlight的队列调整 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
-    <meta name="description" content="年轻人，别逗">
+    <meta name="description" content="前言
+介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。">
     
     
     
@@ -76,85 +77,84 @@
 
     </header>
     <div id="container">
-      <div id="main">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/02/02/sflow-queue/" title="基于floodlight的队列调整" itemprop="url">基于floodlight的队列调整</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-02-02T12:16:13.000Z" itemprop="datePublished">Feb 2 2015</time>
+    Updated:<time datetime="2015-02-02T12:22:32.000Z" itemprop="dateModified">Feb 2 2015</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li></ol>
+		</div>
+		
+		<h2 id="前言">前言</h2>
+<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/sflow/">sflow</a><a href="/tags/floodlight/">floodlight</a><a href="/tags/queue/">queue</a><a href="/tags/qos/">qos</a>
+  </div>
 
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2015/02/02/sflow-queue/" title="基于floodlight的队列调整" itemprop="url">
-  
-      <time datetime="2015-02-02T12:16:13.000Z" itemprop="datePublished">Feb 2 2015</time>
-    <h1 itemprop="name">基于floodlight的队列调整</h1>
-    
-     
-           <p itemprop="description" >前言
-介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。</p>
-        
-    
-  </a>
-</section>
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/SDN/">SDN</a>
+</div>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2015/01/27/sflow-ddos/" title="sflow流量监控之ddos防御" itemprop="url">
-  
-      <time datetime="2015-01-27T08:17:47.000Z" itemprop="datePublished">Jan 27 2015</time>
-    <h1 itemprop="name">sflow流量监控之ddos防御</h1>
-    
-     
-           <p itemprop="description" >前言
-最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越</p>
-        
-    
-  </a>
-</section>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2014/11/15/floodlight-twohosts-ping/" title="SDN环境下两主机通信过程" itemprop="url">
-  
-      <time datetime="2014-11-15T11:47:25.000Z" itemprop="datePublished">Nov 15 2014</time>
-    <h1 itemprop="name">SDN环境下两主机通信过程</h1>
-    
-     
-           <p itemprop="description" >感悟
-SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉</p>
-        
-    
-  </a>
-</section>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2014/11/14/openwrt-example/" title="openwrt-example" itemprop="url">
-  
-      <time datetime="2014-11-14T15:27:00.000Z" itemprop="datePublished">Nov 14 2014</time>
-    <h1 itemprop="name">openwrt-example</h1>
-    
-     
-       <p itemprop="description" >这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.</p>
-      
-    
-  </a>
-</section>
+<div class="article-share" id="share">
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2014/11/14/hello-world/" title="Hello World" itemprop="url">
-  
-      <time datetime="2014-11-14T15:23:15.000Z" itemprop="datePublished">Nov 14 2014</time>
-    <h1 itemprop="name">Hello World</h1>
-    
-     
-           <p itemprop="description" >Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the </p>
-        
-    
-  </a>
-</section>
-
+  <div data-url="http://liushy.com/2015/02/02/sflow-queue/" data-title="基于floodlight的队列调整 | liushy" data-tsina="null" class="share clearfix">
+  </div>
 
 </div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2015/01/27/sflow-ddos/"  title="sflow流量监控之ddos防御">
+ <strong>NEXT:</strong><br/> 
+ <span>sflow流量监控之ddos防御
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<div class="ds-thread"></div>
+</section>
+
+</div>  
       <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li></ol>
+  </div>
 
 <div id="asidepart">
 <div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
@@ -232,8 +232,8 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 
 </aside>
 </div>
-  </div>
-  <footer><div id="footer" >
+    </div>
+    <footer><div id="footer" >
     
             <p class="copyright"> © 2015 
 		
@@ -269,6 +269,8 @@ $(document).ready(function(){
       m.removeClass('moveMain');
       a.css('display', 'block').removeClass('fadeOut');
       o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
         
     }
   });
@@ -288,7 +290,79 @@ $(document).ready(function(){
 });
 </script>
 
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
 
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
 
 
 
@@ -376,5 +450,5 @@ ga('send', 'pageview');
 
 
   </body>
- </html>
+</html>
 

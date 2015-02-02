@@ -90,7 +90,7 @@
     </p>
   <p class="article-time">
     <time datetime="2015-01-27T08:17:47.000Z" itemprop="datePublished">Jan 27 2015</time>
-    Updated:<time datetime="2015-01-27T08:05:19.000Z" itemprop="dateModified">Jan 27 2015</time>
+    Updated:<time datetime="2015-01-27T08:25:35.000Z" itemprop="dateModified">Jan 27 2015</time>
     
   </p>
 </header>
@@ -103,7 +103,7 @@
 		</div>
 		
 		<h2 id="前言">前言</h2>
-<p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如<a href="http://www.openflowhub.org/display/floodlightcontroller/FAQ+Floodlight+OpenFlow+Controller" title="Floodlight FAQ" target="_blank" rel="external">Floodlight FAQ</a>所提到对控制器而言这样的查询很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。   </p>
+<p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如<a href="http://www.openflowhub.org/display/floodlightcontroller/FAQ+Floodlight+OpenFlow+Controller" title="Floodlight FAQ" target="_blank" rel="external">Floodlight FAQ</a>所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。   </p>
 <h2 id="实验环境">实验环境</h2>
 <p>本次实验是在一台物理主机上完成实验拓扑，控制器部署和sflow部署。通过mininet模拟一个switch，三台host。控制器使用Floodlight。由于mininet已经部署了sflow agent，所以只需要部署sflow collector。<br>实验拓扑如下图：<br><img src="/img/ddos-topo.png" alt="ddos-topo"><br>sflow官网推荐了几款sflow软件如sflow-trend,sflow-rt等，这里我选择的是sflow-rt，安装sflow-rt很简单。<br>1.首先，下载<a href="http://www.inmon.com/products/sFlow-RT.php" target="_blank" rel="external">官方压缩包</a><br>2.然后解压安装：    </p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$tar</span> -zxvf sflow.tar.gz   </div><div class="line"><span class="variable">$cd</span> sflow/sflow-rt   </div><div class="line">$./start.sh</div></pre></td></tr></table></figure>
@@ -113,9 +113,9 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$sudo</span> ovs-vsctl -- --id=@sflow create sflow agent=eth0 target=\<span class="string">"192.168.2.233:6343\" header=128 sampling=10 polling=1 -- set bridge s1 sflow=@sflow</span></div></pre></td></tr></table></figure>
 
 
-<p>注意：agent是要监听的网卡，这个网卡一定要能监听到我们所需的交换机的流量，target是sflow collector所在的ip地址。bridge设定需要监听的交换机。   </p>
+<p>注意：agent是要监听的网卡，这个网卡一定要能监听到我们所需的交换机的流量，target是sflow collector所在的ip地址，bridge设定需要监听的交换机。   </p>
 <h2 id="实验原理">实验原理</h2>
-<p>sflow-rt统计到的每个接口的流量信息，我们可以通过sflow-rt的rest api获取json数据并对json数据进行解析获得。对解析到的数据进行判断分析后即可实施策略。本次实验原理如下：<br>1.首先对sflow-rt进行配置，设定metricName=ddos,并设定它的阈值，当监测到的流量超过这个阈值时即判断为ddos；<br><em>定义地址组</em>：   </p>
+<p>sflow-rt统计到的每个接口的流量信息，我们可以通过sflow-rt的rest api获取json数据并对json数据进行解析获得。对解析到的数据进行判断分析后即可实施策略。本次实验原理如下：<br>1.首先对sflow-rt进行配置，设定metric=ddos,并设定它的阈值，当监测到的流量超过这个阈值时即判断为ddos；<br><em>定义地址组</em>：   </p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -H <span class="string">"Content-Type:application/json"</span> -X PUT --data <span class="string">"{external:['0.0.0.0/0'], internal:['10.0.0.0/8']}"</span> http://localhost:<span class="number">8008</span>/group/json</div></pre></td></tr></table></figure>
 
 
@@ -167,6 +167,14 @@
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2015/02/02/sflow-queue/" title="基于floodlight的队列调整">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  基于floodlight的队列调整</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2014/11/15/floodlight-twohosts-ping/"  title="SDN环境下两主机通信过程">
@@ -217,7 +225,7 @@
 	<p class="asidetitle">分类浏览</p>
 		<ul>
 		
-			<li><a href="/categories/SDN/" title="SDN">SDN<sup>2</sup></a></li>
+			<li><a href="/categories/SDN/" title="SDN">SDN<sup>3</sup></a></li>
 		
 			<li><a href="/categories/openwrt/" title="openwrt">openwrt<sup>1</sup></a></li>
 		
@@ -232,7 +240,7 @@
 		
 			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
 		
-			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>2</sup></a></li>
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
 		
 			<li><a href="/tags/floodlight-ping/" title="floodlight   ping">floodlight   ping<sup>0</sup></a></li>
 		
@@ -242,7 +250,11 @@
 		
 			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
 		
-			<li><a href="/tags/sflow/" title="sflow">sflow<sup>1</sup></a></li>
+			<li><a href="/tags/qos/" title="qos">qos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/queue/" title="queue">queue<sup>1</sup></a></li>
+		
+			<li><a href="/tags/sflow/" title="sflow">sflow<sup>2</sup></a></li>
 		
 		</ul>
 </div>
