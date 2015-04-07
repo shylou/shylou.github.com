@@ -7,13 +7,13 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>SDN环境下两主机通信过程 | liushy</title>
+    <title>Floodlight模块对Packet_in报文处理分析 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
-    <meta name="description" content="感悟
-SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越">
+    <meta name="description" content="前言
+看源码最痛苦的是知其然而不知其所以然，当然对于我这种搞理论研究写代码无非就是完成一篇论文的烟酒僧来说，源码看不懂关系不大，知道某函数某接口怎么用或者复制黏贴别人的成果就行了。。。呵呵。。。可谁叫我一根筋呢，看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodli">
     
     
     
@@ -82,15 +82,15 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2014/11/15/floodlight-twohosts-ping/" title="SDN环境下两主机通信过程" itemprop="url">SDN环境下两主机通信过程</a>
+      <a href="/2015/04/07/Floodlight-packetin/" title="Floodlight模块对Packet_in报文处理分析" itemprop="url">Floodlight模块对Packet_in报文处理分析</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://liushy.com" title="Liushy">Liushy</a>
     </p>
   <p class="article-time">
-    <time datetime="2014-11-15T11:47:25.000Z" itemprop="datePublished">Nov 15 2014</time>
-    Updated:<time datetime="2014-11-15T15:52:24.000Z" itemprop="dateModified">Nov 15 2014</time>
+    <time datetime="2015-04-07T14:03:26.000Z" itemprop="datePublished">Apr 7 2015</time>
+    Updated:<time datetime="2015-04-07T14:01:30.000Z" itemprop="dateModified">Apr 7 2015</time>
     
   </p>
 </header>
@@ -99,25 +99,36 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#感悟"><span class="toc-number">1.</span> <span class="toc-text">感悟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#两主机通信过程"><span class="toc-number">2.</span> <span class="toc-text">两主机通信过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Openflow与传统路由的比较"><span class="toc-number">3.</span> <span class="toc-text">Openflow与传统路由的比较</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.command.CONTINUE</span></a></li></ol></li></ol>
 		</div>
 		
-		<h2 id="感悟">感悟</h2>
-<p>SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。<br>弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想<br>法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就<br>是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细<br>节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所<br>以无论是做科研还是学术，我们都应有一个严谨的态度。</p>
-<h2 id="两主机通信过程">两主机通信过程</h2>
-<p>本次实验环境Floodlight+Mininet。我们利用mininet仿真出一个switch下三台hosts：h1,h2,<br>h3,然后h2 ping h3;通过wirshark抓包分析openflow的协议流程。 （在本文我就不分析不同<br>switch下不同host的ping包过程了）默认加载了转发模块。<br>拓扑图如下：<br><img src="/img/topo.png" alt="topo">     </p>
-<p>1.最初h2会通过将自己和h3的ip地址同子网掩码与运算得知：自己和h3在同一网段，可直接通信；<br>2.h2对数据包二层封装时，发现自己并不知道h3的mac地址，于是发送ARP广播包；<br>3.switch收到arp广播包后，由于没有流表，于是它向控制器发送packet_in消息：<br>4.控制器收到packet_in后，向switch发送packet_out,并下发流表给switch让它将数据包从除2端口以外的其他所有<br>端口发送；<br>5.h3收到arp数据包后，在数据包里添加上自己的mac地址；<br>6.switch收到h3的arp包，由于没有流表项，于是向控制器发送packet_in消息；<br>7.控制器学习到h3的mac和ip地址，向switch发送packet_out消息并下发h3到h2的流表项；<br>8.h2知道了h3的mac地址，完成icmp包的封装，就向h3发包了；<br>9.由于switch没有h2-&gt;h3的流表项，所以它还是会向控制器发送packet_in；<br>10.控制器发送packet_out给switch并下发h2-&gt;h3的流表；至此h2和h3就能不通过控制器只通过switch直接通信啦！<br>下面是寻址阶段抓包截图：（注：抓取的是通过eth0的包，eth0与控制器通信，所以也就是抓的控制器的包）<br><img src="/img/ping过程.png" alt="ping过程">     </p>
-<p>寻址结束后，抓取控制器的包时，没有了h2 ping h3的icmp包,在端口2抓包：<br><img src="/img/s1-eth2.png" alt="端口2">   </p>
-<p>在端口3抓包：<br><img src="/img/s1-eth3.png" alt="端口3">   </p>
-<h2 id="Openflow与传统路由的比较">Openflow与传统路由的比较</h2>
-<p>Openflow与传统路由一样，在源主机不知道目的主机mac地址的情况下，都会进行arp寻址。但不同之处在于，传统路<br>由没有控制器，所有流表在switch里,转发和控制都由switch负责；而Openflow协议里，switch若没有匹配流表（或者<br>没有流表），它会向控制器发送请求，让控制器下发策略。<br><strong>这是我个人的分析，欢迎指正，大家共同学习，若转载请注明出处！</strong></p>
+		<h2 id="前言">前言</h2>
+<p>看源码最痛苦的是知其然而不知其所以然，当然对于我这种搞理论研究写代码无非就是完成一篇论文的烟酒僧来说，源码看不懂关系不大，知道某函数某接口怎么用或者复制黏贴别人的成果就行了。。。呵呵。。。可谁叫我一根筋呢，看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太多时间看源码，最近做实验啥的感觉瓶颈了，唉，遂决心好好研究一下源码，看是否能给自己新的灵感。此次参考的源码是我修改过的MACTracker，我将要分析的是其中对Packet_in事件处理的方法recevie（）   </p>
+<h2 id="Packet_in处理分析">Packet_in处理分析</h2>
+<p>首先，贴上代码，主要功能是获取连上控制器的主机的MAC地址，IP地址并在控制台显示出来。   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> net.floodlightcontroller.core.IListener.Command <span class="title">receive</span>(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {</div><div class="line">Ethernet eth = IFloodlightProviderService.bcStore.get(cntx,IFloodlightProviderService.CONTEXT_PI_PAYLOAD);</div><div class="line">Long sourceMACHash = Ethernet.toLong(eth.getSourceMACAddress());</div><div class="line"><span class="keyword">if</span>(eth.getPayload() <span class="keyword">instanceof</span> IPv4){</div><div class="line">  IPv4 pkt = (IPv4)eth.getPayload().clone();</div><div class="line">  String src = IPv4.fromIPv4Address(pkt.getSourceAddress());</div><div class="line">  String dst = IPv4.fromIPv4Address(pkt.getDestinationAddress());</div><div class="line">  <span class="keyword">if</span> (!macAddresses.contains(sourceMACHash)) {</div><div class="line">	 macAddresses.add(sourceMACHash);</div><div class="line">	 logger.info(<span class="string">"MAC Address: {} IP Address: {} seen on switch"</span>,HexString.toHexString(sourceMACHash),src);</div><div class="line">      }</div><div class="line">  }</div><div class="line"><span class="keyword">return</span> Command.CONTINUE;</div><div class="line">}</div></pre></td></tr></table></figure>
+
+
+<h3 id="Packet_in包处理流程">Packet_in包处理流程</h3>
+<p>1.receive()是模块用来处理Packt_in数据包的函数，每个需要处理Packet_in包的模块均默认以它命名，所以它们获取OpenFlow消息的方式也是相同的。<br>2.首先通过代码：<code>Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD)</code><br>获取消息。其中通过调用接口IFloodlightProviderService的静态方法bcstore获取OpenFlow消息，而该消息是一个Ethernet对象。我们可以通过Ethernet里的方法getSourceMACaddress()获取该报文的源MAC地址；然后再通过getPayload()获取报文的有效载荷(所谓有效载荷，指的是除去协议头部之外实际传输的数据)，根据有效载荷可以判断报文的协议类型：ARP,IPv4,ICMP,DUCP等网络层协议类型。<br>3.若是IPv4包：IPv4类里有个方法getSourceAddress()获取源IP地址(二进制)，通过方法fromIPv4Address将IP地址转换为点分十进制的。   </p>
+<h3 id="bcstore">bcstore</h3>
+<p>bcstore是接口IFloodlightProvider里定义的一个对象，主要是存储OpenFlow消息，消息的对象是Ethernet类型的。bcstore本身是FloodightContextStore&lt;&gt;类型的，该类型有个方法用来获取存储的消息：get(FloodlightContext bc,String key).方法具体实现如下：<br><code>public V get(FloodlightContext bc, String key) {
+        return (V)bc.storage.get(key);}</code>    </p>
+<h3 id="return-command-CONTINUE">return.command.CONTINUE</h3>
+<p>最开始照着开发者文档做的时候，看到recieve()结尾处的return.command.CONTINUE的解释是“该方法返回command.CONTINUE以便其他处理程序继续处理”，而且我查看了其他好几个模块recieve函数返回值都是command.CONTINUE，于是就找到了command的源头。原来command是接口<em>Ilistener</em>下的一个枚举类型：<br>    <code>public enum Command {
+        CONTINUE, STOP
+    }</code><br>当时我就纳闷了，返回一个枚举类型值，谁来处理它？怎么处理这个值以实现能让其他模块继续执行的功能？于是我挨个模块源码寻找,终于在模块<code>net.floodlight.core.internal.controller</code>找到了它的身影：   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">pktinProcTime.recordStartTimePktIn();</div><div class="line">Command cmd;</div><div class="line"><span class="keyword">for</span> (IOFMessageListener listener : listeners) {</div><div class="line">     pktinProcTime.recordStartTimeComp(listener);</div><div class="line">     cmd = listener.receive(sw, m, bc);</div><div class="line">     pktinProcTime.recordEndTimeComp(listener);</div><div class="line">     <span class="keyword">if</span> (Command.STOP.equals(cmd)) {</div><div class="line">        <span class="keyword">break</span>;</div><div class="line">     }</div><div class="line">}</div></pre></td></tr></table></figure>
+
+
+<p>这段代码就是对recevie返回值进行处理，如果返回的是STOP，则该事件停止处理，也就是当前模块处理完后其他模块就没法处理了，而默认情况下事件会被每个模块遍历处理，所以我们会看到大多处理事件的模块返回的值都是CONTINUE。   </p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/floodlight/">floodlight</a><a href="/tags/ping/">ping</a><a href="/tags/openflow/">openflow</a>
+  <span></span> <a href="/tags/Floodlight/">Floodlight</a><a href="/tags/Packet-in/">Packet_in</a><a href="/tags/recevie/">recevie</a>
   </div>
 
 
@@ -130,7 +141,7 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2014/11/15/floodlight-twohosts-ping/" data-title="SDN环境下两主机通信过程 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2015/04/07/Floodlight-packetin/" data-title="Floodlight模块对Packet_in报文处理分析 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -139,19 +150,11 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/01/27/sflow-ddos/" title="sflow流量监控之ddos防御">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  sflow流量监控之ddos防御</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2014/11/14/openwrt-example/"  title="openwrt-example">
+<a href="/2015/02/02/sflow-queue/"  title="基于floodlight&amp;sflow的队列调整">
  <strong>NEXT:</strong><br/> 
- <span>openwrt-example
+ <span>基于floodlight&amp;sflow的队列调整
 </span>
 </a>
 </div>
@@ -168,7 +171,7 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#感悟"><span class="toc-number">1.</span> <span class="toc-text">感悟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#两主机通信过程"><span class="toc-number">2.</span> <span class="toc-text">两主机通信过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Openflow与传统路由的比较"><span class="toc-number">3.</span> <span class="toc-text">Openflow与传统路由的比较</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.command.CONTINUE</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
