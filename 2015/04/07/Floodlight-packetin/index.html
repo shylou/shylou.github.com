@@ -7,13 +7,13 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>Floodlight模块对Packet_in报文处理分析 | liushy</title>
+    <title>Floodlight中模块对Packet_in报文的处理 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
     <meta name="description" content="前言
-看源码最痛苦的是知其然而不知其所以然，当然对于我这种搞理论研究写代码无非就是完成一篇论文的烟酒僧来说，源码看不懂关系不大，知道某函数某接口怎么用或者复制黏贴别人的成果就行了。。。呵呵。。。可谁叫我一根筋呢，看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodli">
+看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太">
     
     
     
@@ -82,7 +82,7 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/04/07/Floodlight-packetin/" title="Floodlight模块对Packet_in报文处理分析" itemprop="url">Floodlight模块对Packet_in报文处理分析</a>
+      <a href="/2015/04/07/Floodlight-packetin/" title="Floodlight中模块对Packet_in报文的处理" itemprop="url">Floodlight中模块对Packet_in报文的处理</a>
   </h1>
   <p class="article-author">By
     
@@ -90,7 +90,7 @@
     </p>
   <p class="article-time">
     <time datetime="2015-04-07T14:03:26.000Z" itemprop="datePublished">Apr 7 2015</time>
-    Updated:<time datetime="2015-04-07T14:01:30.000Z" itemprop="dateModified">Apr 7 2015</time>
+    Updated:<time datetime="2015-04-08T01:21:59.000Z" itemprop="dateModified">Apr 8 2015</time>
     
   </p>
 </header>
@@ -99,29 +99,37 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.command.CONTINUE</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-Command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.Command.CONTINUE</span></a></li></ol></li></ol>
 		</div>
 		
 		<h2 id="前言">前言</h2>
-<p>看源码最痛苦的是知其然而不知其所以然，当然对于我这种搞理论研究写代码无非就是完成一篇论文的烟酒僧来说，源码看不懂关系不大，知道某函数某接口怎么用或者复制黏贴别人的成果就行了。。。呵呵。。。可谁叫我一根筋呢，看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太多时间看源码，最近做实验啥的感觉瓶颈了，唉，遂决心好好研究一下源码，看是否能给自己新的灵感。此次参考的源码是我修改过的MACTracker，我将要分析的是其中对Packet_in事件处理的方法recevie（）   </p>
+<p>看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太多时间看源码，最近做实验啥的感觉瓶颈了，唉，遂决心好好研究一下源码，看是否能给自己新的灵感。此次参考的源码是我修改过的MACTracker，我将要分析的是其中对Packet_in事件处理的方法recevie（）   </p>
 <h2 id="Packet_in处理分析">Packet_in处理分析</h2>
 <p>首先，贴上代码，主要功能是获取连上控制器的主机的MAC地址，IP地址并在控制台显示出来。   </p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> net.floodlightcontroller.core.IListener.Command <span class="title">receive</span>(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {</div><div class="line">Ethernet eth = IFloodlightProviderService.bcStore.get(cntx,IFloodlightProviderService.CONTEXT_PI_PAYLOAD);</div><div class="line">Long sourceMACHash = Ethernet.toLong(eth.getSourceMACAddress());</div><div class="line"><span class="keyword">if</span>(eth.getPayload() <span class="keyword">instanceof</span> IPv4){</div><div class="line">  IPv4 pkt = (IPv4)eth.getPayload().clone();</div><div class="line">  String src = IPv4.fromIPv4Address(pkt.getSourceAddress());</div><div class="line">  String dst = IPv4.fromIPv4Address(pkt.getDestinationAddress());</div><div class="line">  <span class="keyword">if</span> (!macAddresses.contains(sourceMACHash)) {</div><div class="line">	 macAddresses.add(sourceMACHash);</div><div class="line">	 logger.info(<span class="string">"MAC Address: {} IP Address: {} seen on switch"</span>,HexString.toHexString(sourceMACHash),src);</div><div class="line">      }</div><div class="line">  }</div><div class="line"><span class="keyword">return</span> Command.CONTINUE;</div><div class="line">}</div></pre></td></tr></table></figure>
 
 
 <h3 id="Packet_in包处理流程">Packet_in包处理流程</h3>
-<p>1.receive()是模块用来处理Packt_in数据包的函数，每个需要处理Packet_in包的模块均默认以它命名，所以它们获取OpenFlow消息的方式也是相同的。<br>2.首先通过代码：<code>Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD)</code><br>获取消息。其中通过调用接口IFloodlightProviderService的静态方法bcstore获取OpenFlow消息，而该消息是一个Ethernet对象。我们可以通过Ethernet里的方法getSourceMACaddress()获取该报文的源MAC地址；然后再通过getPayload()获取报文的有效载荷(所谓有效载荷，指的是除去协议头部之外实际传输的数据)，根据有效载荷可以判断报文的协议类型：ARP,IPv4,ICMP,DUCP等网络层协议类型。<br>3.若是IPv4包：IPv4类里有个方法getSourceAddress()获取源IP地址(二进制)，通过方法fromIPv4Address将IP地址转换为点分十进制的。   </p>
+<p>1.receive()是模块用来处理Packt_in数据包的函数，每个需要处理Packet_in包的模块均默认以它命名，所以它们获取OpenFlow消息的方式也是相同的。<br>2.首先通过代码：   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD)</div></pre></td></tr></table></figure>
+
+
+<p>获取消息。其中通过调用接口IFloodlightProviderService的静态方法bcstore获取OpenFlow消息，而该消息是一个Ethernet对象。我们可以通过Ethernet里的方法getSourceMACaddress()获取该报文的源MAC地址；然后再通过getPayload()获取报文的有效载荷(所谓有效载荷，指的是除去协议头部之外实际传输的数据)，根据有效载荷可以判断报文的协议类型：ARP,IPv4,ICMP,DUCP等网络层协议类型。<br>3.若是IPv4包：IPv4类里有个方法getSourceAddress()获取源IP地址(二进制)，通过方法fromIPv4Address将IP地址转换为点分十进制的。   </p>
 <h3 id="bcstore">bcstore</h3>
-<p>bcstore是接口IFloodlightProvider里定义的一个对象，主要是存储OpenFlow消息，消息的对象是Ethernet类型的。bcstore本身是FloodightContextStore&lt;&gt;类型的，该类型有个方法用来获取存储的消息：get(FloodlightContext bc,String key).方法具体实现如下：<br><code>public V get(FloodlightContext bc, String key) {
-        return (V)bc.storage.get(key);}</code>    </p>
-<h3 id="return-command-CONTINUE">return.command.CONTINUE</h3>
-<p>最开始照着开发者文档做的时候，看到recieve()结尾处的return.command.CONTINUE的解释是“该方法返回command.CONTINUE以便其他处理程序继续处理”，而且我查看了其他好几个模块recieve函数返回值都是command.CONTINUE，于是就找到了command的源头。原来command是接口<em>Ilistener</em>下的一个枚举类型：<br>    <code>public enum Command {
-        CONTINUE, STOP
-    }</code><br>当时我就纳闷了，返回一个枚举类型值，谁来处理它？怎么处理这个值以实现能让其他模块继续执行的功能？于是我挨个模块源码寻找,终于在模块<code>net.floodlight.core.internal.controller</code>找到了它的身影：   </p>
+<p>bcstore是接口IFloodlightProvider里定义的一个对象，主要是存储OpenFlow消息，消息的对象是Ethernet类型的。bcstore本身是FloodightContextStore&lt;&gt;类型的，该类型有个方法用来获取存储的消息：get(FloodlightContext bc,String key).方法具体实现如下：   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> V <span class="title">get</span>(FloodlightContext bc, String key) {</div><div class="line">        <span class="keyword">return</span> (V)bc.storage.get(key);}</div></pre></td></tr></table></figure>
+
+
+<h3 id="return-Command-CONTINUE">return.Command.CONTINUE</h3>
+<p>最开始照着开发者文档做的时候，看到recieve()结尾处的return.Command.CONTINUE的解释是“该方法返回Command.CONTINUE以便其他处理程序继续处理”，而且我查看了其他好几个模块recieve函数返回值都是Command.CONTINUE，于是就找到了Command的源头。原来Command是接口<em>Ilistener</em>下的一个枚举类型：   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">enum</span> Command {</div><div class="line">        CONTINUE, STOP</div><div class="line">    }</div></pre></td></tr></table></figure>
+
+
+<p>当时我就纳闷了，返回一个枚举类型值，谁来处理它？怎么处理这个值以实现能让其他模块继续执行的功能？于是我挨个模块源码寻找,终于在模块<code>net.floodlight.core.internal.controller</code>找到了它的身影：   </p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">pktinProcTime.recordStartTimePktIn();</div><div class="line">Command cmd;</div><div class="line"><span class="keyword">for</span> (IOFMessageListener listener : listeners) {</div><div class="line">     pktinProcTime.recordStartTimeComp(listener);</div><div class="line">     cmd = listener.receive(sw, m, bc);</div><div class="line">     pktinProcTime.recordEndTimeComp(listener);</div><div class="line">     <span class="keyword">if</span> (Command.STOP.equals(cmd)) {</div><div class="line">        <span class="keyword">break</span>;</div><div class="line">     }</div><div class="line">}</div></pre></td></tr></table></figure>
 
 
-<p>这段代码就是对recevie返回值进行处理，如果返回的是STOP，则该事件停止处理，也就是当前模块处理完后其他模块就没法处理了，而默认情况下事件会被每个模块遍历处理，所以我们会看到大多处理事件的模块返回的值都是CONTINUE。   </p>
+<p>这段代码就是对recevie()返回值进行处理，如果返回的是STOP，则该事件停止处理，也就是当前模块处理完后其他模块就没法处理了，而默认情况下事件会被每个模块遍历处理，所以我们会看到大多处理事件的模块返回的值都是CONTINUE。   </p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -141,7 +149,7 @@
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2015/04/07/Floodlight-packetin/" data-title="Floodlight模块对Packet_in报文处理分析 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2015/04/07/Floodlight-packetin/" data-title="Floodlight中模块对Packet_in报文的处理 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -171,7 +179,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.command.CONTINUE</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-Command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.Command.CONTINUE</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
