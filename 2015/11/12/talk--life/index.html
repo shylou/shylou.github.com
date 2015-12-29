@@ -7,13 +7,13 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>SDN环境下两主机通信过程 | liushy</title>
+    <title>随便聊聊 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
-    <meta name="description" content="感悟
-　　SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节">
+    <meta name="description" content="唠唠
+　　快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，以至于忘了搭理自">
     
     
     
@@ -84,15 +84,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2014/11/15/floodlight-twohosts-ping/" title="SDN环境下两主机通信过程" itemprop="url">SDN环境下两主机通信过程</a>
+      <a href="/2015/11/12/talk--life/" title="随便聊聊" itemprop="url">随便聊聊</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://liushy.com" title="Liushy">Liushy</a>
     </p>
   <p class="article-time">
-    <time datetime="2014-11-15T11:47:25.000Z" itemprop="datePublished">Nov 15 2014</time>
-    Updated:<time datetime="2015-12-28T13:48:24.000Z" itemprop="dateModified">Dec 28 2015</time>
+    <time datetime="2015-11-12T12:34:44.000Z" itemprop="datePublished">Nov 12 2015</time>
+    Updated:<time datetime="2015-12-29T02:56:27.000Z" itemprop="dateModified">Dec 29 2015</time>
     
   </p>
 </header>
@@ -101,38 +101,38 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#感悟"><span class="toc-number">1.</span> <span class="toc-text">感悟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#两主机通信过程"><span class="toc-number">2.</span> <span class="toc-text">两主机通信过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Openflow与传统路由的比较"><span class="toc-number">3.</span> <span class="toc-text">Openflow与传统路由的比较</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#唠唠"><span class="toc-number">1.</span> <span class="toc-text">唠唠</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#聊聊"><span class="toc-number">2.</span> <span class="toc-text">聊聊</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#玩玩"><span class="toc-number">3.</span> <span class="toc-text">玩玩</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#哈哈"><span class="toc-number">4.</span> <span class="toc-text">哈哈</span></a></li></ol>
 		</div>
 		
-		<h2 id="感悟">感悟</h2>
-<p>　　SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所   以无论是做科研还是学术，我们都应有一个严谨的态度。</p>
-<h2 id="两主机通信过程">两主机通信过程</h2>
-<p>　　本次实验环境Floodlight+Mininet。我们利用mininet仿真出一个switch下三台hosts：h1,h2,    h3,然后h2 ping h3;通过wirshark抓包分析openflow的协议流程。（在本文我就不分析不同   switch下不同host的ping包过程了）默认加载了转发模块。拓扑图如下：<br><img src="/img/topo.png" alt="topo">     </p>
-<p>　　1.最初h2会通过将自己和h3的ip地址同子网掩码与运算得知：自己和h3在同一网段，可直接通信；<br>　　2.h2对数据包二层封装时，发现自己并不知道h3的mac地址，于是发送ARP广播包；<br>　　3.switch收到arp广播包后，由于没有流表，于是它向控制器发送packet_in消息：<br>　　4.控制器收到packet_in后，向switch发送packet_out,并下发流表给switch让它将数据包从除2端口以外的其他所有端口发送；<br>　　5.h3收到arp数据包后，在数据包里添加上自己的mac地址；<br>　　6.switch收到h3的arp包，由于没有流表项，于是向控制器发送packet_in消息；<br>　　7.控制器学习到h3的mac和ip地址，向switch发送packet_out消息并下发h3到h2的流表项；<br>　　8.h2知道了h3的mac地址，完成icmp包的封装，就向h3发包了；<br>　　9.由于switch没有h2-&gt;h3的流表项，所以它还是会向控制器发送packet_in；<br>　　10.控制器发送packet_out给switch并下发h2-&gt;h3的流表；至此h2和h3就能不通过控制器只通过switch直接通信啦！<br>下面是寻址阶段抓包截图：（注：抓取的是通过eth0的包，eth0与控制器通信，所以也就是抓的控制器的包）<br><img src="/img/ping过程.png" alt="ping过程">     </p>
-<p>寻址结束后，抓取控制器的包时，没有了h2 ping h3的icmp包,在端口2抓包：<br><img src="/img/s1-eth2.png" alt="端口2">   </p>
-<p>在端口3抓包：<br><img src="/img/s1-eth3.png" alt="端口3">   </p>
-<h2 id="Openflow与传统路由的比较">Openflow与传统路由的比较</h2>
-<p>　　Openflow与传统路由一样，在源主机不知道目的主机mac地址的情况下，都会进行arp寻址。但不同之处在于，传统路由没有控制器，所有流表在switch里,转发和控制都由switch负责；而Openflow协议里，switch若没有匹配流表（或者没有流表），它会向控制器发送请求，让控制器下发策略。<br><strong>这是我个人的分析，欢迎指正，大家共同学习，若转载请注明出处！</strong></p>
+		<h2 id="唠唠">唠唠</h2>
+<p>　　快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，以至于忘了搭理自己这个博客了。现在忙的事情都先告一段落了，还好，今天得空了，想了想，还是得对自己这几个月梳理梳理，由于本文与技术无关，所以新建了一个专题 [<em>Life</em>] 打算以后写不出技术文章的时候，就在这里说说自己的生活感悟。</p>
+<h2 id="聊聊">聊聊</h2>
+<p>　　其实这半年是真的很累，距离上一次发文不久，我就参加了全国的大学生SDN应用创新大赛，准备了一个多月，很无奈，没获奖，只得到了一个参赛证明，我们属于研究生组的。比较喜剧的是，本校有一个本科生参赛组在提交作品前，还请我们去给人家指导，结果人家最后进入了决赛，还拿了奖。。。汗。。。不得不说师弟们很厉害哈！师兄没起到带头作用，丢人了。。。<br>　　然后是上面提到的找工作，说实话，我觉得找工作这事儿特诡异，怎么说呢？面试ZX是一个很偶然的时候，当时ZX来重庆招蓝剑，说实话，蓝剑是什么东东，当时的我一概不知，所以也就没管，恰好这时，本实验室一哥们去面了，完了特兴奋地给我打电话喊我去面试。当时我还没反应过来怎么回事，还怀疑这哥们是不是受刺激了，然后和实验室另一基友去面了。。面试过程就不扒了，此处省略N个字。。。现在算半只脚踏进了zx里了，前段时间，部门来电话了，说是做SDN，主要方向是云安全的，这下好了，心里算踏实了，一直以来我都是比较关注云安全这一块的，然后还要结合SDN来做，哈哈，这不是为我量身打造的吗~心里挺满意的哈，不过也得自己有那个能力，以后嘛~~好好干涩！ 送上一张蓝剑夏令营，在深圳拍的<br><img src="/img/lanjian.JPG" alt="lanjian"></p>
+<h2 id="玩玩">玩玩</h2>
+<p>　　前段时间出去玩了，好久没这么嗨了，十月底出去的，同室友一起去了龚滩古镇，西昌和泸沽湖。玩的挺累的，不过景色好心情也好，还有好客的当地人，算是不错的一趟旅行。第一站来到了龚滩古镇，位于重庆与贵州的交界处——酉阳县，古镇依江而建，镇对面是拔地而起的万丈高崖，江面绿波荡漾，逛了一圈花了将近一下午的时间，很是羡慕当地人，面朝江面，４Ｍ带宽的生活，有些生活细节让我莫名的感动，看到有一家人坐在电视机前吃饭，小孩子一边扒饭一边盯着电视看动画片，爸妈都在桌前吃饭聊着什么，孩子他妈时不时提醒小朋友多吃点饭别老看电视，这个场景让我想起了小时候，内心忍不住有些感慨。当夜我们就住进了一处江边的客栈，超级便宜，每人４０元，热水ｗｉｆｉ电视该有的都有，晚上坐在江边的馆子里吃了些当地的特色，味道还行，略贵－——－！甩张图给你们看一下：   　　　</p>
+<p><img src="/img/gongtan.JPG" alt="gongtan"><br>　　第二站来到了西昌，这个日照充足的地方很有意思，下了火车我还以为来到了西北一样，整个地区很平不像重庆山多，灰尘蛮大的，各种工程车行驶而过。人生地不熟的，没瞎逛我们就直奔传说中的琼海了，琼海其实就是一个大湖，但时不时来点浪哈，一股咸盐味。海边修的公园，不远处是一块湿地，当天逛完了琼海我们就租了自行车在湿地里逛了一圈，路面很宽干净，在加上西昌的阳光，非常不错的骑行。晚上吃了西昌当地的特色——醉虾，活虾就那么放在一堆作料里闷，吃在嘴里还在跳，怪怪的。甩一张琼海的<br><img src="/img/xichang.JPG" alt="qionghai"><br>　　第三站我们来到了美丽的女儿国——泸沽湖，第一次认识泸沽湖，是在[转山]这本书里，网上搜索了泸沽湖，顿时被图片里的她惊艳了，一直想去，但被各种原因搁浅了。这个湖太大了，连接了四川和云南两省，绕湖一圈七十多公里，而且还分了四川泸沽湖和云南泸沽湖。下车我们就先去了草海，这地方是泸沽湖旁的一块湿地，据说以前走婚的时候，男方就是划着船儿过草海来到摩梭人家的，晚上去次日早上回，当地人为了安全，每家每户出钱出力修了一条走婚桥。草海真是纯净无污染，收图<br><img src="/img/caohai.JPG" alt="caohai"><br>　　第一天夜里住在了里格的一家青年旅社，真心便宜，这边的客栈房间里几乎都提供了电热毯，所以晚上睡着不会太冷。第二天早上天没亮就出门了，哈哈，看日出。船家将我们送到一个视野最好的湖滩上等日出，日出难得啊，可是冷啊～雾好大啊～但还好，等到了<br><img src="/img/richu.JPG" alt="richu"><br>　　最后一天就是绕湖观光，走得很累，但景色确实不错，纯净自然，阳光充足，比雾都重庆好太多，感觉自己就是来这洗肺的，看看这纯净的湖面<br><img src="/img/luguhu.JPG" alt="luguhu">　　　</p>
+<h2 id="哈哈">哈哈</h2>
+<p>　　最后以此标题做个总结吧，这一年就这样结束了，没什么大事儿，感觉就是这么细水长流般渡过了，玩也玩了，该完成的项目也完成了。这一年收获蛮大的，事实上相比一年前，懂得东西更多了，更深入了，还有了一定的成果，可喜可贺，工作定了还算比较顺利，结识了一些搞技术的朋友，知识面更开阔了，也发现了自身诸多的不足。开心的是出去旅行一圈的愿望实现了，特别是去了我梦里的女儿国哈！新年伊始还有很多事要做，毕业论文什么的，为上班做好准备等等～好好干吧，孩子！新年快乐，么么哒～</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/floodlight/">floodlight</a><a href="/tags/ping/">ping</a><a href="/tags/openflow/">openflow</a>
+  <span></span> <a href="/tags/生活，旅游/">生活，旅游</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/SDN/">SDN</a>
+  <a class="article-category-link" href="/categories/Life/">Life</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2014/11/15/floodlight-twohosts-ping/" data-title="SDN环境下两主机通信过程 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2015/11/12/talk--life/" data-title="随便聊聊 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -141,19 +141,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/01/27/sflow-ddos/" title="sflow流量监控之ddos防御">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  sflow流量监控之ddos防御</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2014/11/14/openwrt-example/"  title="openwrt-example">
+<a href="/2015/04/07/Floodlight-packetin/"  title="Floodlight中模块对Packet_in报文的处理">
  <strong>NEXT:</strong><br/> 
- <span>openwrt-example
+ <span>Floodlight中模块对Packet_in报文的处理
 </span>
 </a>
 </div>
@@ -170,7 +162,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#感悟"><span class="toc-number">1.</span> <span class="toc-text">感悟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#两主机通信过程"><span class="toc-number">2.</span> <span class="toc-text">两主机通信过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Openflow与传统路由的比较"><span class="toc-number">3.</span> <span class="toc-text">Openflow与传统路由的比较</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#唠唠"><span class="toc-number">1.</span> <span class="toc-text">唠唠</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#聊聊"><span class="toc-number">2.</span> <span class="toc-text">聊聊</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#玩玩"><span class="toc-number">3.</span> <span class="toc-text">玩玩</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#哈哈"><span class="toc-number">4.</span> <span class="toc-text">哈哈</span></a></li></ol>
   </div>
 
 <div id="asidepart">
