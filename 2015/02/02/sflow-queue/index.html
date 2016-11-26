@@ -13,7 +13,7 @@
     <meta name="author" content="Liushy">
     
     <meta name="description" content="前言
-　　介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以">
+介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端">
     
     
     
@@ -58,11 +58,13 @@
 					
 						<li><a href="/archives">归档</a></li>
 					
-						<li><a href="/categories/openwrt">Openwrt</a></li>
+						<li><a href="/categories/OpenWrt">OpenWrt</a></li>
 					
 						<li><a href="/categories/SDN">SDN</a></li>
 					
-						<li><a href="/categories/Life">Life</a></li>
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
 					
 						<li><a href="/about">关于</a></li>
 					
@@ -92,7 +94,7 @@
     </p>
   <p class="article-time">
     <time datetime="2015-02-02T12:16:13.000Z" itemprop="datePublished">Feb 2 2015</time>
-    Updated:<time datetime="2015-12-28T13:39:30.000Z" itemprop="dateModified">Dec 28 2015</time>
+    Updated:<time datetime="2016-11-26T10:48:10.000Z" itemprop="dateModified">Nov 26 2016</time>
     
   </p>
 </header>
@@ -105,11 +107,11 @@
 		</div>
 		
 		<h2 id="前言">前言</h2>
-<p>　　介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但<a href="https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-does-open-vswitch-support-openflow-meters" target="_blank" rel="external">OVS FAQ</a>有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。   </p>
+<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但<a href="https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-does-open-vswitch-support-openflow-meters" target="_blank" rel="external">OVS FAQ</a>有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。   </p>
 <h2 id="实验设计">实验设计</h2>
-<p>　　1.拓扑结构沿用上次实验的：switch+3hosts+floodlight+sflow如图：<br>　　<img src="/img/ddos-topo.png" alt="queue-topo"><br>　　2.设计思想：switch上有三个端口分别连接有host1,host2,host3。在端口3上设置3条队列，分别带宽设置为：<br>　　— —id=@q0 create queue other-config:min-rate=1000000000 other-config:max-rate=1000000000<br>　　— —id=@q1 create queue other-config:max-rate=20000000 other-config:min-rate=20000000<br>　　— —id=@q2 create queue other-config:max-rate=2000000 other-config:min-rate=2000000<br>　　让host1和host2同时向host3发包通过流量监控，获取端口1和端口2的速率分别为R1和R2，然后进行判断：<br>　　若R1&gt;R2:端口1到端口3的队列—&gt;q0    端口2到端口3的队列—&gt;q2<br>　　若R2&gt;R1:端口1到端口3的队列—&gt;q2    端口2到端口3的队列—&gt;q0<br>　　若R1=R2:端口1到端口3的队列—&gt;q1    端口2到端口3的队列—&gt;q1    </p>
+<p>1.拓扑结构沿用上次实验的：switch+3hosts+floodlight+sflow如图：<br>　　<img src="/img/ddos-topo.png" alt="queue-topo"><br>2.设计思想：switch上有三个端口分别连接有host1,host2,host3。在端口3上设置3条队列，分别带宽设置为：<br>— —id=@q0 create queue other-config:min-rate=1000000000 other-config:max-rate=1000000000<br>— —id=@q1 create queue other-config:max-rate=20000000 other-config:min-rate=20000000<br>— —id=@q2 create queue other-config:max-rate=2000000 other-config:min-rate=2000000<br>让host1和host2同时向host3发包通过流量监控，获取端口1和端口2的速率分别为R1和R2，然后进行判断：<br>　　若R1&gt;R2:端口1到端口3的队列—&gt;q0    端口2到端口3的队列—&gt;q2<br>　　若R2&gt;R1:端口1到端口3的队列—&gt;q2    端口2到端口3的队列—&gt;q0<br>　　若R1=R2:端口1到端口3的队列—&gt;q1    端口2到端口3的队列—&gt;q1    </p>
 <h2 id="结果分析">结果分析</h2>
-<p>　　首先让host1和host2分别向host3泛洪：<br>　　h1&gt; ping -f h3<br>　　h2&gt; ping -f h3<br>　　执行队列调整应用后终端显示:<br>　　<img src="/img/console-view.png" alt="console"><br>　　可以看出，由于端口1(注意：eth0~eth2依次对应端口1~3)的速率比端口2的速率快，应用立即通知控制器下发流表给端口1和端口2设定不同的出口队列，再来看看控制器的流表：<br>　　<img src="/img/queue-flows.png" alt="queue-flow"><br>　　从流表可以看到，控制器已经下发了队列调整流表项。端口1的速率变化：<br>　　<img src="/img/s1-eth0-rate.png" alt="eth0-rate"><br>　　端口2的速率变化：<br>　　<img src="/img/s1-eth1-rate.png" alt="eth1-rate"><br>　　从图中我们可以看到，最初阶段，端口1和端口2的速率均在2M左右；从时间17:13:18开始，也就是实施队列调整应用后，端口1的速率上升到了大于2M阶段，而端口2的速率下降到了500k以下。</p>
+<p>首先让host1和host2分别向host3泛洪：<br>　　h1&gt; ping -f h3<br>　　h2&gt; ping -f h3<br>执行队列调整应用后终端显示:<br>　　<img src="/img/console-view.png" alt="console"><br>可以看出，由于端口1(注意：eth0~eth2依次对应端口1~3)的速率比端口2的速率快，应用立即通知控制器下发流表给端口1和端口2设定不同的出口队列，再来看看控制器的流表：<br>　　<img src="/img/queue-flows.png" alt="queue-flow"><br>从流表可以看到，控制器已经下发了队列调整流表项。端口1的速率变化：<br>　　<img src="/img/s1-eth0-rate.png" alt="eth0-rate"><br>端口2的速率变化：<br>　　<img src="/img/s1-eth1-rate.png" alt="eth1-rate"><br>从图中我们可以看到，最初阶段，端口1和端口2的速率均在2M左右；从时间17:13:18开始，也就是实施队列调整应用后，端口1的速率上升到了大于2M阶段，而端口2的速率下降到了500k以下。</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -192,28 +194,19 @@
 </div>
 
   
-<div class="categorieslist">
-	<p class="asidetitle">分类浏览</p>
-		<ul>
-		
-			<li><a href="/categories/Life/" title="Life">Life<sup>1</sup></a></li>
-		
-			<li><a href="/categories/SDN/" title="SDN">SDN<sup>4</sup></a></li>
-		
-			<li><a href="/categories/openwrt/" title="openwrt">openwrt<sup>1</sup></a></li>
-		
-		</ul>
-</div>
-
-
-  
 <div class="tagslist">
 	<p class="asidetitle">常用标签</p>
 		<ul class="clearfix">
 		
 			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>1</sup></a></li>
 		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
 			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
 		
 			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
 		
@@ -238,19 +231,6 @@
 		</ul>
 </div>
 
-
-  <div class="linkslist">
-  <p class="asidetitle">相关链接</p>
-    <ul>
-      <li><a href="http://www.sdnstudy.com" target="_blank" title="sdnsudy">sdnstudy</a></li>
-      <li><a href="http://sunqi.me" target="_blank" title="sunqi">sunqi</a></li>
-    </ul>
-</div>
-
-
-  <div class="rsspart">
-	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
-</div>
 
 </aside>
 </div>

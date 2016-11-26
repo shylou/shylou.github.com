@@ -57,11 +57,13 @@
 					
 						<li><a href="/archives">归档</a></li>
 					
-						<li><a href="/categories/openwrt">Openwrt</a></li>
+						<li><a href="/categories/OpenWrt">OpenWrt</a></li>
 					
 						<li><a href="/categories/SDN">SDN</a></li>
 					
-						<li><a href="/categories/Life">Life</a></li>
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
 					
 						<li><a href="/about">关于</a></li>
 					
@@ -83,6 +85,20 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2016/11/26/OVS-CLI/" title="OVS配置命令" itemprop="url">
+  
+      <time datetime="2016-11-26T10:12:53.000Z" itemprop="datePublished">Nov 26 2016</time>
+    <h1 itemprop="name">OVS配置命令</h1>
+    
+     
+           <p itemprop="description" >在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-t</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2015/11/12/talk--life/" title="随便聊聊" itemprop="url">
   
       <time datetime="2015-11-12T12:34:44.000Z" itemprop="datePublished">Nov 12 2015</time>
@@ -90,7 +106,7 @@
     
      
            <p itemprop="description" >唠唠
-　　快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很</p>
+快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，</p>
         
     
   </a>
@@ -105,7 +121,7 @@
     
      
            <p itemprop="description" >前言
-　　看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTrack</p>
+看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker</p>
         
     
   </a>
@@ -120,7 +136,7 @@
     
      
            <p itemprop="description" >前言
-　　介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的</p>
+介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控</p>
         
     
   </a>
@@ -135,7 +151,7 @@
     
      
            <p itemprop="description" >前言
-　　最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越</p>
+最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越</p>
         
     
   </a>
@@ -150,7 +166,7 @@
     
      
            <p itemprop="description" >感悟
-　　SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕</p>
+SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉</p>
         
     
   </a>
@@ -210,28 +226,19 @@
 </div>
 
   
-<div class="categorieslist">
-	<p class="asidetitle">分类浏览</p>
-		<ul>
-		
-			<li><a href="/categories/Life/" title="Life">Life<sup>1</sup></a></li>
-		
-			<li><a href="/categories/SDN/" title="SDN">SDN<sup>4</sup></a></li>
-		
-			<li><a href="/categories/openwrt/" title="openwrt">openwrt<sup>1</sup></a></li>
-		
-		</ul>
-</div>
-
-
-  
 <div class="tagslist">
 	<p class="asidetitle">常用标签</p>
 		<ul class="clearfix">
 		
 			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>1</sup></a></li>
 		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
 			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
 		
 			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
 		
@@ -256,19 +263,6 @@
 		</ul>
 </div>
 
-
-  <div class="linkslist">
-  <p class="asidetitle">相关链接</p>
-    <ul>
-      <li><a href="http://www.sdnstudy.com" target="_blank" title="sdnsudy">sdnstudy</a></li>
-      <li><a href="http://sunqi.me" target="_blank" title="sunqi">sunqi</a></li>
-    </ul>
-</div>
-
-
-  <div class="rsspart">
-	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
-</div>
 
 </aside>
 </div>

@@ -7,13 +7,12 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>随便聊聊 | liushy</title>
+    <title>OVS配置命令 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
-    <meta name="description" content="唠唠
-快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，以至于忘了搭理自己这">
+    <meta name="description" content="在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中">
     
     
     
@@ -86,15 +85,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/11/12/talk--life/" title="随便聊聊" itemprop="url">随便聊聊</a>
+      <a href="/2016/11/26/OVS-CLI/" title="OVS配置命令" itemprop="url">OVS配置命令</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://liushy.com" title="Liushy">Liushy</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-11-12T12:34:44.000Z" itemprop="datePublished">Nov 12 2015</time>
-    Updated:<time datetime="2016-11-26T10:43:48.000Z" itemprop="dateModified">Nov 26 2016</time>
+    <time datetime="2016-11-26T10:12:53.000Z" itemprop="datePublished">Nov 26 2016</time>
+    Updated:<time datetime="2016-11-26T12:23:29.000Z" itemprop="dateModified">Nov 26 2016</time>
     
   </p>
 </header>
@@ -103,38 +102,76 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#唠唠"><span class="toc-number">1.</span> <span class="toc-text">唠唠</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#聊聊"><span class="toc-number">2.</span> <span class="toc-text">聊聊</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#玩玩"><span class="toc-number">3.</span> <span class="toc-text">玩玩</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#哈哈"><span class="toc-number">4.</span> <span class="toc-text">哈哈</span></a></li></ol>
+		
 		</div>
 		
-		<h2 id="唠唠">唠唠</h2>
-<p>快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，以至于忘了搭理自己这个博客了。现在忙的事情都先告一段落了，还好，今天得空了，想了想，还是得对自己这几个月梳理梳理，由于本文与技术无关，所以新建了一个专题 [<em>Life</em>] 打算以后写不出技术文章的时候，就在这里说说自己的生活感悟。</p>
-<h2 id="聊聊">聊聊</h2>
-<p>其实这半年是真的很累，距离上一次发文不久，我就参加了全国的大学生SDN应用创新大赛，准备了一个多月，很无奈，没获奖，只得到了一个参赛证明，我们属于研究生组的。比较喜剧的是，本校有一个本科生参赛组在提交作品前，还请我们去给人家指导，结果人家最后进入了决赛，还拿了奖。。。汗。。。不得不说师弟们很厉害哈！师兄没起到带头作用，丢人了。。。<br>然后是上面提到的找工作，说实话，我觉得找工作这事儿特诡异，怎么说呢？面试ZX是一个很偶然的时候，当时ZX来重庆招蓝剑，说实话，蓝剑是什么东东，当时的我一概不知，所以也就没管，恰好这时，本实验室一哥们去面了，完了特兴奋地给我打电话喊我去面试。当时我还没反应过来怎么回事，还怀疑这哥们是不是受刺激了，然后和实验室另一基友去面了。。面试过程就不扒了，此处省略N个字。。。现在算半只脚踏进了zx里了，前段时间，部门来电话了，说是做SDN，主要方向是云安全的，这下好了，心里算踏实了，一直以来我都是比较关注云安全这一块的，然后还要结合SDN来做，哈哈，这不是为我量身打造的吗~心里挺满意的哈，不过也得自己有那个能力，以后嘛~~好好干涩！ 送上一张蓝剑夏令营，在深圳拍的<br><img src="/img/lanjian.JPG" alt="lanjian"></p>
-<h2 id="玩玩">玩玩</h2>
-<p>前段时间出去玩了，好久没这么嗨了，十月底出去的，同室友一起去了龚滩古镇，西昌和泸沽湖。玩的挺累的，不过景色好心情也好，还有好客的当地人，算是不错的一趟旅行。第一站来到了龚滩古镇，位于重庆与贵州的交界处——酉阳县，古镇依江而建，镇对面是拔地而起的万丈高崖，江面绿波荡漾，逛了一圈花了将近一下午的时间，很是羡慕当地人，面朝江面，４Ｍ带宽的生活，有些生活细节让我莫名的感动，看到有一家人坐在电视机前吃饭，小孩子一边扒饭一边盯着电视看动画片，爸妈都在桌前吃饭聊着什么，孩子他妈时不时提醒小朋友多吃点饭别老看电视，这个场景让我想起了小时候，内心忍不住有些感慨。当夜我们就住进了一处江边的客栈，超级便宜，每人４０元，热水ｗｉｆｉ电视该有的都有，晚上坐在江边的馆子里吃了些当地的特色，味道还行，略贵－——－！甩张图给你们看一下：   　　　</p>
-<p><img src="/img/gongtan.JPG" alt="gongtan"><br>第二站来到了西昌，这个日照充足的地方很有意思，下了火车我还以为来到了西北一样，整个地区很平不像重庆山多，灰尘蛮大的，各种工程车行驶而过。人生地不熟的，没瞎逛我们就直奔传说中的琼海了，琼海其实就是一个大湖，但时不时来点浪哈，一股咸盐味。海边修的公园，不远处是一块湿地，当天逛完了琼海我们就租了自行车在湿地里逛了一圈，路面很宽干净，在加上西昌的阳光，非常不错的骑行。晚上吃了西昌当地的特色——醉虾，活虾就那么放在一堆作料里闷，吃在嘴里还在跳，怪怪的。甩一张琼海的<br><img src="/img/xichang.JPG" alt="qionghai"><br>第三站我们来到了美丽的女儿国——泸沽湖，第一次认识泸沽湖，是在[转山]这本书里，网上搜索了泸沽湖，顿时被图片里的她惊艳了，一直想去，但被各种原因搁浅了。这个湖太大了，连接了四川和云南两省，绕湖一圈七十多公里，而且还分了四川泸沽湖和云南泸沽湖。下车我们就先去了草海，这地方是泸沽湖旁的一块湿地，据说以前走婚的时候，男方就是划着船儿过草海来到摩梭人家的，晚上去次日早上回，当地人为了安全，每家每户出钱出力修了一条走婚桥。草海真是纯净无污染，收图<br><img src="/img/caohai.JPG" alt="caohai"><br>第一天夜里住在了里格的一家青年旅社，真心便宜，这边的客栈房间里几乎都提供了电热毯，所以晚上睡着不会太冷。第二天早上天没亮就出门了，哈哈，看日出。船家将我们送到一个视野最好的湖滩上等日出，日出难得啊，可是冷啊～雾好大啊～但还好，等到了<br><img src="/img/richu.JPG" alt="richu"><br>最后一天就是绕湖观光，走得很累，但景色确实不错，纯净自然，阳光充足，比雾都重庆好太多，感觉自己就是来这洗肺的，看看这纯净的湖面<br><img src="/img/luguhu.JPG" alt="luguhu">　　　</p>
-<h2 id="哈哈">哈哈</h2>
-<p>最后以此标题做个总结吧，这一年就这样结束了，没什么大事儿，感觉就是这么细水长流般渡过了，玩也玩了，该完成的项目也完成了。这一年收获蛮大的，事实上相比一年前，懂得东西更多了，更深入了，还有了一定的成果，可喜可贺，工作定了还算比较顺利，结识了一些搞技术的朋友，知识面更开阔了，也发现了自身诸多的不足。开心的是出去旅行一圈的愿望实现了，特别是去了我梦里的女儿国哈！新年伊始还有很多事要做，毕业论文什么的，为上班做好准备等等～好好干吧，孩子！新年快乐，么么哒～</p>
+		<p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)<br>以下是本人使用和收集的OVS相关配置命令：       </p>
+<p>建立 VXLAN Network ID (VNI) 和指定的 OpenFlow port number, eg: VNI=5566, OF_PORT=9   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=x.x.x.x option:key=<span class="number">5566</span> ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
+
+
+
+<p>VNI flow by flow</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=<span class="number">140.113</span>.<span class="number">215.200</span> option:key=flow ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
+
+
+
+<p>设置 VXLAN tunnel id   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ovs-ofctl add-flow ovs-br <span class="keyword">in</span>_port=<span class="number">1</span>,actions=<span class="keyword">set</span>_field:<span class="number">5566</span>-&gt;tun_id,output:<span class="number">2</span></div><div class="line">ovs-ofctl add-flow s1 <span class="keyword">in</span>_port=<span class="number">2</span>,tun_id=<span class="number">5566</span>,actions=output:<span class="number">1</span></div></pre></td></tr></table></figure>
+
+
+
+<p>查询out-of-band $ in-band   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl get controller ovs-br connection-mode</div></pre></td></tr></table></figure>
+
+
+
+<p>Out-of-band   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=out-of-band</div></pre></td></tr></table></figure>
+
+
+
+<p>In-band (default)   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=<span class="keyword">in</span>-band</div></pre></td></tr></table></figure>
+
+
+<p>移除 hidden flow   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> bridge br0 other-config:disable-in-band=<span class="literal">true</span></div></pre></td></tr></table></figure>
+
+
+<p>设置 GRE tunnel   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs−vsctl add−port ovs-br ovs-gre -- <span class="keyword">set</span> interface ovs-gre <span class="built_in">type</span>=gre options:remote_ip=<span class="number">1.2</span>.<span class="number">3.4</span></div></pre></td></tr></table></figure>
+
+
+<p>设置 Vlan trunk   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl add-port ovs-br eth0 trunk=<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span></div></pre></td></tr></table></figure>
+
+
+<p>设置已 add 的 port 为 access port, vlan id 9</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> port eth0 tag=<span class="number">9</span></div></pre></td></tr></table></figure>
+
+
+<p>网络工程是一门大学问，虽然本科四年里偶有涉及，硕士阶段专攻了一年多的路由交换原理，到目前开始从事网络安全开发工作，我也不敢说自己精通网络，深知自身仍然还有很多要学的地方，而对于网络知识的学习，我觉得最好的方式莫过于搞一套网络设备来慢慢折腾，模拟一个个应用场景，敲一下各种配置命令，能够一步步照着做了，想弄明白网络就不是难事，总的来说，急不得，在了解理论的基础上，动手实践理解会更深刻，还有一点就是多做记录，正所谓好记性不如烂笔头，我推荐做一个自己的博客或者使用笔记软件，记录自己平时的实践和理论学习。<br>参考网站：<br><a href="http://blog.csdn.net/beginning1126/article/details/41172365" title=" http://blog.csdn.net/beginning1126/article/details/41172365" target="_blank" rel="external"> http://blog.csdn.net/beginning1126/article/details/41172365</a><br><a href="http://blog.csdn.net/tantexian/article/details/46707175" title="http://blog.csdn.net/tantexian/article/details/46707175" target="_blank" rel="external">http://blog.csdn.net/tantexian/article/details/46707175</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/生活，旅游/">生活，旅游</a>
+  <span></span> <a href="/tags/OVS/">OVS</a><a href="/tags/VXLAN/">VXLAN</a><a href="/tags/GRE/">GRE</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/Life/">Life</a>
+  <a class="article-category-link" href="/categories/SDN/">SDN</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2015/11/12/talk--life/" data-title="随便聊聊 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2016/11/26/OVS-CLI/" data-title="OVS配置命令 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -143,19 +180,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2016/11/26/OVS-CLI/" title="OVS配置命令">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  OVS配置命令</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/04/07/Floodlight-packetin/"  title="Floodlight中模块对Packet_in报文的处理">
+<a href="/2015/11/12/talk--life/"  title="随便聊聊">
  <strong>NEXT:</strong><br/> 
- <span>Floodlight中模块对Packet_in报文的处理
+ <span>随便聊聊
 </span>
 </a>
 </div>
@@ -172,7 +201,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#唠唠"><span class="toc-number">1.</span> <span class="toc-text">唠唠</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#聊聊"><span class="toc-number">2.</span> <span class="toc-text">聊聊</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#玩玩"><span class="toc-number">3.</span> <span class="toc-text">玩玩</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#哈哈"><span class="toc-number">4.</span> <span class="toc-text">哈哈</span></a></li></ol>
+  
   </div>
 
 <div id="asidepart">

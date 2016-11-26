@@ -13,7 +13,7 @@
     <meta name="author" content="Liushy">
     
     <meta name="description" content="感悟
-　　SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节">
+SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越">
     
     
     
@@ -58,11 +58,13 @@
 					
 						<li><a href="/archives">归档</a></li>
 					
-						<li><a href="/categories/openwrt">Openwrt</a></li>
+						<li><a href="/categories/OpenWrt">OpenWrt</a></li>
 					
 						<li><a href="/categories/SDN">SDN</a></li>
 					
-						<li><a href="/categories/Life">Life</a></li>
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
 					
 						<li><a href="/about">关于</a></li>
 					
@@ -92,7 +94,7 @@
     </p>
   <p class="article-time">
     <time datetime="2014-11-15T11:47:25.000Z" itemprop="datePublished">Nov 15 2014</time>
-    Updated:<time datetime="2015-12-28T13:48:24.000Z" itemprop="dateModified">Dec 28 2015</time>
+    Updated:<time datetime="2016-11-26T10:45:30.000Z" itemprop="dateModified">Nov 26 2016</time>
     
   </p>
 </header>
@@ -105,14 +107,14 @@
 		</div>
 		
 		<h2 id="感悟">感悟</h2>
-<p>　　SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所   以无论是做科研还是学术，我们都应有一个严谨的态度。</p>
+<p>SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所   以无论是做科研还是学术，我们都应有一个严谨的态度。</p>
 <h2 id="两主机通信过程">两主机通信过程</h2>
-<p>　　本次实验环境Floodlight+Mininet。我们利用mininet仿真出一个switch下三台hosts：h1,h2,    h3,然后h2 ping h3;通过wirshark抓包分析openflow的协议流程。（在本文我就不分析不同   switch下不同host的ping包过程了）默认加载了转发模块。拓扑图如下：<br><img src="/img/topo.png" alt="topo">     </p>
-<p>　　1.最初h2会通过将自己和h3的ip地址同子网掩码与运算得知：自己和h3在同一网段，可直接通信；<br>　　2.h2对数据包二层封装时，发现自己并不知道h3的mac地址，于是发送ARP广播包；<br>　　3.switch收到arp广播包后，由于没有流表，于是它向控制器发送packet_in消息：<br>　　4.控制器收到packet_in后，向switch发送packet_out,并下发流表给switch让它将数据包从除2端口以外的其他所有端口发送；<br>　　5.h3收到arp数据包后，在数据包里添加上自己的mac地址；<br>　　6.switch收到h3的arp包，由于没有流表项，于是向控制器发送packet_in消息；<br>　　7.控制器学习到h3的mac和ip地址，向switch发送packet_out消息并下发h3到h2的流表项；<br>　　8.h2知道了h3的mac地址，完成icmp包的封装，就向h3发包了；<br>　　9.由于switch没有h2-&gt;h3的流表项，所以它还是会向控制器发送packet_in；<br>　　10.控制器发送packet_out给switch并下发h2-&gt;h3的流表；至此h2和h3就能不通过控制器只通过switch直接通信啦！<br>下面是寻址阶段抓包截图：（注：抓取的是通过eth0的包，eth0与控制器通信，所以也就是抓的控制器的包）<br><img src="/img/ping过程.png" alt="ping过程">     </p>
+<p>本次实验环境Floodlight+Mininet。我们利用mininet仿真出一个switch下三台hosts：h1,h2,    h3,然后h2 ping h3;通过wirshark抓包分析openflow的协议流程。（在本文我就不分析不同   switch下不同host的ping包过程了）默认加载了转发模块。拓扑图如下：<br><img src="/img/topo.png" alt="topo">     </p>
+<p>1.最初h2会通过将自己和h3的ip地址同子网掩码与运算得知：自己和h3在同一网段，可直接通信；<br>2.h2对数据包二层封装时，发现自己并不知道h3的mac地址，于是发送ARP广播包；<br>3.switch收到arp广播包后，由于没有流表，于是它向控制器发送packet_in消息：<br>4.控制器收到packet_in后，向switch发送packet_out,并下发流表给switch让它将数据包从除2端口以外的其他所有端口发送；<br>5.h3收到arp数据包后，在数据包里添加上自己的mac地址；<br>6.switch收到h3的arp包，由于没有流表项，于是向控制器发送packet_in消息；<br>7.控制器学习到h3的mac和ip地址，向switch发送packet_out消息并下发h3到h2的流表项；<br>8.h2知道了h3的mac地址，完成icmp包的封装，就向h3发包了；<br>9.由于switch没有h2-&gt;h3的流表项，所以它还是会向控制器发送packet_in；<br>10.控制器发送packet_out给switch并下发h2-&gt;h3的流表；至此h2和h3就能不通过控制器只通过switch直接通信啦！<br>下面是寻址阶段抓包截图：（注：抓取的是通过eth0的包，eth0与控制器通信，所以也就是抓的控制器的包）<br><img src="/img/ping过程.png" alt="ping过程">     </p>
 <p>寻址结束后，抓取控制器的包时，没有了h2 ping h3的icmp包,在端口2抓包：<br><img src="/img/s1-eth2.png" alt="端口2">   </p>
 <p>在端口3抓包：<br><img src="/img/s1-eth3.png" alt="端口3">   </p>
 <h2 id="Openflow与传统路由的比较">Openflow与传统路由的比较</h2>
-<p>　　Openflow与传统路由一样，在源主机不知道目的主机mac地址的情况下，都会进行arp寻址。但不同之处在于，传统路由没有控制器，所有流表在switch里,转发和控制都由switch负责；而Openflow协议里，switch若没有匹配流表（或者没有流表），它会向控制器发送请求，让控制器下发策略。<br><strong>这是我个人的分析，欢迎指正，大家共同学习，若转载请注明出处！</strong></p>
+<p>Openflow与传统路由一样，在源主机不知道目的主机mac地址的情况下，都会进行arp寻址。但不同之处在于，传统路由没有控制器，所有流表在switch里,转发和控制都由switch负责；而Openflow协议里，switch若没有匹配流表（或者没有流表），它会向控制器发送请求，让控制器下发策略。<br><strong>这是我个人的分析，欢迎指正，大家共同学习，若转载请注明出处！</strong></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -195,28 +197,19 @@
 </div>
 
   
-<div class="categorieslist">
-	<p class="asidetitle">分类浏览</p>
-		<ul>
-		
-			<li><a href="/categories/Life/" title="Life">Life<sup>1</sup></a></li>
-		
-			<li><a href="/categories/SDN/" title="SDN">SDN<sup>4</sup></a></li>
-		
-			<li><a href="/categories/openwrt/" title="openwrt">openwrt<sup>1</sup></a></li>
-		
-		</ul>
-</div>
-
-
-  
 <div class="tagslist">
 	<p class="asidetitle">常用标签</p>
 		<ul class="clearfix">
 		
 			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>1</sup></a></li>
 		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
 			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
 		
 			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
 		
@@ -241,19 +234,6 @@
 		</ul>
 </div>
 
-
-  <div class="linkslist">
-  <p class="asidetitle">相关链接</p>
-    <ul>
-      <li><a href="http://www.sdnstudy.com" target="_blank" title="sdnsudy">sdnstudy</a></li>
-      <li><a href="http://sunqi.me" target="_blank" title="sunqi">sunqi</a></li>
-    </ul>
-</div>
-
-
-  <div class="rsspart">
-	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
-</div>
 
 </aside>
 </div>
