@@ -101,11 +101,6 @@
 	<div class="article-content">
 		
 		
-		<div id="toc" class="toc-article">
-			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验环境"><span class="toc-number">2.</span> <span class="toc-text">实验环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验原理"><span class="toc-number">3.</span> <span class="toc-text">实验原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验结果"><span class="toc-number">4.</span> <span class="toc-text">实验结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
-		</div>
-		
 		<h2 id="前言">前言</h2>
 <p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如<a href="http://www.openflowhub.org/display/floodlightcontroller/FAQ+Floodlight+OpenFlow+Controller" title="Floodlight FAQ" target="_blank" rel="external">Floodlight FAQ</a>所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。   </p>
 <h2 id="实验环境">实验环境</h2>

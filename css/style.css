@@ -113,8 +113,8 @@ a img {
 body {
   background: #fff;
   font-family: "Helvetica Neue", "Helvetica", "Microsoft YaHei", "WenQuanYi Micro Hei", Arial, sans-serif;
-  font-size: 97%;
-  color: #fff fg;
+  font-size: 95%;
+  color: #20202f;
   line-height: 1.5;
 }
 small {
@@ -136,7 +136,7 @@ sub {
 }
 a {
   text-decoration: none;
-  color: #fff fg;
+  color: #20202f;
 }
 a:hover,
 a:focus {
@@ -428,19 +428,19 @@ body >header a {
 #textlogo h1.site-name {
   width: 100%;
   font-family: "covered_by_your_graceregular";
-  font-size: 197%;
+  font-size: 195%;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 @media only screen and (min-width: 768px) {
   #textlogo h1.site-name {
-    font-size: 237%;
+    font-size: 235%;
   }
 }
 @media only screen and (min-width: 1024px) {
   #textlogo h1.site-name {
-    font-size: 277%;
+    font-size: 275%;
   }
 }
 #textlogo h2.blog-motto {
@@ -449,12 +449,12 @@ body >header a {
 }
 @media only screen and (min-width: 768px) {
   #textlogo h2.blog-motto {
-    font-size: 97%;
+    font-size: 95%;
   }
 }
 @media only screen and (min-width: 1024px) {
   #textlogo h2.blog-motto {
-    font-size: 107%;
+    font-size: 105%;
   }
 }
 .navbar {
@@ -481,7 +481,7 @@ body >header a {
 header nav {
   float: left;
   width: 100%;
-  font-size: 109.5%;
+  font-size: 107.5%;
   padding-top: 0.5em;
   max-height: 0.01em;
   -webkit-transition: max-height 1s ease-out;
@@ -619,10 +619,10 @@ header nav ul li a:hover {
   line-height: 2;
 }
 #main section.post a p {
-  color: #fff fg;
+  color: #20202f;
 }
 #main section.post a time {
-  color: #fff fg;
+  color: #20202f;
   display: block;
   margin: 0.5em 0;
   font-size: 0.5em;
@@ -700,7 +700,7 @@ header nav ul li a:hover {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #ccc;
-  font-size: 97%;
+  font-size: 95%;
   padding-right: 0.3em;
 }
 .category-icon:before {
@@ -730,7 +730,7 @@ header nav ul li a:hover {
 .archive-title h2 {
   width: 90%;
   color: #2ca6cb;
-  font-size: 117%;
+  font-size: 115%;
 }
 .archive-title a {
   color: #2ca6cb;
@@ -817,7 +817,7 @@ header nav ul li a:hover {
 }
 article header.article-info >h1 {
   padding: 0.2em 3%;
-  font-size: 167%;
+  font-size: 165%;
   line-height: 1.5;
   word-wrap: break-word;
   word-break: normal;
@@ -827,7 +827,7 @@ article header.article-info >h1 {
 }
 @media only screen and (min-width: 1024px) {
   article header.article-info >h1 {
-    font-size: 197%;
+    font-size: 195%;
     padding-top: 0.3em;
   }
 }
@@ -857,7 +857,7 @@ article header.article-info >p.article-time {
 }
 article header.article-info >p.article-time:before {
   font-family: "FontAwesome";
-  font-size: 127%;
+  font-size: 125%;
   content: "\f017";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -882,14 +882,14 @@ article .article-content .kb {
 }
 article .article-content h1,
 article .article-content h2 {
-  font-size: 177%;
+  font-size: 175%;
   line-height: 1.2em;
 }
 article .article-content h3,
 article .article-content h4,
 article .article-content h5,
 article .article-content h6 {
-  font-size: 137%;
+  font-size: 135%;
 }
 article .article-content h1,
 article .article-content h2,
@@ -929,7 +929,7 @@ article .article-content blockquote {
   margin: 0.65em 0 0.65em 4%;
   padding-left: 1%;
   line-height: 1.5;
-  font-size: 107%;
+  font-size: 105%;
 }
 article .article-content blockquote footer {
   background: #fff;
@@ -945,7 +945,7 @@ article .article-content blockquote cite {
 article .article-content ul,
 article .article-content ol {
   padding-left: 2em;
-  font-size: 102%;
+  font-size: 100%;
 }
 @media only screen and (min-width: 768px) {
   article .article-content ul,
@@ -971,9 +971,9 @@ article .article-content p code,
 article .article-content strong code,
 article .article-content em code {
   font-family: Monaco, Menlo, Consolas, Courier New, monospace;
-  background: #eee;
-  color: #e6e6e6;
-  border: 1px solid #d6d6d6;
+  background: #fff;
+  color: #1d1d2a;
+  border: 1px solid #e6e6e6;
   padding: 0 5px;
   margin: 0 2px;
   font-size: 90%;
@@ -981,7 +981,7 @@ article .article-content em code {
   text-shadow: 0 1px #fff;
 }
 article .article-content p {
-  font-size: 102%;
+  font-size: 100%;
   line-height: 1.7;
   margin: 0.7em 0;
 }
@@ -1110,10 +1110,10 @@ footer.article-footer {
   position: relative;
 }
 .share a:before {
-  font-size: 97%;
+  font-size: 95%;
   font-family: "FontAwesome";
   text-align: center;
-  color: #fff fg;
+  color: #20202f;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   width: 1.5em;
@@ -1388,7 +1388,7 @@ section.comment {
   margin: 1em 0;
 }
 .toc-article {
-  background: #eee;
+  background: #fff;
   margin: 2em 0 0 0.5em;
   padding: 1em;
 }
@@ -1430,7 +1430,7 @@ section.comment {
 }
 #toc.toc-aside strong {
   padding: 0.3em 0;
-  color: #fff fg;
+  color: #20202f;
 }
 #toc.toc-aside:hover {
   -webkit-transition: opacity 0.3s ease-out;
@@ -1809,7 +1809,7 @@ section.comment {
   font-family: "covered_by_your_graceregular";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 147%;
+  font-size: 145%;
   line-height: 1.3em;
   width: 90%;
   margin: 0 auto;
@@ -1840,7 +1840,7 @@ section.comment {
 .social-list a {
   display: inline-block;
   color: #343434;
-  font-size: 177%;
+  font-size: 175%;
   margin: 0.5em;
 }
 @media only screen and (min-width: 768px) {
@@ -1993,7 +1993,7 @@ footer {
   font-family: "covered_by_your_graceregular";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 147%;
+  font-size: 145%;
   line-height: 1.3em;
   width: 90%;
   margin: 0 auto;
@@ -2030,7 +2030,7 @@ footer {
   display: block;
   width: 14%;
   color: #fff;
-  font-size: 177%;
+  font-size: 175%;
   padding: 0.5em;
 }
 @media only screen and (min-width: 1024px) {
@@ -2071,14 +2071,14 @@ footer {
   overflow: auto;
   color: #c5c8c6;
   line-height: 1.5;
-  font-size: 92.14999999999999%;
+  font-size: 90.25%;
 }
 .article-content .highlight .gutter pre,
 .article-content .gist .gist-file .gist-data .line-numbers {
   color: #fff;
   font-size: 0.85em;
   line-height: 1.5;
-  font-size: 92.14999999999999%;
+  font-size: 90.25%;
 }
 .article-content pre {
   font-family: Monaco, Menlo, Consolas, Courier New, monospace;
@@ -2302,14 +2302,14 @@ pre .xml .cdata {
   padding-bottom: 1em !important;
 }
 textarea {
-  color: #fff fg !important;
+  color: #20202f !important;
   background: #fff !important;
 }
 textarea::-webkit-input-placeholder {
-  color: #fff fg !important;
+  color: #20202f !important;
 }
 textarea::-moz-placeholder {
-  color: #fff fg !important;
+  color: #20202f !important;
 }
 .article-gallery {
   background: #fff;

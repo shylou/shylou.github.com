@@ -101,11 +101,6 @@
 	<div class="article-content">
 		
 		
-		<div id="toc" class="toc-article">
-			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Packet_in处理分析"><span class="toc-number">2.</span> <span class="toc-text">Packet_in处理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Packet_in包处理流程"><span class="toc-number">2.1.</span> <span class="toc-text">Packet_in包处理流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bcstore"><span class="toc-number">2.2.</span> <span class="toc-text">bcstore</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-Command-CONTINUE"><span class="toc-number">2.3.</span> <span class="toc-text">return.Command.CONTINUE</span></a></li></ol></li></ol>
-		</div>
-		
 		<h2 id="前言">前言</h2>
 <p>看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太多时间看源码，最近做实验啥的感觉瓶颈了，唉，遂决心好好研究一下源码，看是否能给自己新的灵感。此次参考的源码是我修改过的MACTracker，我将要分析的是其中对Packet_in事件处理的方法recevie（）   </p>
 <h2 id="Packet_in处理分析">Packet_in处理分析</h2>

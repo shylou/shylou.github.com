@@ -101,11 +101,6 @@
 	<div class="article-content">
 		
 		
-		<div id="toc" class="toc-article">
-			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验设计"><span class="toc-number">2.</span> <span class="toc-text">实验设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结果分析"><span class="toc-number">3.</span> <span class="toc-text">结果分析</span></a></li></ol>
-		</div>
-		
 		<h2 id="前言">前言</h2>
 <p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但<a href="https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-does-open-vswitch-support-openflow-meters" target="_blank" rel="external">OVS FAQ</a>有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。   </p>
 <h2 id="实验设计">实验设计</h2>
