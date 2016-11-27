@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2016-11-26T16:21:27.500Z</updated>
+  <updated>2016-11-27T04:01:43.873Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,76 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[Linux内存占用]]></title>
+    <link href="http://liushy.com/2016/11/27/Linux-mem/"/>
+    <id>http://liushy.com/2016/11/27/Linux-mem/</id>
+    <published>2016-11-27T02:39:51.000Z</published>
+    <updated>2016-11-27T03:39:56.000Z</updated>
+    <content type="html"><![CDATA[<p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用：   </p>
+<h3 id="top">top</h3>
+<p>top命令是Linux下常用的性能分析工具，能够实时显示系统中进程的资源占用状况，类似于Windows的任务管理器可以直接使用top命令后，查看%MEM的内容。可以指定进程或者用户查看，如查看oracle用户的进程内存使用情况的话可以使用如下的命令：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ top -u oracle</div></pre></td></tr></table></figure>
+
+<p>显示内容解释：</p>
+<blockquote>
+<p>PID：进程的ID<br>USER：进程所有者<br>PR：进程的优先级别，越小越优先被执行<br>NInice：值<br>VIRT：进程占用的虚拟内存<br>RES：进程占用的物理内存<br>SHR：进程使用的共享内存<br>S：进程的状态。S表示休眠，R表示正在运行，Z表示僵死状态，N表示该进程优先值为负数<br>%CPU：进程占用CPU的使用率<br>%MEM：进程使用的物理内存和总内存的百分比<br>TIME+：该进程启动后占用的总的CPU时间，即占用CPU使用时间的累加值。<br>COMMAND：进程启动命令名称   </p>
+</blockquote>
+<p>常用的命令：</p>
+<blockquote>
+<p>P：按%CPU使用率排行<br>T：按MITE+排行<br>M：按%MEM排行   </p>
+</blockquote>
+<h3 id="pmap">pmap</h3>
+<p>可以根据进程查看进程相关信息占用的内存情况，(进程号可以通过ps查看)如下所示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ pmap <span class="operator">-d</span> <span class="number">14596</span></div></pre></td></tr></table></figure>
+
+
+<h3 id="ps">ps</h3>
+<p>ps 的参数众多, 在此仅列出几个常用的参数：   </p>
+<blockquote>
+<p>-A 列出所有的行程<br>-w 显示加宽可以显示较多的资讯<br>-au 显示较详细的资讯<br>-aux 显示所有包含其他使用者的行程   </p>
+</blockquote>
+<p>au(x) 输出格式 :<br>USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND   </p>
+<blockquote>
+<p>USER: 行程拥有者<br>PID: pid<br>%CPU: 占用的 CPU 使用率<br>%MEM: 占用的记忆体使用率<br>VSZ: 占用的虚拟记忆体大小<br>RSS: 占用的记忆体大小<br>TTY: 终端的次要装置号码 (minor device number of tty)<br>STAT: 该行程的状态:<br>D: 不可中断的静止<br>R: 正在执行中<br>S: 静止状态<br>T: 暂停执行<br>Z: 不存在但暂时无法消除<br>W: 没有足够的记忆体分页可分配<br>&lt;: 高优先序的行程<br>N: 低优先序的行程<br>L: 有记忆体分页分配并锁在记忆体内<br>START: 行程开始时间<br>TIME: 执行的时间<br>COMMAND:所执行的指令   </p>
+</blockquote>
+<h3 id="du">du</h3>
+<p>du命令主要是用来查看硬盘使用情况的：  </p>
+<blockquote>
+<p>  du -sh : 查看当前目录总共占的容量。而不单独列出各子项占用的容量<br>du -lh —max-depth=1 : 查看当前目录下一级子文件和子目录占用的磁盘容量。   </p>
+</blockquote>
+<h3 id="free">free</h3>
+<p>free是最常用的查看内存占用的命令，有以下参数：   </p>
+<blockquote>
+<p>-b：以Byte为单位显示内存使用情况；<br> -k：以KB为单位显示内存使用情况；<br>-m：以MB为单位显示内存使用情况；<br>-o：不显示缓冲区调节列；<br>-s&lt;间隔秒数&gt;：持续观察内存使用状况；<br>-t：显示内存总和列；<br>-V：显示版本信息。<br>举例说明：  </p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">free -m </div><div class="line">            total  used  free shared  buffers cached </div><div class="line">Mem:        <span class="number">2016</span>   <span class="number">1973</span>  <span class="number">42</span>     <span class="number">0</span>     <span class="number">163</span>    <span class="number">1497</span> </div><div class="line">-/+ buffers/cache: <span class="number">312</span>   <span class="number">1703</span> </div><div class="line">Swap:       <span class="number">4094</span>    <span class="number">0</span>    <span class="number">4094</span></div></pre></td></tr></table></figure>
+
+
+<p>输出的第一行：   </p>
+<blockquote>
+<p>total：内存总数；<br>used：已经使用的内存数；<br>free：空闲的内存数；<br>shared：当前已经废弃不用；<br>buffers Buffer：缓存内存数；<br>cached Page：缓存内存数。   </p>
+</blockquote>
+<p>第二行（-/+ buffers/cache）：   </p>
+<blockquote>
+<p>(-buffers/cache) used内存数：第一行Mem行中的 used – buffers – cached<br>(+buffers/cache) free内存数: 第一行Mem行中的 free + buffers + cached   </p>
+</blockquote>
+<p>第三行是交换区的使用情况，那么什么时候会用到交换区的内存呢，即当可用内存少于额定值的时候，就会进行交换。可以通过<code>cat /proc/meminfo</code>来查看内存额定值：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ cat /proc/meminfo </div><div class="line">MemTotal:        <span class="number">1017576</span> kB</div><div class="line">MemFree:          <span class="number">206012</span> kB</div><div class="line">MemAvailable:     <span class="number">479832</span> kB</div><div class="line">Buffers:           <span class="number">47344</span> kB</div><div class="line">Cached:           <span class="number">333836</span> kB</div><div class="line">SwapCached:            <span class="number">0</span> kB</div><div class="line">Active:           <span class="number">455128</span> kB</div><div class="line">Inactive:         <span class="number">271084</span> kB</div><div class="line">Active(anon):     <span class="number">345856</span> kB</div><div class="line">Inactive(anon):     <span class="number">4140</span> kB</div><div class="line">Active(file):     <span class="number">109272</span> kB</div><div class="line">Inactive(file):   <span class="number">266944</span> kB</div><div class="line">Unevictable:          <span class="number">32</span> kB</div><div class="line">Mlocked:              <span class="number">32</span> kB</div><div class="line">SwapTotal:       <span class="number">1047548</span> kB</div><div class="line">SwapFree:        <span class="number">1047548</span> kB</div><div class="line">Dirty:               <span class="number">588</span> kB</div><div class="line">Writeback:             <span class="number">0</span> kB</div><div class="line">AnonPages:        <span class="number">345060</span> kB</div><div class="line">Mapped:           <span class="number">174264</span> kB</div><div class="line">Shmem:              <span class="number">4968</span> kB</div><div class="line">Slab:              <span class="number">38328</span> kB</div><div class="line">SReclaimable:      <span class="number">20452</span> kB</div><div class="line">SUnreclaim:        <span class="number">17876</span> kB</div><div class="line">KernelStack:        <span class="number">5312</span> kB</div><div class="line">PageTables:        <span class="number">23708</span> kB</div><div class="line">NFS_Unstable:          <span class="number">0</span> kB</div><div class="line">Bounce:                <span class="number">0</span> kB</div><div class="line">WritebackTmp:          <span class="number">0</span> kB</div><div class="line">CommitLimit:     <span class="number">1556336</span> kB</div><div class="line">Committed_AS:    <span class="number">2404256</span> kB</div><div class="line">VmallocTotal:   <span class="number">34359738367</span> kB</div><div class="line">VmallocUsed:       <span class="number">23324</span> kB</div><div class="line">VmallocChunk:   <span class="number">34359709832</span> kB</div><div class="line">HardwareCorrupted:     <span class="number">0</span> kB</div><div class="line">AnonHugePages:     <span class="number">65536</span> kB</div><div class="line">HugePages_Total:       <span class="number">0</span></div><div class="line">HugePages_Free:        <span class="number">0</span></div><div class="line">HugePages_Rsvd:        <span class="number">0</span></div><div class="line">HugePages_Surp:        <span class="number">0</span></div><div class="line">Hugepagesize:       <span class="number">2048</span> kB</div></pre></td></tr></table></figure>
+
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用：   </p>
+<h3 id="top">top</h3>
+<p>top命令是Linux下常用的性能分析工具，能够实时显示系统中进程的资源占用状况，类似于Windows的任务管理器可以直接使用top命令后，查看]]>
+    </summary>
+    
+      <category term="内存" scheme="http://liushy.com/tags/%E5%86%85%E5%AD%98/"/>
+    
+      <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[OVS配置命令]]></title>
@@ -284,7 +354,7 @@
     <link href="http://liushy.com/2014/11/14/openwrt-example/"/>
     <id>http://liushy.com/2014/11/14/openwrt-example/</id>
     <published>2014-11-14T15:27:00.000Z</published>
-    <updated>2016-11-26T16:19:44.000Z</updated>
+    <updated>2016-11-27T02:03:56.000Z</updated>
     <content type="html"><![CDATA[<p>这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.     </p>
 <a id="more"></a>     
 
@@ -311,7 +381,7 @@
     
       <category term="OpenWrt" scheme="http://liushy.com/tags/OpenWrt/"/>
     
-      <category term="OpenWrt" scheme="http://liushy.com/categories/OpenWrt/"/>
+      <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
     
   </entry>
   
