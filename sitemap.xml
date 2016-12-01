@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://liushy.com/2015/01/27/sflow-ddos/</loc>
+    <lastmod>2016-12-01T14:06:35.000Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://liushy.com/2016/11/27/Linux-mem/</loc>
     <lastmod>2016-11-27T03:39:56.000Z</lastmod>
   </url>
@@ -29,11 +34,6 @@
   <url>
     <loc>http://liushy.com/2015/02/02/sflow-queue/</loc>
     <lastmod>2016-11-26T10:48:10.000Z</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://liushy.com/2015/01/27/sflow-ddos/</loc>
-    <lastmod>2016-11-26T10:46:57.000Z</lastmod>
   </url>
   
   <url>

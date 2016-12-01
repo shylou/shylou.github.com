@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2016-11-27T04:01:43.873Z</updated>
+  <updated>2016-12-01T14:09:03.463Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -264,7 +264,7 @@
     <link href="http://liushy.com/2015/01/27/sflow-ddos/"/>
     <id>http://liushy.com/2015/01/27/sflow-ddos/</id>
     <published>2015-01-27T08:17:47.000Z</published>
-    <updated>2016-11-26T10:46:57.000Z</updated>
+    <updated>2016-12-01T14:06:35.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言">前言</h2>
 <p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如<a href="http://www.openflowhub.org/display/floodlightcontroller/FAQ+Floodlight+OpenFlow+Controller" title="Floodlight FAQ" target="_blank" rel="external">Floodlight FAQ</a>所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。   </p>
 <h2 id="实验环境">实验环境</h2>
@@ -301,7 +301,7 @@
 
 <p>运行ddos防御应用后：<br><img src="/img/ddos截取.png" alt="ddos2"><br>可以看出，运行ddos防御应用后，h1向h2泛洪的包迅速被完全的丢弃了。   </p>
 <h2 id="总结">总结</h2>
-<p>写这篇文主要目的不是介绍怎么写应用，而是对sflow性能的一个展示。流量监控是sdn中很重要的一环，我们在获取各个接口的实时信息后，可以实现很多的服务，比如负载均衡，QOS，流量工程等。这也是我初次尝试sflow,还有很多不解的地方，我的想法是，做好sflow与控制器的交互，完善流量监控的功能，为以后的各种服务提供帮助。<br><strong>参考网站</strong>：<a href="http://blog.sflow.com/2013/05/controlling-large-flows-with-openflow.html" target="_blank" rel="external">sflow官博</a></p>
+<p>写这篇文主要目的不是介绍怎么写应用，而是对sflow性能的一个展示。流量监控是sdn中很重要的一环，我们在获取各个接口的实时信息后，可以实现很多的服务，比如负载均衡，QOS，流量工程等。这也是我初次尝试sflow,还有很多不解的地方，我的想法是，做好sflow与控制器的交互，完善流量监控的功能，为以后的各种服务提供帮助。<br><strong>参考网站</strong>：<a href="http://blog.sflow.com/2013/05/controlling-large-flows-with-openflow.html" target="_blank" rel="external">sflow官博</a><br><strong>DDOS源码参考</strong>：<a href="https://github.com/shylou/floodlight-ddos" target="_blank" rel="external">DDOS源码</a></p>
 ]]></content>
     <summary type="html">
     <![CDATA[<h2 id="前言">前言</h2>
