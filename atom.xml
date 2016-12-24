@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2016-12-24T09:37:35.532Z</updated>
+  <updated>2016-12-24T09:45:52.049Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://liushy.com/2016/12/21/docker+hadoop/"/>
     <id>http://liushy.com/2016/12/21/docker+hadoop/</id>
     <published>2016-12-21T13:41:34.000Z</published>
-    <updated>2016-12-24T09:37:21.000Z</updated>
+    <updated>2016-12-24T09:45:18.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言_"><strong>前言 </strong></h2>
 <p>这个部署是去年做的，有点久了，镜像上传在<a href="https://hub.docker.com/r/liushy/ubuntu/tags/" target="_blank" rel="external">dockerhub</a>，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，事情太多太杂，而自身精力涣散，三天打鱼两天晒网，实际也就没弄明白什么。平时读点博客，看到docker，hadoop等字眼就会不住高潮，内心想说这玩意我玩过啊，然后也就仅限于此了。术业有专攻，如果不是经常接触，搞不久就会忘，若时常回顾一下，等到用时，就不会那么陌生了。   </p>
 <h2 id="安装docker"><strong>安装docker</strong></h2>
@@ -47,7 +47,7 @@
 <li>CREATED：创建时间</li>
 <li>SIZE：镜像大小   </li>
 </ul>
-<p>那么，除此之外，还需要了解docker的一些常用操作（暂定）：   </p>
+<p>那么，除此之外，还需要了解docker的一些常用操作。   </p>
 <h2 id="启动Docker容器_"><strong>启动Docker容器 </strong></h2>
 <p>启动docker容器，就可以构建部署hadoop集群了。使用如下命令启动docker容器：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -ti ubuntu</div></pre></td></tr></table></figure>
