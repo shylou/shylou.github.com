@@ -7,12 +7,10 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>OVS配置命令 | liushy</title>
+    <title>来了又走 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
-    
-    <meta name="description" content="在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中">
     
     
     
@@ -83,88 +81,41 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2016/11/26/OVS-CLI/" title="OVS配置命令" itemprop="url">OVS配置命令</a>
+      <a href="/2016/12/24/goon-2016/" title="来了又走" itemprop="url">来了又走</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://liushy.com" title="Liushy">Liushy</a>
     </p>
   <p class="article-time">
-    <time datetime="2016-11-26T10:12:53.000Z" itemprop="datePublished">Nov 26 2016</time>
-    Updated:<time datetime="2016-11-26T12:23:29.000Z" itemprop="dateModified">Nov 26 2016</time>
+    <time datetime="2016-12-24T13:45:06.000Z" itemprop="datePublished">Dec 24 2016</time>
+    Updated:<time datetime="2016-12-24T13:45:06.000Z" itemprop="dateModified">Dec 24 2016</time>
     
   </p>
 </header>
 	<div class="article-content">
 		
 		
-		<p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)<br>以下是本人使用和收集的OVS相关配置命令：       </p>
-<p>建立 VXLAN Network ID (VNI) 和指定的 OpenFlow port number, eg: VNI=5566, OF_PORT=9   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=x.x.x.x option:key=<span class="number">5566</span> ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
-
-
-
-<p>VNI flow by flow</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=<span class="number">140.113</span>.<span class="number">215.200</span> option:key=flow ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
-
-
-
-<p>设置 VXLAN tunnel id   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ovs-ofctl add-flow ovs-br <span class="keyword">in</span>_port=<span class="number">1</span>,actions=<span class="keyword">set</span>_field:<span class="number">5566</span>-&gt;tun_id,output:<span class="number">2</span></div><div class="line">ovs-ofctl add-flow s1 <span class="keyword">in</span>_port=<span class="number">2</span>,tun_id=<span class="number">5566</span>,actions=output:<span class="number">1</span></div></pre></td></tr></table></figure>
-
-
-
-<p>查询out-of-band $ in-band   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl get controller ovs-br connection-mode</div></pre></td></tr></table></figure>
-
-
-
-<p>Out-of-band   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=out-of-band</div></pre></td></tr></table></figure>
-
-
-
-<p>In-band (default)   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=<span class="keyword">in</span>-band</div></pre></td></tr></table></figure>
-
-
-<p>移除 hidden flow   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> bridge br0 other-config:disable-in-band=<span class="literal">true</span></div></pre></td></tr></table></figure>
-
-
-<p>设置 GRE tunnel   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs−vsctl add−port ovs-br ovs-gre -- <span class="keyword">set</span> interface ovs-gre <span class="built_in">type</span>=gre options:remote_ip=<span class="number">1.2</span>.<span class="number">3.4</span></div></pre></td></tr></table></figure>
-
-
-<p>设置 Vlan trunk   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl add-port ovs-br eth0 trunk=<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span></div></pre></td></tr></table></figure>
-
-
-<p>设置已 add 的 port 为 access port, vlan id 9</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> port eth0 tag=<span class="number">9</span></div></pre></td></tr></table></figure>
-
-
-<p>网络工程是一门大学问，虽然本科四年里偶有涉及，硕士阶段专攻了一年多的路由交换原理，到目前开始从事网络安全开发工作，我也不敢说自己精通网络，深知自身仍然还有很多要学的地方，而对于网络知识的学习，我觉得最好的方式莫过于搞一套网络设备来慢慢折腾，模拟一个个应用场景，敲一下各种配置命令，能够一步步照着做了，想弄明白网络就不是难事，总的来说，急不得，在了解理论的基础上，动手实践理解会更深刻，还有一点就是多做记录，正所谓好记性不如烂笔头，我推荐做一个自己的博客或者使用笔记软件，记录自己平时的实践和理论学习。<br>参考网站：<br><a href="http://blog.csdn.net/beginning1126/article/details/41172365" title=" http://blog.csdn.net/beginning1126/article/details/41172365" target="_blank" rel="external"> http://blog.csdn.net/beginning1126/article/details/41172365</a><br><a href="http://blog.csdn.net/tantexian/article/details/46707175" title="http://blog.csdn.net/tantexian/article/details/46707175" target="_blank" rel="external">http://blog.csdn.net/tantexian/article/details/46707175</a></p>
-  
+		  
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/OVS/">OVS</a><a href="/tags/VXLAN/">VXLAN</a><a href="/tags/GRE/">GRE</a>
+  <span></span> <a href="/tags/生活，旅游/">生活，旅游</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/SDN/">SDN</a>
+  <a class="article-category-link" href="/categories/Life/">Life</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2016/11/26/OVS-CLI/" data-title="OVS配置命令 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2016/12/24/goon-2016/" data-title="来了又走 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -173,19 +124,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2016/11/27/Linux-mem/" title="Linux内存占用">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  Linux内存占用</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/11/12/talk--life/"  title="随便聊聊">
+<a href="/2016/12/21/docker+hadoop/"  title="使用docker部署hadoop分布式集群">
  <strong>NEXT:</strong><br/> 
- <span>随便聊聊
+ <span>使用docker部署hadoop分布式集群
 </span>
 </a>
 </div>
@@ -195,7 +138,7 @@
 	
 <section class="comment">
 	<!-- 多说评论框 start -->
-	<div class="ds-thread" data-thread-key="2016/11/26/OVS-CLI/" data-title="OVS配置命令" data-url="http://liushy.com/2016/11/26/OVS-CLI/"></div>
+	<div class="ds-thread" data-thread-key="2016/12/24/goon-2016/" data-title="来了又走" data-url="http://liushy.com/2016/12/24/goon-2016/"></div>
 <!-- 多说评论框 end -->
 <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
 <script type="text/javascript">
