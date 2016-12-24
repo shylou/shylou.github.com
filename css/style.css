@@ -1031,18 +1031,18 @@ article .article-content .video-container embed {
   margin-top: 0;
 }
 article .article-content table {
-  width: 100%;
+  width: 90%;
   border-collapse: collapse;
   border-spacing: 0;
 }
 article .article-content table th {
   font-weight: bold;
-  border-bottom: 3px solid #dbdbdb;
+  border-bottom: 3px solid #3cb1d5;
   padding-bottom: 0.5em;
 }
 article .article-content table td {
-  border-bottom: 1px solid #dbdbdb;
-  padding: 10px 0;
+  border-bottom: 2px solid #3cb1d5;
+  padding: 10px 1em;
 }
 article .article-content .pullquote {
   text-align: left;
