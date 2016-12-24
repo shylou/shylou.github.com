@@ -1,0 +1,616 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>使用docker部署hadoop分布式集群 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="前言 
+这个部署是去年做的，有点久了，镜像上传在dockerhub，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://zhannei.baidu.com/cse/search target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/12/21/docker+hadoop/" title="使用docker部署hadoop分布式集群" itemprop="url">使用docker部署hadoop分布式集群</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-12-21T13:41:34.000Z" itemprop="datePublished">Dec 21 2016</time>
+    Updated:<time datetime="2016-12-24T09:16:33.000Z" itemprop="dateModified">Dec 24 2016</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h2 id="前言_"><strong>前言 </strong></h2>
+<p>这个部署是去年做的，有点久了，镜像上传在<a href="https://hub.docker.com/r/liushy/ubuntu/tags/" target="_blank" rel="external">dockerhub</a>，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，事情太多太杂，而自身精力涣散，三天打鱼两天晒网，实际也就没弄明白什么。平时读点博客，看到docker，hadoop等字眼就会不住高潮，内心想说这玩意我玩过啊，然后也就仅限于此了。术业有专攻，如果不是经常接触，搞不久就会忘，若时常回顾一下，等到用时，就不会那么陌生了。   </p>
+<h2 id="安装docker"><strong>安装docker</strong></h2>
+<p>安装docker的套路网上有教程，目前新的Ubuntu系统都有集成，不过<a href="https://www.oschina.net/translate/installing-docker-on-mac-os-x" target="_blank" rel="external">OSX系统跑docker</a>需要配合虚拟机如Virtualbox等来做，所以mac用户要稍微折腾一下了。本文的环境是在Ubuntu 14下做的，大致命令如下：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">sudo</span> apt-get install apt-transport-https </div><div class="line">$ <span class="built_in">sudo</span> apt-key adv --keyserver hkp://keyserver.ubuntu.com:<span class="number">80</span> --recv-keys <span class="number">36</span>A1D7869245C8950F966E92D8576A8BA88D21E9 </div><div class="line">$ <span class="built_in">sudo</span> bash -c <span class="string">"echo deb https://get.docker.io/ubuntu docker main &gt; /etc/apt/sources.list.d/docker.list"</span> </div><div class="line">$ <span class="built_in">sudo</span> apt-get update </div><div class="line">$ <span class="built_in">sudo</span> apt-get install lxc-docker</div></pre></td></tr></table></figure>
+
+
+<p>docker的安装可以参考<a href="http://www.cnblogs.com/xiaoluosun/p/5520510.html" target="_blank" rel="external">这个</a>   </p>
+<p>接下来要提到的是docker仓库的概念，熟悉github或使用过svn的都应该知道代码库吧，而我们也可以为docker创建仓库，这个库即是存放docker镜像的场所。比如我们做了个装有JDK的docker镜像，那么就可以将其存到仓库里，每次需要使用带Java的环境时，就可以可以使用该镜像，并在此基础上构建其它镜像。国内比较知名的docker库如<a href="https://github.com/DockerPool/" target="_blank" rel="external">dockerpool</a>，而我此次使用的是<a href="https://hub.docker.com/" target="_blank" rel="external">dockerhub</a>，国内访问剧慢，最好使用vpn加速。建议养成使用仓库的习惯，无论是代码还是docker。怎么使用docker仓库呢，首先需要在dockerhub官网创建一个账户，创建自己的仓库，然后在你的生产环境登陆<a href="https://hub.docker.com/" target="_blank" rel="external">dockerhub</a>，即可从<a href="https://hub.docker.com/" target="_blank" rel="external">dockerhub</a>上pull（拉取）镜像，当然也可以将本地的镜像push（上传）到仓库。大致流程可<a href="http://geek.csdn.net/news/detail/35121" target="_blank" rel="external">参考此文</a>。  </p>
+<p>登录到DockerHub：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ docker login --username=账户 --email=邮箱@xxx.com</div><div class="line">PassWord:</div><div class="line">WARNING: login credentials saved <span class="keyword">in</span> /home/hadoop/.docker/config.json</div><div class="line">Login Succeeded</div></pre></td></tr></table></figure>
+
+<p>搞定仓库设置后，那么就可以从docker仓库中获取Ubuntu镜像了：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker pull ubuntu:<span class="number">14.04</span></div></pre></td></tr></table></figure>
+
+<p>使用<code>docker images</code>可以查看本地的所有镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ docker images</div><div class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE</div><div class="line">liushy/ubuntu       hadoop              <span class="number">358</span>d6e31872e        <span class="number">13</span> months ago       <span class="number">1.276</span> GB</div><div class="line">liushy/ubuntu       java                <span class="number">50</span>d62690f3f0        <span class="number">13</span> months ago       <span class="number">752.9</span> MB</div><div class="line">ubuntu              <span class="number">14.04</span>               e9ae3c220b23        <span class="number">13</span> months ago       <span class="number">187.9</span> MB</div></pre></td></tr></table></figure>
+
+
+<p>显示的内容包括：   </p>
+<ul>
+<li>REPOSITORY：仓库名，例如liushy/ubuntu和ubuntu</li>
+<li>TAG：标记,例如hadoop</li>
+<li>IMAGE ID：镜像ID号，这是唯一的</li>
+<li>CREATED：创建时间</li>
+<li>SIZE：镜像大小   </li>
+</ul>
+<p>那么，除此之外，还需要了解docker的一些常用操作（暂定）：   </p>
+<h2 id="启动Docker容器_"><strong>启动Docker容器 </strong></h2>
+<p>启动docker容器，就可以构建部署hadoop集群了。使用如下命令启动docker容器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -ti ubuntu</div></pre></td></tr></table></figure>
+
+<p>docker run -ti ubuntu命令中没有指定执行程序，Docker默认执行/bin/bash。如下面这条命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$  docker run liushy/ubuntu:java /bin/<span class="built_in">echo</span> <span class="string">'Hello world'</span></div><div class="line">Hello world</div></pre></td></tr></table></figure>
+
+
+<p>即是启动标记为java的镜像，运行bash打印“Hello world”。<br>接下来我们在Ubuntu基础镜像的上，安装Java，执行如下命令：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo apt-get install software-properties-common python-software-properties</span></div><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo add-apt-repository ppa:webupd8team/java</span></div><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo apt-get update</span></div><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo apt-get install oracle-java7-installer</span></div></pre></td></tr></table></figure>
+
+
+<p>安装结束后，可以将该镜像保存，以备以后使用：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment"># exit</span></div><div class="line">docker commit -m <span class="string">"java image"</span> <span class="number">50</span>d62690f3f0  liushy/ubuntu:java</div></pre></td></tr></table></figure>
+
+
+<p><code>-m</code>后面指定提交说明，<code>50d62690f3f0</code>是容器ID（也可以通过<code>docker ps</code>查询运行的容器），<code>liushy/ubuntu</code>是仓库，<code>:java</code>是标记。</p>
+<h2 id="构建Hadoop镜像"><strong>构建Hadoop镜像</strong></h2>
+<p>首先启动Java容器的镜像，下载Hadoop，输入如下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ docker run -ti liushy/ubuntu:java</div><div class="line">root@<span class="number">7</span>cf73e2147ec:/<span class="comment"># </span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:<span class="built_in">cd</span> ~</div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># mkdir soft</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># cd soft/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft<span class="comment"># mkdir apache</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft<span class="comment"># cd apache/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache<span class="comment"># mkdir hadoop</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache<span class="comment"># cd hadoop/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop<span class="comment"># wget http://mirrors.sonic.net/apache/hadoop/common/hadoop-2.6.0/hadoop-2.6.0.tar.gz</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop<span class="comment"># tar xvzf hadoop-2.6.0.tar.gz</span></div></pre></td></tr></table></figure>
+
+
+<p>本次安装的是hdoop-2.6.0版的   </p>
+<h3 id="配置环境">配置环境</h3>
+<p>还需要配置环境变量，在~/.bashrc添加java和hadoop文件路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:vi ~/.bashrc</div><div class="line"><span class="keyword">export</span> JAVA_HOME=/usr/lib/jvm/java-<span class="number">7</span>-oracle</div><div class="line"><span class="keyword">export</span> HADOOP_HOME=/root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span></div><div class="line"><span class="keyword">export</span> HADOOP_CONFIG_HOME=<span class="variable">$HADOOP_HOME</span>/etc/hadoop</div><div class="line"><span class="keyword">export</span> PATH=<span class="variable">$PATH</span>:<span class="variable">$HADOOP_HOME</span>/bin</div><div class="line"><span class="keyword">export</span> PATH=<span class="variable">$PATH</span>:<span class="variable">$HADOOP_HOME</span>/sbin</div></pre></td></tr></table></figure>
+
+
+<p>最后，一定记得要<code>source ~/.bashrc</code>使配置生效。</p>
+<h3 id="配置Hadoop">配置Hadoop</h3>
+<p>部署分布式的hadoop，主要分为两大角色：Master和Slave。从HDFS的角度，由若干个NameNode和DataNode组成（在分布式文件系统中，NameNode管理文件系统的命名空间，DataNode管理存储的数据）；从MapReduce的角度，将主机划分JobTracker 和TaskTracker(主节点的Job分配多个Task给从节点执行)。HDFS在集群上实现分布式文件系统，MapReduce在集群上实现了分布式计算和任务处理。HDFS在MapReduce任务处理过程中提供了文件操作和存储等支持，MapReduce在HDFS的基础上实现了任务的分发、跟踪、执行等工作，并收集结果，二者相互作用，完成了Hadoop分布式集群的主要任务<a href="http://blog.chinaunix.net/uid-25266990-id-3900239.html" target="_blank" rel="external">[参考]</a>。   </p>
+<p>部署hadoop的各个节点，需要修改hadoop的配置文件，包括core-site.xml、hdfs-site.xml、mapred-site.xml这三个文件。在此之前，建议新建如下目录:</p>
+<ul>
+<li>tmp：作为Hadoop的临时目录</li>
+<li>namenode：作为NameNode的存放目录</li>
+<li>datanode：作为DataNode的存放目录</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># cd $HADOOP_HOME/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># mkdir tmp</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># cd tmp/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/tmp<span class="comment"># cd ../</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># mkdir namenode</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># cd namenode/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/namenode<span class="comment"># cd ../</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># mkdir datanode</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># cd datanode/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec::~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/datanode<span class="comment"># cd $HADOOP_CONFIG_HOME/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># cp mapred-site.xml.template mapred-site.xml</span></div></pre></td></tr></table></figure>
+
+
+<p>接下来就是对上述几个文件进行配置：     </p>
+<p><strong>core-site.xml配置：</strong></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">name</span>&gt;</span>hadoop.tmp.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">value</span>&gt;</span>/root/soft/apache/hadoop/hadoop-2.6.0/tmp<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">description</span>&gt;</span>A base for other temporary directories.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">name</span>&gt;</span>fs.default.name<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">value</span>&gt;</span>hdfs://master:9000<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">description</span>&gt;</span>xxxxxx.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
+<ul>
+<li>hadoop.tmp.dir：配置为/root/soft/apache/hadoop/hadoop-2.6.0/tmp为此前创建的临时目录。</li>
+<li>fs.default.name：配置为hdfs://master:9000，指向Master节点  </li>
+</ul>
+<p><strong>hdfs-site.xml配置：</strong></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.replication<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>2<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">description</span>&gt;</span>xxxxx.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.namenode.name.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/root/soft/apache/hadoop/hadoop-2.6.0/namenode<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.datanode.data.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/root/soft/apache/hadoop/hadoop-2.6.0/datanode<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
+<ul>
+<li>dfs.replication：配置为2。指集群为一个Master节点和两个Slave节点。</li>
+<li>dfs.namenode.name.dir：配置为此前创建的NameNode目录</li>
+<li>dfs.datanode.data.dir：配置为此前创建的NaDataNode目录   </li>
+</ul>
+<p><strong>mapred-site.xml配置：</strong>   </p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>mapred.job.tracker<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>master:9001<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">description</span>&gt;</span>xxxxxx.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
+<ul>
+<li>mapred.job.tracker：配置jobTracker在master节点。 </li>
+</ul>
+<p>除此之外，还要配置conf/hadoop-env.sh文件,修改为你的jdk的安装位置:   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">export</span> JAVA_HOME=/usr/lib/jvm/java-<span class="number">7</span>-oracle</div></pre></td></tr></table></figure>
+
+
+<p>还要格式化Namenode:<code>hadoop namenode -format</code></p>
+<h3 id="节点SSH互访">节点SSH互访</h3>
+<p>Hadoop启动以后，Namenode是通过SSH来启动和停止各个Datanode上的守护进程的，要求在节点之间执行指令的时候是不需要输入密码，故我们要配置SSH运用无密码公钥认证的形式。   </p>
+<p>首先，安装SSH   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># sudo apt-get install ssh</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># ssh localhost</span></div></pre></td></tr></table></figure>
+
+<p>利用<code>ssh localhost</code>测试一下是否设置好无口令登陆，如果没有设置好，系统将要求你输入密码，通过下面的设置可以实现无口令登陆：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># cat ~/.ssh/id_dsa.pub &gt;&gt; ~/.ssh/authorized_keys</span></div></pre></td></tr></table></figure>
+
+
+<p>最后，保存一份镜像:   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># exit</span></div><div class="line">hadoop@hadoop:~$ docker commit -m <span class="string">"hadoop image"</span> <span class="number">358</span>d6e31872e liushy/ubuntu:hadoop</div></pre></td></tr></table></figure>
+
+<h2 id="启动Hadoop集群"><strong>启动Hadoop集群</strong></h2>
+<p>接下来就是启动hadoop集群了，本次部署的hadoop方案是，一个Master节点，两个Slave节点： 　　</p>
+<blockquote>
+<p><strong>部署方案： </strong>   </p>
+</blockquote>
+<p>　　　节点　　　IP　　　　　Hadoop任务　　　       　　　　Docker启动命令<br>　　　Master　172.17.0.2　Namenode,jobTracker　docker run -ti -h master ubuntu:hadoop<br>　　　Slave1　172.17.0.3　Datanode,taskTracker　docker run -ti -h Slave1 ubuntu:hadoop<br>　　　Slave2　172.17.0.4　Datanode,taskTracker　docker run -ti -h Slave2 ubuntu:hadoop   </p>
+<p>容器启动成功后，docker会为它们自动分配ip地址，是同一网段相互之间能够ping通。当然也可以修改ip，方法请自行百度。   </p>
+<h3 id="修改hosts">修改hosts</h3>
+<p>接下来修改各节点的hosts文件<code>vi /etc/hosts</code>，添加各节点的hostname和ip：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="number">172.17</span>.<span class="number">0.2</span>        master</div><div class="line"><span class="number">172.17</span>.<span class="number">0.3</span>        slave1</div><div class="line"><span class="number">172.17</span>.<span class="number">0.4</span>        slave2</div></pre></td></tr></table></figure>
+
+
+<h3 id="修改slaves">修改slaves</h3>
+<p>除此之外，还要在master节点上，配置slaves文件，该文件需要填写slave节点的hostname:   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@master:~<span class="comment"># cd $HADOOP_CONFIG_HOME/</span></div><div class="line">root@master:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># vi slaves</span></div><div class="line">slave1</div><div class="line">slave2</div></pre></td></tr></table></figure>
+
+
+<h3 id="启动Hadoop">启动Hadoop</h3>
+<p>在Master节点的hadoop目录下执行<code>start-all.sh</code>，启动Hadoop集群:   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">root@master:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># start-all.sh </span></div><div class="line">This script is Deprecated. Instead use start-dfs.sh and start-yarn.sh</div><div class="line">starting secondarynamenode, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/hadoop-root-secondarynamenode-master.out</div><div class="line">starting yarn daemons</div><div class="line">...</div><div class="line"><span class="number">0.0</span>.<span class="number">0.0</span>:starting resourcemanager, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/yarn--resourcemanager-master.out</div><div class="line">slave2: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/yarn-root-nodemanager-slave2.out</div><div class="line">slave1: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/yarn-root-nodemanager-slave1.out</div></pre></td></tr></table></figure>
+
+<p>打印上述日志，说明集群运行成功，碍于生产环境，运行较慢，可以多等等。使用jps命令可以查看各节点运行的进程。 </p>
+<p><strong>maste节点：</strong>    </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">root@master:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># jps</span></div><div class="line"><span class="number">492</span> Jps</div><div class="line"><span class="number">429</span> ResourceManager</div><div class="line"><span class="number">295</span> SecondaryNameNode</div><div class="line"><span class="number">124</span> NameNode</div></pre></td></tr></table></figure>
+
+
+
+<p><strong>slave1节点：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@slave1:/<span class="comment"># jps</span></div><div class="line"><span class="number">52</span> DataNode</div><div class="line"><span class="number">147</span> NodeManager</div><div class="line"><span class="number">240</span> Jps</div></pre></td></tr></table></figure>
+
+
+
+<p><strong>slave2节点：</strong>   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@slave1:/<span class="comment"># jps</span></div><div class="line"><span class="number">50</span> DataNode</div><div class="line"><span class="number">121</span> NodeManager</div><div class="line"><span class="number">250</span> Jps</div></pre></td></tr></table></figure>
+
+
+<p>通过web访问hadoop运行情况：<br><img src="/img/docker-hadoop.png" alt="hadoop-web"><br>针对hadoop的架构和操作此文就不深入阐述了。</p>
+<h2 id="结语"><strong>结语</strong></h2>
+<p>搭建环境是一件费时耗力，低效率的事情，搞不好就各种排错，甚至重来，这也是很多人不想接触环境的原因。如何做到少出错，快速定位问题，我想这也是很多正在搞环境的开发人员所渴望的一种工作状态。其实，没有什么捷径可走，还是要多积累，但有些事情必须得长期坚持，那就是学习操作系统，内存管理，网络等相关知识。很多疑难杂症多因环境变量的配置，硬盘故障，网络不通等引起，而我们往往因为对这些知识不熟悉，而手足无措。    </p>
+<p>回到本文的主题，docker是这两年势头正旺的开源产品，基于lxc（linux container），使得应用部署更加轻量。如何将其运用于开发环境中，很多互联网公司都在做。作为开发人员来说，掌握容器也是一门专业利器，基于容器结合应用可以实现大规模的业务部署，比如本文的hadoop。当然相比虚拟机，docker也有缺陷，比如处理能力，所以如何运用docker来提升处理业务的能力，是开发人员需要通过实践来解决的问题。   </p>
+<p><strong>参考网站</strong><br><a href="http://blog.chinaunix.net/uid-25266990-id-3900239.html" target="_blank" rel="external">http://blog.chinaunix.net/uid-25266990-id-3900239.html</a><br><a href="http://blog.csdn.net/u011692203/article/details/46898293" target="_blank" rel="external">http://blog.csdn.net/u011692203/article/details/46898293</a><br><a href="http://www.cnblogs.com/xiaoluosun/p/5520510.html" target="_blank" rel="external">http://www.cnblogs.com/xiaoluosun/p/5520510.html</a><br><a href="http://tashan10.com/yong-dockerda-jian-hadoopwei-fen-bu-shi-ji-qun/#" target="_blank" rel="external">http://tashan10.com/yong-dockerda-jian-hadoopwei-fen-bu-shi-ji-qun/</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/docker/">docker</a><a href="/tags/Hadoop/">Hadoop</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2016/12/21/docker+hadoop/" data-title="使用docker部署hadoop分布式集群 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2016/11/27/Linux-mem/"  title="Linux内存占用">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux内存占用
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="2016/12/21/docker+hadoop/" data-title="使用docker部署hadoop分布式集群" data-url="http://liushy.com/2016/12/21/docker+hadoop/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"liushy"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言_"><span class="toc-number">1.</span> <span class="toc-text">前言 </span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#安装docker"><span class="toc-number">2.</span> <span class="toc-text">安装docker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#启动Docker容器_"><span class="toc-number">3.</span> <span class="toc-text">启动Docker容器 </span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构建Hadoop镜像"><span class="toc-number">4.</span> <span class="toc-text">构建Hadoop镜像</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#配置环境"><span class="toc-number">4.1.</span> <span class="toc-text">配置环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#配置Hadoop"><span class="toc-number">4.2.</span> <span class="toc-text">配置Hadoop</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#节点SSH互访"><span class="toc-number">4.3.</span> <span class="toc-text">节点SSH互访</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#启动Hadoop集群"><span class="toc-number">5.</span> <span class="toc-text">启动Hadoop集群</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#修改hosts"><span class="toc-number">5.1.</span> <span class="toc-text">修改hosts</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#修改slaves"><span class="toc-number">5.2.</span> <span class="toc-text">修改slaves</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#启动Hadoop"><span class="toc-number">5.3.</span> <span class="toc-text">启动Hadoop</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">6.</span> <span class="toc-text">结语</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/openflow/" title="openflow">openflow<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
+		
+			<li><a href="/tags/qos/" title="qos">qos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/queue/" title="queue">queue<sup>1</sup></a></li>
+		
+			<li><a href="/tags/recevie/" title="recevie">recevie<sup>1</sup></a></li>
+		
+			<li><a href="/tags/sflow/" title="sflow">sflow<sup>2</sup></a></li>
+		
+			<li><a href="/tags/内存/" title="内存">内存<sup>1</sup></a></li>
+		
+			<li><a href="/tags/生活，旅游/" title="生活，旅游">生活，旅游<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2016 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"liushy"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

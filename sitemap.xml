@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://liushy.com/2016/12/21/docker+hadoop/</loc>
+    <lastmod>2016-12-24T09:16:33.000Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://liushy.com/2015/01/27/sflow-ddos/</loc>
     <lastmod>2016-12-01T14:06:35.000Z</lastmod>
   </url>
