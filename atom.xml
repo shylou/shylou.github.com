@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2016-12-24T09:19:14.169Z</updated>
+  <updated>2016-12-24T09:37:35.532Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://liushy.com/2016/12/21/docker+hadoop/"/>
     <id>http://liushy.com/2016/12/21/docker+hadoop/</id>
     <published>2016-12-21T13:41:34.000Z</published>
-    <updated>2016-12-24T09:16:33.000Z</updated>
+    <updated>2016-12-24T09:37:21.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言_"><strong>前言 </strong></h2>
 <p>这个部署是去年做的，有点久了，镜像上传在<a href="https://hub.docker.com/r/liushy/ubuntu/tags/" target="_blank" rel="external">dockerhub</a>，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，事情太多太杂，而自身精力涣散，三天打鱼两天晒网，实际也就没弄明白什么。平时读点博客，看到docker，hadoop等字眼就会不住高潮，内心想说这玩意我玩过啊，然后也就仅限于此了。术业有专攻，如果不是经常接触，搞不久就会忘，若时常回顾一下，等到用时，就不会那么陌生了。   </p>
 <h2 id="安装docker"><strong>安装docker</strong></h2>
@@ -169,7 +169,7 @@
 <p>通过web访问hadoop运行情况：<br><img src="/img/docker-hadoop.png" alt="hadoop-web"><br>针对hadoop的架构和操作此文就不深入阐述了。</p>
 <h2 id="结语"><strong>结语</strong></h2>
 <p>搭建环境是一件费时耗力，低效率的事情，搞不好就各种排错，甚至重来，这也是很多人不想接触环境的原因。如何做到少出错，快速定位问题，我想这也是很多正在搞环境的开发人员所渴望的一种工作状态。其实，没有什么捷径可走，还是要多积累，但有些事情必须得长期坚持，那就是学习操作系统，内存管理，网络等相关知识。很多疑难杂症多因环境变量的配置，硬盘故障，网络不通等引起，而我们往往因为对这些知识不熟悉，而手足无措。    </p>
-<p>回到本文的主题，docker是这两年势头正旺的开源产品，基于lxc（linux container），使得应用部署更加轻量。如何将其运用于开发环境中，很多互联网公司都在做。作为开发人员来说，掌握容器也是一门专业利器，基于容器结合应用可以实现大规模的业务部署，比如本文的hadoop。当然相比虚拟机，docker也有缺陷，比如处理能力，所以如何运用docker来提升处理业务的能力，是开发人员需要通过实践来解决的问题。   </p>
+<p>回到本文的主题，docker是这两年势头正旺的开源产品，基于lxc（linux container），使得应用部署更加轻量。如何将其运用于开发环境中，很多互联网公司都在做。作为开发人员来说，掌握容器也是一门专业利器，基于容器结合应用可以实现大规模的业务部署，比如本文的hadoop。当然相比虚拟机，docker也有缺陷，比如隔离性差，所以如何运用docker来保障处理业务的安全稳定，是开发人员需要通过实践来解决的问题。   </p>
 <p><strong>参考网站</strong><br><a href="http://blog.chinaunix.net/uid-25266990-id-3900239.html" target="_blank" rel="external">http://blog.chinaunix.net/uid-25266990-id-3900239.html</a><br><a href="http://blog.csdn.net/u011692203/article/details/46898293" target="_blank" rel="external">http://blog.csdn.net/u011692203/article/details/46898293</a><br><a href="http://www.cnblogs.com/xiaoluosun/p/5520510.html" target="_blank" rel="external">http://www.cnblogs.com/xiaoluosun/p/5520510.html</a><br><a href="http://tashan10.com/yong-dockerda-jian-hadoopwei-fen-bu-shi-ji-qun/#" target="_blank" rel="external">http://tashan10.com/yong-dockerda-jian-hadoopwei-fen-bu-shi-ji-qun/</a></p>
 ]]></content>
     <summary type="html">
