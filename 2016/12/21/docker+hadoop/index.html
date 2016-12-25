@@ -92,7 +92,7 @@
     </p>
   <p class="article-time">
     <time datetime="2016-12-21T13:41:34.000Z" itemprop="datePublished">Dec 21 2016</time>
-    Updated:<time datetime="2016-12-24T14:48:58.000Z" itemprop="dateModified">Dec 24 2016</time>
+    Updated:<time datetime="2016-12-25T01:47:54.000Z" itemprop="dateModified">Dec 25 2016</time>
     
   </p>
 </header>
@@ -219,7 +219,6 @@
 <th style="text-align:center">节点</th>
 <th style="text-align:center">IP</th>
 <th style="text-align:center">Hadoop任务</th>
-<th style="text-align:center">Docker启动命令</th>
 </tr>
 </thead>
 <tbody>
@@ -227,23 +226,26 @@
 <td style="text-align:center">Master</td>
 <td style="text-align:center">172.17.0.2</td>
 <td style="text-align:center">Namenode,jobTracker</td>
-<td style="text-align:center">docker run -ti -h master liushy/ubuntu:hadoop</td>
 </tr>
 <tr>
 <td style="text-align:center">Slave1</td>
 <td style="text-align:center">172.17.0.3</td>
 <td style="text-align:center">Datanode,taskTracker</td>
-<td style="text-align:center">docker run -ti -h Slave1 liushy/ubuntu:hadoop</td>
 </tr>
 <tr>
 <td style="text-align:center">Slave2</td>
 <td style="text-align:center">172.17.0.4</td>
 <td style="text-align:center">Datanode,taskTracker</td>
-<td style="text-align:center">docker run -ti -h Slave2 liushy/ubuntu:hadoop</td>
 </tr>
 </tbody>
 </table>
-<p>容器启动成功后，docker会为它们自动分配ip地址，是同一网段相互之间能够ping通。当然也可以修改ip，方法请自行百度。   </p>
+<p>启动容器使用如下命令：   </p>
+<ul>
+<li><code>docker run -ti -h master liushy/ubuntu:hadoop</code>   </li>
+<li><code>docker run -ti -h slave1 liushy/ubuntu:hadoop</code>    </li>
+<li><code>docker run -ti -h slave2 liushy/ubuntu:hadoop</code>    </li>
+</ul>
+<p>其中，<code>-h</code>指定的是容器的主机名，比如<code>master slave1 slave2</code><br>容器启动成功后，docker会为它们自动分配ip地址，是同一网段相互之间能够ping通，在容器中输入<code>ifconfig</code>查看。当然也可以修改ip，方法请自行百度。   </p>
 <h3 id="修改hosts">修改hosts</h3>
 <p>接下来修改各节点的hosts文件<code>vi /etc/hosts</code>，添加各节点的hostname和ip：   </p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="number">172.17</span>.<span class="number">0.2</span>        master</div><div class="line"><span class="number">172.17</span>.<span class="number">0.3</span>        slave1</div><div class="line"><span class="number">172.17</span>.<span class="number">0.4</span>        slave2</div></pre></td></tr></table></figure>
@@ -373,6 +375,8 @@ var duoshuoQuery = {short_name:"liushy"};
 		
 	</div>
 </div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
 
   
 <div class="tagslist">

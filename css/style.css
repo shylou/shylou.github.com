@@ -929,7 +929,7 @@ article .article-content blockquote {
   margin: 0.65em 0 0.65em 4%;
   padding-left: 1%;
   line-height: 1.5;
-  font-size: 67%;
+  font-size: 86%;
 }
 article .article-content blockquote footer {
   background: #fff;
@@ -971,9 +971,9 @@ article .article-content p code,
 article .article-content strong code,
 article .article-content em code {
   font-family: Monaco, Menlo, Consolas, Courier New, monospace;
-  background: #fff;
+  background: #dbdbea;
   color: #1d1d2a;
-  border: 1px solid #e6e6e6;
+  border: 1px solid #bebed9;
   padding: 0 5px;
   margin: 0 2px;
   font-size: 90%;
@@ -1388,7 +1388,7 @@ section.comment {
   margin: 1em 0;
 }
 .toc-article {
-  background: #fff;
+  background: #dbdbea;
   margin: 2em 0 0 0.5em;
   padding: 1em;
 }
@@ -2065,11 +2065,11 @@ footer {
 }
 .article-content pre,
 .article-content .highlight {
-  background: #1d1f21;
+  background: #353526;
   margin: 0.5em 0;
   padding: 1em 1%;
   overflow: auto;
-  color: #c5c8c6;
+  color: #a3d900;
   line-height: 1.5;
   font-size: 90.25%;
 }
@@ -2127,7 +2127,7 @@ footer {
 }
 .article-content .gist {
   margin: 0.5em 0;
-  background: #1d1f21;
+  background: #353526;
   padding: 1em 2%;
 }
 .article-content .gist .gist-file {
@@ -2153,7 +2153,7 @@ footer {
   border: none;
 }
 .article-content .gist .gist-file .gist-meta {
-  background: #1d1f21;
+  background: #353526;
   color: #969899;
   font: 0.85em "Georgia", serif;
   padding: 0;
