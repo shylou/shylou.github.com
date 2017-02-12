@@ -165,6 +165,7 @@ $(document).ready(function(){
   c.click(function(){
     a.addClass('fadeOut').css('display', 'none');
     o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
     m.addClass('moveMain');
   });
   o.click(function(){
@@ -175,6 +176,9 @@ $(document).ready(function(){
   $(window).scroll(function(){
     o.css("top",Math.max(80,260-$(this).scrollTop()));
   });
+//---
+	
+//---
 });
 </script>
 
