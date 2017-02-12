@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2016-12-31T10:54:03.592Z</updated>
+  <updated>2017-02-12T08:28:29.118Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,128 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[解析Floodlight之Forwarding模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-forwarding/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-forwarding/</id>
+    <published>2017-02-12T07:07:13.000Z</published>
+    <updated>2017-02-12T08:20:46.000Z</updated>
+    <content type="html"><![CDATA[<p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是<code>processPacketInMessage()</code>，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪<code>doFlood()</code>方法，其它类型数据包执行<code>doForwardFlow()</code>方法。<br>Forwarding类中对数据包的几种操作方法：</p>
+<ul>
+<li><code>doForwardFlow()</code>：转发</li>
+<li><code>doFlood()</code>：泛洪</li>
+<li><code>doDropFlow()</code>：丢包    </li>
+</ul>
+<p>接下来重点分析<code>doForwardFlow()</code>方法的实现流程。如图所示：<br><img src="/img/doforward.jpg" alt="doforward">    </p>
+<p>doForwardFlow方法的工作流程：</p>
+<ul>
+<li>Step1：首先该方法会获取Packet_in消息中的数据包的匹配域，提取数据包中的交换机信息，依次判断源/目的交换机是否存在，是则继续执行，否则执行泛洪<code>doFlood()</code>；</li>
+<li>Step2：当源、目的交换机均存在，接着会判断两者是否同属一个island(即同一个二层网络)，判断后的操作与前面步骤一样；</li>
+<li>Step3：若同属一个island，然后会判断源目的交换机是否同一端口；</li>
+<li>Step4：如果是在同一个island不同端口，便调取路径引擎(routingEngine)中的<code>getRoute()</code>方法获取源、目的交换机的路径，最后执行<code>pushRoute()</code>方法将路径下发到相应的交换机。</li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是<code>processPacketInMessage()</code>，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(Broa]]>
+    </summary>
+    
+      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
+    
+      <category term="Forwarding" scheme="http://liushy.com/tags/Forwarding/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[解析Floodlight之TopologyInstance模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-topoins/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-topoins/</id>
+    <published>2017-02-12T06:37:42.000Z</published>
+    <updated>2017-02-12T08:20:46.000Z</updated>
+    <content type="html"><![CDATA[<p>Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法<code>compute()</code>：<br><img src="/img/topoins.jpg" alt="topoins"><br><code>compute()</code>运行的大致流程：</p>
+<ul>
+<li>Step1：调用方法<code>identifyOpenflowDomains()</code>通过<em>深度优先</em>的算法计算出整个网络中的所有集群clusters，每一个集群都是一个强相连的子图；</li>
+<li>Step2：调用方法<code>addLinksToOpenflowDomains()</code>遍历所有的链路links，如果链路两端的交换机属于同一个集群cluster，则将该链路添加到这个集群中；</li>
+<li>Step3：调用<code>calculateShortestPathTreeInClusters()</code>方法计算路径，该方法首先会清空路径缓存变量pathcache，再调用负载均衡路由算法计算每个cluster所有点之间的路径；</li>
+<li>Step4：调用<code>calculateBroadcastNodePortsInClusters()</code>根据路径结果生成每个集群中的广播树结构，主要是为了避免环路产生广播风暴。控制器收到交换机上送的ARP包后，会先根据广播树决定ARP包应该被flood还是转发。     </li>
+</ul>
+<p>TopologyInstance类在计算路径时采用<strong><em>Dijkstra</em></strong>算法，基于跳数，即每条链路Cost值为1。除此之外，还定义了<code>buildroute()</code>方法和<code>getroute()</code>方法，<code>buildroute()</code>方法根据<code>compute()</code>计算的结果创建路径，<code>getroute()</code>方法则将<code>buildroute()</code>的路径缓存到<strong><em>pathcache</em></strong>中供转发模块Forwarding获取。   </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法<code>compute()</code>：<br><img sr]]>
+    </summary>
+    
+      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
+    
+      <category term="TopologyInstance" scheme="http://liushy.com/tags/TopologyInstance/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[解析Floodlight之TopologyManager模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-topomanager/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-topomanager/</id>
+    <published>2017-02-12T04:12:04.000Z</published>
+    <updated>2017-02-12T08:24:49.000Z</updated>
+    <content type="html"><![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>compute()</code>重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程<code>UpdateTopologyWorker</code>：<br><img src="/img/topoman.jpg" alt="topoman"><br><code>UpdateTopologyWorker</code>线程中只运行了一个方法<code>updateTopology()</code>，该方法大致的流程：</p>
+<ul>
+<li>Step1：首先调用<code>applyUpdates()</code>方法获取拓扑更新，如果链路有更新如新增链路就执行<code>addOrUpdateLink()</code>，如果链路down掉了，就执行删除<code>removeLink()</code>；</li>
+<li>Step2：然后调用<code>createNewInstance()</code>方法创建一个TopologyInstance实例，并运行方法<code>compute()</code>计算路径；</li>
+<li>Step3：<code>lastUpdateTime</code>用于记录上一次更新的时间，<code>informListeners()</code>向所有需要监听拓扑信息的模块传递拓扑更新信息</li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>comput]]>
+    </summary>
+    
+      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
+    
+      <category term="TopologyManager" scheme="http://liushy.com/tags/TopologyManager/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[解析Floodlight之LinkDiscoveryManager模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/</id>
+    <published>2017-02-12T03:01:59.000Z</published>
+    <updated>2017-02-12T08:20:46.000Z</updated>
+    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关注SDN架构本身的高校研究者来说，Floodlight相比Opendaylight和Onos更加轻量易读，不需折腾太繁琐的环境和依赖，更有助于对算法的研究。最近几个月，总有小伙伴询问Floodlight的相关问题。说实话，好久没碰了，能记得的内容我会很快解答，有些忘了的还得花时间翻翻代码。去年的毕业论文，我写了对Floodlight 架构的理解。所以我打算将部分内容整理一下（主要是模块的工作流程），写出来以供参考或者备忘。本文即是Floodlight中链路发现模块的解析，如有不正之处，一定提出哈。  </p>
+<h2 id="LinkDiscoverManager">LinkDiscoverManager</h2>
+<p>Floodlight中链路发现功能的实现类是LinkDiscoveryManager模块。该模块的主要工作是：向交换机下发LLDP包和BDDP包以及处理交换机上传的LLDP包和BDDP包，以此来记录全网的链路信息，即每条链路的源/目的交换机MAC地址、源/目的端口号等。   </p>
+<p>其中，LLDP（Link Layer Discovery Protocol，链路发现协议）包，是一种二层数据包，该数据包标识了交换机的信息，邻居节点间相互广播LLDP来获取对方的存在，并将设备信息保存；BDDP包是BigSwitch公司定义的一种类似LLDP的数据包，BDDP包可以通过不受控制器管理的设备，用以发现一些不是直连的节点组合。比如两交换机中间有设备不受本控制器管理，由于LLDP是由控制器主动下发给交换机，所以这种情况下LLDP包是无法通过中间设备到达两交换机的，而这时控制器通过下发BDDP包通过中间设备来发现两交换机的连接关系。所以LLDP包和BDDP包的区别是前者可以发现直连的设备后者发现间接连接的设备。   </p>
+<h2 id="解析LinkDiscoverManager多线程">解析LinkDiscoverManager多线程</h2>
+<p>LinkDiscovermanager模块初始化后会启动三个线程，如图所示：<br><img src="/img/linkdiscovermanager.jpg" alt="linkdiscover"><br>图中所示的链路发现模块启动后的处理流程，涉及到三个线程和一个主要方法：</p>
+<ul>
+<li>线程<code>discoveryTask</code>主要实现发送LLDP包的任务，每隔1秒运行方法<code>discoverLinks()</code>，<code>discoverLinks()</code>方法中指定了一个计时方法<code>timeoutLinks()</code>，首先会处理掉那些过时了的链路links，其次，每间隔15秒要求全部交换机在所有端口发送LLDP包即运行方法<code>discoverOnAllPorts()</code>；</li>
+<li>线程<code>bddpTask</code>主要实现发送BDDP包的任务，遍历所有已经发送 LLDP 包的端口, 如果该端口还没有建立过连接, 就发送 BDDP 包；</li>
+<li>线程<code>updatesThread</code>主要负责更新消息回调，如果有链路或者端口发生变化，则处理这些更新并发布链路更新消息；</li>
+<li>方法<code>handlePacketIn（）</code>主要处理交换机上传的Packet-in消息,解析LLDP包。</li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h2 id="前言">前言</h2>
+<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业]]>
+    </summary>
+    
+      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
+    
+      <category term="LinkDiscoveryManager" scheme="http://liushy.com/tags/LinkDiscoveryManager/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[贰零幺陆]]></title>

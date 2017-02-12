@@ -83,6 +83,65 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2017/02/12/floodlight-forwarding/" title="解析Floodlight之Forwarding模块" itemprop="url">
+  
+      <time datetime="2017-02-12T07:07:13.000Z" itemprop="datePublished">Feb 12 2017</time>
+    <h1 itemprop="name">解析Floodlight之Forwarding模块</h1>
+    
+     
+           <p itemprop="description" >Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiC</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
+    <a href="/2017/02/12/floodlight-topoins/" title="解析Floodlight之TopologyInstance模块" itemprop="url">
+  
+      <time datetime="2017-02-12T06:37:42.000Z" itemprop="datePublished">Feb 12 2017</time>
+    <h1 itemprop="name">解析Floodlight之TopologyInstance模块</h1>
+    
+     
+           <p itemprop="description" >Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法compute()：compute()运行的大致流程：
+
+Step1：调用</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
+    <a href="/2017/02/12/floodlight-topomanager/" title="解析Floodlight之TopologyManager模块" itemprop="url">
+  
+      <time datetime="2017-02-12T04:12:04.000Z" itemprop="datePublished">Feb 12 2017</time>
+    <h1 itemprop="name">解析Floodlight之TopologyManager模块</h1>
+    
+     
+           <p itemprop="description" >Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数compute()重新计算路径</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
+    <a href="/2017/02/12/floodlight-linkdiscovermanager/" title="解析Floodlight之LinkDiscoveryManager模块" itemprop="url">
+  
+      <time datetime="2017-02-12T03:01:59.000Z" itemprop="datePublished">Feb 12 2017</time>
+    <h1 itemprop="name">解析Floodlight之LinkDiscoveryManager模块</h1>
+    
+     
+           <p itemprop="description" >前言
+Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2016/12/24/goon-2016/" title="贰零幺陆" itemprop="url">
   
       <time datetime="2016-12-24T13:45:06.000Z" itemprop="datePublished">Dec 24 2016</time>
@@ -175,65 +234,6 @@ top命令是Linux下常用的性能分析工具，能够实时显示系统中进
   </a>
 </section>
 
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2015/02/02/sflow-queue/" title="基于floodlight&amp;sflow的队列调整" itemprop="url">
-  
-      <time datetime="2015-02-02T12:16:13.000Z" itemprop="datePublished">Feb 2 2015</time>
-    <h1 itemprop="name">基于floodlight&amp;sflow的队列调整</h1>
-    
-     
-           <p itemprop="description" >前言
-介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控</p>
-        
-    
-  </a>
-</section>
-
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2015/01/27/sflow-ddos/" title="sflow流量监控之ddos防御" itemprop="url">
-  
-      <time datetime="2015-01-27T08:17:47.000Z" itemprop="datePublished">Jan 27 2015</time>
-    <h1 itemprop="name">sflow流量监控之ddos防御</h1>
-    
-     
-           <p itemprop="description" >前言
-最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越</p>
-        
-    
-  </a>
-</section>
-
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2014/11/15/floodlight-twohosts-ping/" title="SDN环境下两主机通信过程" itemprop="url">
-  
-      <time datetime="2014-11-15T11:47:25.000Z" itemprop="datePublished">Nov 15 2014</time>
-    <h1 itemprop="name">SDN环境下两主机通信过程</h1>
-    
-     
-           <p itemprop="description" >感悟
-SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉</p>
-        
-    
-  </a>
-</section>
-
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2014/11/14/openwrt-example/" title="openwrt-example" itemprop="url">
-  
-      <time datetime="2014-11-14T15:27:00.000Z" itemprop="datePublished">Nov 14 2014</time>
-    <h1 itemprop="name">openwrt-example</h1>
-    
-     
-       <p itemprop="description" >这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.</p>
-      
-    
-  </a>
-</section>
-
 
   <nav id="page-nav" class="clearfix">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
@@ -270,17 +270,25 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 	<p class="asidetitle">常用标签</p>
 		<ul class="clearfix">
 		
-			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>1</sup></a></li>
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
 		
 			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
 		
 			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
 		
 			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
 		
 			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
 		
 			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
 		
 			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
 		
@@ -302,10 +310,6 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 		
 			<li><a href="/tags/sflow/" title="sflow">sflow<sup>2</sup></a></li>
 		
-			<li><a href="/tags/内存/" title="内存">内存<sup>1</sup></a></li>
-		
-			<li><a href="/tags/生活，旅游/" title="生活，旅游">生活，旅游<sup>2</sup></a></li>
-		
 		</ul>
 </div>
 
@@ -315,7 +319,7 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
   </div>
   <footer><div id="footer" >
     
-            <p class="copyright"> © 2016 
+            <p class="copyright"> © 2017 
 		
 		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
 		
