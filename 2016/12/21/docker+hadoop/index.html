@@ -92,7 +92,7 @@
     </p>
   <p class="article-time">
     <time datetime="2016-12-21T13:41:34.000Z" itemprop="datePublished">Dec 21 2016</time>
-    Updated:<time datetime="2016-12-25T01:47:54.000Z" itemprop="dateModified">Dec 25 2016</time>
+    Updated:<time datetime="2017-03-04T12:12:14.000Z" itemprop="dateModified">Mar 4 2017</time>
     
   </p>
 </header>
@@ -272,7 +272,7 @@
 
 
 <p><strong>slave2节点：</strong>   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@slave1:/<span class="comment"># jps</span></div><div class="line"><span class="number">50</span> DataNode</div><div class="line"><span class="number">121</span> NodeManager</div><div class="line"><span class="number">250</span> Jps</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@slave2:/<span class="comment"># jps</span></div><div class="line"><span class="number">50</span> DataNode</div><div class="line"><span class="number">121</span> NodeManager</div><div class="line"><span class="number">250</span> Jps</div></pre></td></tr></table></figure>
 
 
 <p>通过web访问hadoop运行情况：<br><img src="/img/docker-hadoop.png" alt="hadoop-web"><br>针对hadoop的架构和操作此文就不深入阐述了。</p>
@@ -411,6 +411,10 @@ var duoshuoQuery = {short_name:"liushy"};
 		
 			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
 		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nat/" title="nat">nat<sup>1</sup></a></li>
+		
 			<li><a href="/tags/openflow/" title="openflow">openflow<sup>1</sup></a></li>
 		
 			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
@@ -418,10 +422,6 @@ var duoshuoQuery = {short_name:"liushy"};
 			<li><a href="/tags/qos/" title="qos">qos<sup>1</sup></a></li>
 		
 			<li><a href="/tags/queue/" title="queue">queue<sup>1</sup></a></li>
-		
-			<li><a href="/tags/recevie/" title="recevie">recevie<sup>1</sup></a></li>
-		
-			<li><a href="/tags/sflow/" title="sflow">sflow<sup>2</sup></a></li>
 		
 		</ul>
 </div>
@@ -477,15 +477,14 @@ $(document).ready(function(){
 	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
     m.addClass('moveMain');
   });
+ 
   o.click(function(){
     o.css('display', 'none').removeClass('beforeFadeIn');
     a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
     m.removeClass('moveMain');
   });
-  $(window).scroll(function(){
-    o.css("top",Math.max(80,260-$(this).scrollTop()));
-  });
-//---
+  
+  //---
 	
 		  getSize();
 		  if (myWidth >= 1024) {
@@ -493,6 +492,10 @@ $(document).ready(function(){
 		  }
 	
 //---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
 });
 </script>
 

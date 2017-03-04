@@ -83,6 +83,21 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2015/04/07/Floodlight-packetin/" title="Floodlight中模块对Packet_in报文的处理" itemprop="url">
+  
+      <time datetime="2015-04-07T14:03:26.000Z" itemprop="datePublished">Apr 7 2015</time>
+    <h1 itemprop="name">Floodlight中模块对Packet_in报文的处理</h1>
+    
+     
+           <p itemprop="description" >前言
+看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2015/02/02/sflow-queue/" title="基于floodlight&amp;sflow的队列调整" itemprop="url">
   
       <time datetime="2015-02-02T12:16:13.000Z" itemprop="datePublished">Feb 2 2015</time>
@@ -218,6 +233,10 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 		
 			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
 		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nat/" title="nat">nat<sup>1</sup></a></li>
+		
 			<li><a href="/tags/openflow/" title="openflow">openflow<sup>1</sup></a></li>
 		
 			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
@@ -225,10 +244,6 @@ SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控�
 			<li><a href="/tags/qos/" title="qos">qos<sup>1</sup></a></li>
 		
 			<li><a href="/tags/queue/" title="queue">queue<sup>1</sup></a></li>
-		
-			<li><a href="/tags/recevie/" title="recevie">recevie<sup>1</sup></a></li>
-		
-			<li><a href="/tags/sflow/" title="sflow">sflow<sup>2</sup></a></li>
 		
 		</ul>
 </div>
@@ -282,17 +297,20 @@ $(document).ready(function(){
 	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
     m.addClass('moveMain');
   });
+ 
   o.click(function(){
     o.css('display', 'none').removeClass('beforeFadeIn');
     a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
     m.removeClass('moveMain');
   });
+  
+  //---
+	
+//---
   $(window).scroll(function(){
     o.css("top",Math.max(80,260-$(this).scrollTop()));
   });
-//---
-	
-//---
+
 });
 </script>
 

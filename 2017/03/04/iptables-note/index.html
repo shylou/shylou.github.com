@@ -1,0 +1,558 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>Iptables笔记 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="前言
+Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/03/04/iptables-note/" title="Iptables笔记" itemprop="url">Iptables笔记</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-03-04T05:56:58.000Z" itemprop="datePublished">Mar 4 2017</time>
+    Updated:<time datetime="2017-03-04T16:27:53.000Z" itemprop="dateModified">Mar 5 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h2 id="前言">前言</h2>
+<p>Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables结合TC进行数据流的Qos保障和流量控制。都快忘了怎么玩，最近在CI环境中，跑Robot测试用例时，需要外网主机访问云平台的虚机，我采取的方法就是利用Iptables做DNAT转换。所以，学习并熟练运用相关Linux网络技术有助于解决一些网络相关的疑难问题。熟悉这些技术的小伙伴也许会觉得很简单，不过好记性不如烂笔头，本文将记录一下本人学习Iptables的笔记。</p>
+<h2 id="四表五链">四表五链</h2>
+<p>首先，介绍一下iptables技术中的表和链。iptables有四种表（table）和三条链（chain），其中表是按照对数据包的动作区分的，链是按照不同的Hook点来区分的。其原理是将处理不同IP包（五元组任意组合）的规则写入不同的链当中，数据包进来后，会与这些规则进行匹配，一旦匹配成功，即执行规则中的动作。   </p>
+<font color="blue" size="4">#四表</font>    
+
+<p>iptables四种表分别是Filter，NAT，Mangle和Raw。表的处理优先级：raw&gt;mangle&gt;nat&gt;filter。功能介绍如下：  </p>
+<ul>
+<li>Filter表：进行一般的包过滤操作；</li>
+<li>NAT表：进行网络地址转换（IP/端口映射）；</li>
+<li>Mangle表：进行数据包的修改，比如tos，ttl这些字段以及打标记（Mark）；</li>
+<li>Raw表：此表优先级最高，功能是不再让iptables做数据包的链接跟踪处理，提高性能。<a href="http://blog.chinaunix.net/uid-11639156-id-3181909.html" target="_blank" rel="external">相关资料</a>   </li>
+</ul>
+<p>前面三个表就能满足处理常见问题的需要，使用<code>[-t table]</code>指定规则表，关于表的内容就不深入的阐述了。 <a href="http://blog.chinaunix.net/uid-134240-id-62371.html" target="_blank" rel="external">参考网站</a>  </p>
+<font color="blue" size="4">#五链</font>      
+
+<p>iptables的链规则定义了数据包被处理的位置，linux定义了五条链，我们也可以自定义新的链，借用<a href="http://linux.vbird.org/linux_server/0250simple_firewall.php#netfilter_chain" target="_blank" rel="external">鸟哥</a>的图：  </p>
+<p><img src="/img/iptables-chain.JPEG" alt="chain"><br>简单理解，这五条链的规则：   </p>
+<ul>
+<li>PREROUTING:数据包进入路由表之前；</li>
+<li>INPUT:通过路由表后目的地为本机，上送协议栈；</li>
+<li>FORWARD:通过路由表后，经由本机转发，不上送协议栈；</li>
+<li>OUTPUT:由本机产生，向外转发；</li>
+<li>POSTROUTIONG:发送到网卡接口之前。   </li>
+</ul>
+<p>梳理一下，如果数据包只是通过本机转发而不上送本机处理的，路径：<font color="red"><em>PREROUTING—&gt;FORWARD—&gt;POSTROUTIONG</em></font>；如果是需要本机处理的，路径：<font color="red"><em>PREROUTING—&gt;INPUT—&gt;OUTPUT—&gt;POSTROUTIONG</em></font>。   </p>
+<p>iptables表与链的对应关系：<br><img src="/img/table-chain.JPEG" alt="table-chain"> </p>
+<p>使用如下命令指定规则链，如<code>[-A chain]</code>：</p>
+<blockquote>
+<p>-A, —append：   新增规则到某个规则链中，该规则将会成为规则链中的最后一条规则。<br>-D, —delete：    从某个规则链中删除一条规则，可以输入完整规则，或指定规则编号。<br>-R, —replace：    取代现行规则，规则被取代后并不会改变顺序。<br>-I, —insert：    插入一条规则，原本该位置上的规则将会往后移动一个顺位。<br>-L, —list：    列出某规则链中的所有规则。<br>-F, —flush：    删除某规则链中的所有规则。<br>-Z, —zero：   将封包计数器归零。封包计数器是用来计算同一封包出现次数，是过滤阻断式攻击不可或缺的工具。<br>-N, —new-chain：     定义新的规则链。<br>-X, —delete-chain：    删除某个规则链。<br>-P, —policy：     定义过滤政策。 也就是未符合过滤条件之封包，预设的处理方式。<br>-E, —rename-chain：      修改某自定义规则链的名称。</p>
+</blockquote>
+<h2 id="使用Iptables_">使用<em>Iptables </em></h2>
+<p>使用iptables的语法：<br>　　　　　　<br>　　<font color="red" size="4">iptables　[-t table]　command　[chain]　[match]　[-j target/jump]　</font>  </p>
+<p>其中，<code>-t table</code>前文提到，是指定表规则，<code>command</code>后面指定链规则；<code>match</code>指定数据包的匹配规则，一般是指定五元组等；<code>-j target/jump</code>指定匹配成功后的动作，主要包括ACCEPT（通过），DROP（丢弃），REJECT（丢弃并重定向），DNAT，SNAT，MARK，MASQUERADE（伪装宿主机IP）。匹配规则的常用语句：   </p>
+<blockquote>
+<p>-p, —protocol：匹配通讯协议类型是否相符。<br>-s, —src, —source： 匹配封包的来源 IP，可以匹配单机或网络。<br>-d, —dst, —destination：匹配封包的目的地 IP。<br>-i, —in-interface： 匹配封包是从哪块网卡进入，可以使用通配字符 + 来做大范围匹配。<br>-o, —out-interface：匹配封包要从哪 块网卡送出。<br>—sport, —source-port：匹配封包的源端口，可以匹配单一端口，或是一个范围。<br>—dport, —destination-port：匹配封包的目的地端口号。<br>—tcp-flags：TCP 封包的状态标志。<br>-m limit —limit：匹配某段时间内封包的平均流量。<br>—limit-burst：匹配瞬间大量封包的数量，超过此上限的封包将被直接丢弃。<br>-m mac —mac-source ：匹配封包来源网络接口的硬件地址，这个参数不能用在 OUTPUT 和 POSTROUTING 规则链上。<br>—mark：匹配封包是否被表示某个号码。   </p>
+</blockquote>
+<p>配置iptables后，可以使用如下命令查看规则及其对应的编号：   </p>
+<p>　　<font color="red" size="4">iptables　-L　-n　—line-number</font>   </p>
+<p>接下来举几个例子。</p>
+<p><font color="blue" size="4">#包过滤</font><br>包过滤也就是实现简单的防火墙功能，阻止或者允许指定包的通过。例如：<br>允许访问本机的ICMP包，丢弃经过本机转发的http（80端口）包： </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">iptables　-A　INPUT　-p　icmp　-j　ACCEPT     </div><div class="line">iptables　-A　FORWARD　-p　tcp　--dport　<span class="number">80</span>　-j　DROP</div></pre></td></tr></table></figure>
+
+
+<p>其中，<code>-p</code>指定了协议，如<code>-p　icmp</code>指定了ICMP协议，<code>-p　tcp　--dport　80</code>指定了TCP协议，以及目的端口为80即http协议常用的tcp端口。</p>
+<p><font color="blue" size="4">#内外网访问</font><br>内外网访问，就需要为内网的虚机分配一个外网地址。这里两个概念需要简单介绍一下，那就是DNAT(目的IP网络地址转换)和SNAT(源IP网络地址转换)。两者的应用场景是，当外网访问内网服务器时，要对目的IP进行DNAT转换；而当内网主机要访问外网时，需进行SNAT转换。例如：  </p>
+<p>场景一：</p>
+<ul>
+<li>eth0:10 172.168.0.110（外网IP）   </li>
+<li>eth1:10.0.2.1（内网IP）     </li>
+<li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换： </li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>  </div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
+
+
+<p>以上命令可以理解为：</p>
+<ul>
+<li>将目的地址是172.168.0.110的数据包的目的地址修改为10.0.2.5</li>
+<li>将目的地址为10.0.2.5的数据包的源地址修改为10.0.2.1    </li>
+</ul>
+<p>所以外网主机访问内网虚机1，不是虚机的IP地址，而是虚机进行DNAT的外网地址，当数据包到达linux服务器，首先会将数据包的目的地址改为虚机地址并进行转发；而这时iptables还会将目的地址是虚机地址的数据包进行SNAT转换，将源地址改为虚机能通信的地址10.0.2.1，这就保证了虚机能够回复外网的数据包。   </p>
+<p>场景二：   </p>
+<ul>
+<li>eth0:10 172.168.0.110（外网IP）   </li>
+<li>eth1:10.0.2.1（内网IP）     </li>
+<li>内网虚机1：10.0.2.5 </li>
+<li>内网虚机2：10.0.2.6。外网主机能够访问两台虚机的http服务（80端口）：    </li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -p tcp --dport <span class="number">80</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>:<span class="number">80</span></div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span>  </div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -p tcp --dport <span class="number">81</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.6</span>:<span class="number">80</span> </div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.6</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
+
+
+<p>上面的命令，我让两台虚机公用一个外网地址的不同端口号，简单的做了一个端口映射。外网主机可以通过172.168.0.110的80和81端口分别访问内网虚机1和2的http服务。</p>
+<h2 id="总结">总结</h2>
+<p>目前的云平台如OpenStack，其网络管理项目Neutron对租户的安全组也是基于Iptables来做的。前两天某云的租户互通事件，引起很大的讨论，可见云网络中安全问题越来受到重视。所以，熟练使用Iptables，也许会帮助你管理好自己的云网络。写的有点零碎，但尽量争取不了解的人一看就会用，自己回头看能很快明白，后续可能还会在此基础上进行补充，就这些吧。    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iptables/">iptables</a><a href="/tags/nat/">nat</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2017/03/04/iptables-note/" data-title="Iptables笔记 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/02/12/floodlight-forwarding/"  title="解析Floodlight之Forwarding模块">
+ <strong>NEXT:</strong><br/> 
+ <span>解析Floodlight之Forwarding模块
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="2017/03/04/iptables-note/" data-title="Iptables笔记" data-url="http://liushy.com/2017/03/04/iptables-note/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"liushy"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四表五链"><span class="toc-number">2.</span> <span class="toc-text">四表五链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用Iptables_"><span class="toc-number">3.</span> <span class="toc-text">使用Iptables </span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nat/" title="nat">nat<sup>1</sup></a></li>
+		
+			<li><a href="/tags/openflow/" title="openflow">openflow<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
+		
+			<li><a href="/tags/qos/" title="qos">qos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/queue/" title="queue">queue<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2017 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"liushy"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

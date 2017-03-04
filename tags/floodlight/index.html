@@ -168,17 +168,20 @@ $(document).ready(function(){
 	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
     m.addClass('moveMain');
   });
+ 
   o.click(function(){
     o.css('display', 'none').removeClass('beforeFadeIn');
     a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
     m.removeClass('moveMain');
   });
+  
+  //---
+	
+//---
   $(window).scroll(function(){
     o.css("top",Math.max(80,260-$(this).scrollTop()));
   });
-//---
-	
-//---
+
 });
 </script>
 
