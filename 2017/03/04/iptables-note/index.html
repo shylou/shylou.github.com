@@ -7,16 +7,13 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>liushy</title>
+    <title>Iptables笔记 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
-    <meta name="description" content="title: Iptables笔记      
-tags: [iptables,nat]      
-categories: Linux      
-前言
-Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环">
+    <meta name="description" content="前言
+Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables">
     
     
     
@@ -87,7 +84,7 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2017/03/04/iptables-note/" title="" itemprop="url"></a>
+      <a href="/2017/03/04/iptables-note/" title="Iptables笔记" itemprop="url">Iptables笔记</a>
   </h1>
   <p class="article-author">By
     
@@ -95,17 +92,14 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
     </p>
   <p class="article-time">
     <time datetime="2017-03-04T05:56:58.000Z" itemprop="datePublished">Mar 4 2017</time>
-    Updated:<time datetime="2017-03-06T12:21:22.000Z" itemprop="dateModified">Mar 6 2017</time>
+    Updated:<time datetime="2017-03-06T12:24:50.000Z" itemprop="dateModified">Mar 6 2017</time>
     
   </p>
 </header>
 	<div class="article-content">
 		
 		
-		<pre><code><span class="attribute">title</span>: <span class="string">Iptables笔记      </span>
-</code></pre><p>tags: [iptables,nat]      </p>
-<h2 id="categories:_Linux_">categories: Linux      </h2>
-<h2 id="前言">前言</h2>
+		<h2 id="前言">前言</h2>
 <p>Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables结合TC进行数据流的Qos保障和流量控制。都快忘了怎么玩，最近在CI环境中，跑Robot测试用例时，需要外网主机访问云平台的虚机，我采取的方法就是利用Iptables做DNAT转换。所以，学习并熟练运用相关Linux网络技术有助于解决一些网络相关的疑难问题。熟悉这些技术的小伙伴也许会觉得很简单，不过好记性不如烂笔头，本文将记录一下本人学习Iptables的笔记。</p>
 <h2 id="四表五链">四表五链</h2>
 <p>首先，介绍一下iptables技术中的表和链。iptables有四种表（table）和五条链（chain），其中表是按照对数据包的动作区分的，链是按照不同的Hook点来区分的。其原理是将处理不同IP包（五元组任意组合）的规则写入不同的链当中，数据包进来后，会与这些规则进行匹配，一旦匹配成功，即执行规则中的动作。   </p>
@@ -184,12 +178,22 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 	</div>
 		<footer class="article-footer clearfix">
 
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/iptables/">iptables</a><a href="/tags/nat/">nat</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
+</div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2017/03/04/iptables-note/" data-title="liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2017/03/04/iptables-note/" data-title="Iptables笔记 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -212,7 +216,7 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 	
 <section class="comment">
 	<!-- 多说评论框 start -->
-	<div class="ds-thread" data-thread-key="2017/03/04/iptables-note/" data-title="" data-url="http://liushy.com/2017/03/04/iptables-note/"></div>
+	<div class="ds-thread" data-thread-key="2017/03/04/iptables-note/" data-title="Iptables笔记" data-url="http://liushy.com/2017/03/04/iptables-note/"></div>
 <!-- 多说评论框 end -->
 <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
 <script type="text/javascript">
@@ -234,7 +238,7 @@ var duoshuoQuery = {short_name:"liushy"};
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#categories:_Linux_"><span class="toc-number">1.</span> <span class="toc-text">categories: Linux      </span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">2.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四表五链"><span class="toc-number">3.</span> <span class="toc-text">四表五链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用Iptables_"><span class="toc-number">4.</span> <span class="toc-text">使用Iptables </span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四表五链"><span class="toc-number">2.</span> <span class="toc-text">四表五链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用Iptables_"><span class="toc-number">3.</span> <span class="toc-text">使用Iptables </span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -293,6 +297,10 @@ var duoshuoQuery = {short_name:"liushy"};
 		
 			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
 		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nat/" title="nat">nat<sup>1</sup></a></li>
+		
 			<li><a href="/tags/openflow/" title="openflow">openflow<sup>1</sup></a></li>
 		
 			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
@@ -300,10 +308,6 @@ var duoshuoQuery = {short_name:"liushy"};
 			<li><a href="/tags/qos/" title="qos">qos<sup>1</sup></a></li>
 		
 			<li><a href="/tags/queue/" title="queue">queue<sup>1</sup></a></li>
-		
-			<li><a href="/tags/recevie/" title="recevie">recevie<sup>1</sup></a></li>
-		
-			<li><a href="/tags/sflow/" title="sflow">sflow<sup>2</sup></a></li>
 		
 		</ul>
 </div>
