@@ -92,7 +92,7 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
     </p>
   <p class="article-time">
     <time datetime="2017-03-04T05:56:58.000Z" itemprop="datePublished">Mar 4 2017</time>
-    Updated:<time datetime="2017-03-06T12:24:50.000Z" itemprop="dateModified">Mar 6 2017</time>
+    Updated:<time datetime="2017-03-07T13:16:53.000Z" itemprop="dateModified">Mar 7 2017</time>
     
   </p>
 </header>
@@ -151,7 +151,7 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 <li>eth1:10.0.2.1（内网IP）     </li>
 <li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换： </li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>  </div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>  </div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
 
 
 <p>以上命令可以理解为：</p>
@@ -159,7 +159,7 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 <li>将目的地址是172.168.0.110的数据包的目的地址修改为10.0.2.5</li>
 <li>将目的地址为10.0.2.5的数据包的源地址修改为10.0.2.1    </li>
 </ul>
-<p>所以外网主机访问内网虚机1，不是虚机的IP地址，而是虚机进行DNAT的外网地址，当数据包到达linux服务器，首先会将数据包的目的地址改为虚机地址并进行转发；而这时iptables还会将目的地址是虚机地址的数据包进行SNAT转换，将源地址改为虚机能通信的地址10.0.2.1，这就保证了虚机能够回复外网的数据包。   </p>
+<p>所以外网主机访问内网虚机1，不是虚机的IP地址，而是虚机进行DNAT的外网地址，当数据包到达linux服务器，首先会将数据包的目的地址改为虚机地址并进行转发；这时iptables还会将目的地址是虚机地址的数据包进行SNAT转换，以保证内网其它主机通过外网地址访问虚机时，能够处理虚机回复的数据包。   </p>
 <p>场景二：   </p>
 <ul>
 <li>eth0:10 172.168.0.110（外网IP）   </li>
