@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-03-12T13:57:40.525Z</updated>
+  <updated>2017-03-13T12:23:55.650Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -144,28 +144,34 @@
   </entry>
   
   <entry>
-    <title><![CDATA[解析Floodlight之TopologyInstance模块]]></title>
-    <link href="http://liushy.com/2017/02/12/floodlight-topoins/"/>
-    <id>http://liushy.com/2017/02/12/floodlight-topoins/</id>
+    <title><![CDATA[解析Floodlight之LinkDiscoveryManager模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/</id>
     <published>2017-02-11T16:00:00.000Z</published>
-    <updated>2017-03-12T13:42:39.000Z</updated>
-    <content type="html"><![CDATA[<p>Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法<code>compute()</code>：<br><img src="/img/topoins.jpg" alt="topoins"><br><code>compute()</code>运行的大致流程：</p>
+    <updated>2017-03-12T13:41:12.000Z</updated>
+    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关注SDN架构本身的高校研究者来说，Floodlight相比Opendaylight和Onos更加轻量易读，不需折腾太繁琐的环境和依赖，更有助于对算法的研究。最近几个月，总有小伙伴询问Floodlight的相关问题。说实话，好久没碰了，能记得的内容我会很快解答，有些忘了的还得花时间翻翻代码。去年的毕业论文，我写了对Floodlight 架构的理解。所以我打算将部分内容整理一下（主要是模块的工作流程），写出来以供参考或者备忘。本文即是Floodlight中链路发现模块的解析，如有不正之处，一定提出哈。  </p>
+<h2 id="LinkDiscoverManager">LinkDiscoverManager</h2>
+<p>Floodlight中链路发现功能的实现类是LinkDiscoveryManager模块。该模块的主要工作是：向交换机下发LLDP包和BDDP包以及处理交换机上传的LLDP包和BDDP包，以此来记录全网的链路信息，即每条链路的源/目的交换机MAC地址、源/目的端口号等。   </p>
+<p>其中，LLDP（Link Layer Discovery Protocol，链路发现协议）包，是一种二层数据包，该数据包标识了交换机的信息，邻居节点间相互广播LLDP来获取对方的存在，并将设备信息保存；BDDP包是BigSwitch公司定义的一种类似LLDP的数据包，BDDP包可以通过不受控制器管理的设备，用以发现一些不是直连的节点组合。比如两交换机中间有设备不受本控制器管理，由于LLDP是由控制器主动下发给交换机，所以这种情况下LLDP包是无法通过中间设备到达两交换机的，而这时控制器通过下发BDDP包通过中间设备来发现两交换机的连接关系。所以LLDP包和BDDP包的区别是前者可以发现直连的设备后者发现间接连接的设备。   </p>
+<h2 id="解析LinkDiscoverManager多线程">解析LinkDiscoverManager多线程</h2>
+<p>LinkDiscovermanager模块初始化后会启动三个线程，如图所示：<br><img src="/img/linkdiscovermanager.jpg" alt="linkdiscover"><br>图中所示的链路发现模块启动后的处理流程，涉及到三个线程和一个主要方法：</p>
 <ul>
-<li>Step1：调用方法<code>identifyOpenflowDomains()</code>通过<em>深度优先</em>的算法计算出整个网络中的所有集群clusters，每一个集群都是一个强相连的子图；</li>
-<li>Step2：调用方法<code>addLinksToOpenflowDomains()</code>遍历所有的链路links，如果链路两端的交换机属于同一个集群cluster，则将该链路添加到这个集群中；</li>
-<li>Step3：调用<code>calculateShortestPathTreeInClusters()</code>方法计算路径，该方法首先会清空路径缓存变量pathcache，再调用负载均衡路由算法计算每个cluster所有点之间的路径；</li>
-<li>Step4：调用<code>calculateBroadcastNodePortsInClusters()</code>根据路径结果生成每个集群中的广播树结构，主要是为了避免环路产生广播风暴。控制器收到交换机上送的ARP包后，会先根据广播树决定ARP包应该被flood还是转发。     </li>
+<li>线程<code>discoveryTask</code>主要实现发送LLDP包的任务，每隔1秒运行方法<code>discoverLinks()</code>，<code>discoverLinks()</code>方法中指定了一个计时方法<code>timeoutLinks()</code>，首先会处理掉那些过时了的链路links，其次，每间隔15秒要求全部交换机在所有端口发送LLDP包即运行方法<code>discoverOnAllPorts()</code>；</li>
+<li>线程<code>bddpTask</code>主要实现发送BDDP包的任务，遍历所有已经发送 LLDP 包的端口, 如果该端口还没有建立过连接, 就发送 BDDP 包；</li>
+<li>线程<code>updatesThread</code>主要负责更新消息回调，如果有链路或者端口发生变化，则处理这些更新并发布链路更新消息；</li>
+<li>方法<code>handlePacketIn（）</code>主要处理交换机上传的Packet-in消息,解析LLDP包。</li>
 </ul>
-<p>TopologyInstance类在计算路径时采用<strong><em>Dijkstra</em></strong>算法，基于跳数，即每条链路Cost值为1。除此之外，还定义了<code>buildroute()</code>方法和<code>getroute()</code>方法，<code>buildroute()</code>方法根据<code>compute()</code>计算的结果创建路径，<code>getroute()</code>方法则将<code>buildroute()</code>的路径缓存到<strong><em>pathcache</em></strong>中供转发模块Forwarding获取。   </p>
 <p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<p>Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法<code>compute()</code>：<br><img sr]]>
+    <![CDATA[<h2 id="前言">前言</h2>
+<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业]]>
     </summary>
     
       <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
     
-      <category term="TopologyInstance" scheme="http://liushy.com/tags/TopologyInstance/"/>
+      <category term="LinkDiscoveryManager" scheme="http://liushy.com/tags/LinkDiscoveryManager/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     
@@ -198,34 +204,28 @@
   </entry>
   
   <entry>
-    <title><![CDATA[解析Floodlight之LinkDiscoveryManager模块]]></title>
-    <link href="http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/"/>
-    <id>http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/</id>
+    <title><![CDATA[解析Floodlight之TopologyInstance模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-topoins/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-topoins/</id>
     <published>2017-02-11T16:00:00.000Z</published>
-    <updated>2017-03-12T13:41:12.000Z</updated>
-    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
-<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关注SDN架构本身的高校研究者来说，Floodlight相比Opendaylight和Onos更加轻量易读，不需折腾太繁琐的环境和依赖，更有助于对算法的研究。最近几个月，总有小伙伴询问Floodlight的相关问题。说实话，好久没碰了，能记得的内容我会很快解答，有些忘了的还得花时间翻翻代码。去年的毕业论文，我写了对Floodlight 架构的理解。所以我打算将部分内容整理一下（主要是模块的工作流程），写出来以供参考或者备忘。本文即是Floodlight中链路发现模块的解析，如有不正之处，一定提出哈。  </p>
-<h2 id="LinkDiscoverManager">LinkDiscoverManager</h2>
-<p>Floodlight中链路发现功能的实现类是LinkDiscoveryManager模块。该模块的主要工作是：向交换机下发LLDP包和BDDP包以及处理交换机上传的LLDP包和BDDP包，以此来记录全网的链路信息，即每条链路的源/目的交换机MAC地址、源/目的端口号等。   </p>
-<p>其中，LLDP（Link Layer Discovery Protocol，链路发现协议）包，是一种二层数据包，该数据包标识了交换机的信息，邻居节点间相互广播LLDP来获取对方的存在，并将设备信息保存；BDDP包是BigSwitch公司定义的一种类似LLDP的数据包，BDDP包可以通过不受控制器管理的设备，用以发现一些不是直连的节点组合。比如两交换机中间有设备不受本控制器管理，由于LLDP是由控制器主动下发给交换机，所以这种情况下LLDP包是无法通过中间设备到达两交换机的，而这时控制器通过下发BDDP包通过中间设备来发现两交换机的连接关系。所以LLDP包和BDDP包的区别是前者可以发现直连的设备后者发现间接连接的设备。   </p>
-<h2 id="解析LinkDiscoverManager多线程">解析LinkDiscoverManager多线程</h2>
-<p>LinkDiscovermanager模块初始化后会启动三个线程，如图所示：<br><img src="/img/linkdiscovermanager.jpg" alt="linkdiscover"><br>图中所示的链路发现模块启动后的处理流程，涉及到三个线程和一个主要方法：</p>
+    <updated>2017-03-12T13:42:39.000Z</updated>
+    <content type="html"><![CDATA[<p>Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法<code>compute()</code>：<br><img src="/img/topoins.jpg" alt="topoins"><br><code>compute()</code>运行的大致流程：</p>
 <ul>
-<li>线程<code>discoveryTask</code>主要实现发送LLDP包的任务，每隔1秒运行方法<code>discoverLinks()</code>，<code>discoverLinks()</code>方法中指定了一个计时方法<code>timeoutLinks()</code>，首先会处理掉那些过时了的链路links，其次，每间隔15秒要求全部交换机在所有端口发送LLDP包即运行方法<code>discoverOnAllPorts()</code>；</li>
-<li>线程<code>bddpTask</code>主要实现发送BDDP包的任务，遍历所有已经发送 LLDP 包的端口, 如果该端口还没有建立过连接, 就发送 BDDP 包；</li>
-<li>线程<code>updatesThread</code>主要负责更新消息回调，如果有链路或者端口发生变化，则处理这些更新并发布链路更新消息；</li>
-<li>方法<code>handlePacketIn（）</code>主要处理交换机上传的Packet-in消息,解析LLDP包。</li>
+<li>Step1：调用方法<code>identifyOpenflowDomains()</code>通过<em>深度优先</em>的算法计算出整个网络中的所有集群clusters，每一个集群都是一个强相连的子图；</li>
+<li>Step2：调用方法<code>addLinksToOpenflowDomains()</code>遍历所有的链路links，如果链路两端的交换机属于同一个集群cluster，则将该链路添加到这个集群中；</li>
+<li>Step3：调用<code>calculateShortestPathTreeInClusters()</code>方法计算路径，该方法首先会清空路径缓存变量pathcache，再调用负载均衡路由算法计算每个cluster所有点之间的路径；</li>
+<li>Step4：调用<code>calculateBroadcastNodePortsInClusters()</code>根据路径结果生成每个集群中的广播树结构，主要是为了避免环路产生广播风暴。控制器收到交换机上送的ARP包后，会先根据广播树决定ARP包应该被flood还是转发。     </li>
 </ul>
+<p>TopologyInstance类在计算路径时采用<strong><em>Dijkstra</em></strong>算法，基于跳数，即每条链路Cost值为1。除此之外，还定义了<code>buildroute()</code>方法和<code>getroute()</code>方法，<code>buildroute()</code>方法根据<code>compute()</code>计算的结果创建路径，<code>getroute()</code>方法则将<code>buildroute()</code>的路径缓存到<strong><em>pathcache</em></strong>中供转发模块Forwarding获取。   </p>
 <p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<h2 id="前言">前言</h2>
-<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业]]>
+    <![CDATA[<p>Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法<code>compute()</code>：<br><img sr]]>
     </summary>
     
       <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
     
-      <category term="LinkDiscoveryManager" scheme="http://liushy.com/tags/LinkDiscoveryManager/"/>
+      <category term="TopologyInstance" scheme="http://liushy.com/tags/TopologyInstance/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     
@@ -703,11 +703,41 @@
   </entry>
   
   <entry>
-    <title><![CDATA[sflow流量监控之ddos防御]]></title>
-    <link href="http://liushy.com/2015/02/02/sflow-ddos/"/>
-    <id>http://liushy.com/2015/02/02/sflow-ddos/</id>
+    <title><![CDATA[基于floodlight&sflow的队列调整]]></title>
+    <link href="http://liushy.com/2015/02/02/sflow-queue/"/>
+    <id>http://liushy.com/2015/02/02/sflow-queue/</id>
     <published>2015-02-01T16:00:00.000Z</published>
-    <updated>2017-03-12T13:27:05.000Z</updated>
+    <updated>2017-03-13T12:18:43.000Z</updated>
+    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但<a href="https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-does-open-vswitch-support-openflow-meters" target="_blank" rel="external">OVS FAQ</a>有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。   </p>
+<h2 id="实验设计">实验设计</h2>
+<p>1.拓扑结构沿用上次实验的：switch+3hosts+floodlight+sflow如图：<br>　　<img src="/img/ddos-topo.png" alt="queue-topo"><br>2.设计思想：switch上有三个端口分别连接有host1,host2,host3。在端口3上设置3条队列，分别带宽设置为：<br>— —id=@q0 create queue other-config:min-rate=1000000000 other-config:max-rate=1000000000<br>— —id=@q1 create queue other-config:max-rate=20000000 other-config:min-rate=20000000<br>— —id=@q2 create queue other-config:max-rate=2000000 other-config:min-rate=2000000<br>让host1和host2同时向host3发包通过流量监控，获取端口1和端口2的速率分别为R1和R2，然后进行判断：<br>　　若R1&gt;R2:端口1到端口3的队列—&gt;q0    端口2到端口3的队列—&gt;q2<br>　　若R2&gt;R1:端口1到端口3的队列—&gt;q2    端口2到端口3的队列—&gt;q0<br>　　若R1=R2:端口1到端口3的队列—&gt;q1    端口2到端口3的队列—&gt;q1    </p>
+<h2 id="结果分析">结果分析</h2>
+<p>首先让host1和host2分别向host3泛洪：<br>　　h1&gt; ping -f h3<br>　　h2&gt; ping -f h3<br>执行队列调整应用后终端显示:<br>　　<img src="/img/console-view.png" alt="console"><br>可以看出，由于端口1(注意：eth0~eth2依次对应端口1~3)的速率比端口2的速率快，应用立即通知控制器下发流表给端口1和端口2设定不同的出口队列，再来看看控制器的流表：<br>　　<img src="/img/queue-flows.png" alt="queue-flow"><br>从流表可以看到，控制器已经下发了队列调整流表项。端口1的速率变化：<br>　　<img src="/img/s1-eth0-rate.png" alt="eth0-rate"><br>端口2的速率变化：<br>　　<img src="/img/s1-eth1-rate.png" alt="eth1-rate"><br>从图中我们可以看到，最初阶段，端口1和端口2的速率均在2M左右；从时间17:13:18开始，也就是实施队列调整应用后，端口1的速率上升到了大于2M阶段，而端口2的速率下降到了500k以下。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h2 id="前言">前言</h2>
+<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddo]]>
+    </summary>
+    
+      <category term="sflow" scheme="http://liushy.com/tags/sflow/"/>
+    
+      <category term="floodlight" scheme="http://liushy.com/tags/floodlight/"/>
+    
+      <category term="queue" scheme="http://liushy.com/tags/queue/"/>
+    
+      <category term="qos" scheme="http://liushy.com/tags/qos/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[sflow流量监控之ddos防御]]></title>
+    <link href="http://liushy.com/2015/01/27/sflow-ddos/"/>
+    <id>http://liushy.com/2015/01/27/sflow-ddos/</id>
+    <published>2015-01-26T16:00:00.000Z</published>
+    <updated>2017-03-13T12:17:39.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言">前言</h2>
 <p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如<a href="http://www.openflowhub.org/display/floodlightcontroller/FAQ+Floodlight+OpenFlow+Controller" title="Floodlight FAQ" target="_blank" rel="external">Floodlight FAQ</a>所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。   </p>
 <h2 id="实验环境">实验环境</h2>
@@ -762,36 +792,6 @@
   </entry>
   
   <entry>
-    <title><![CDATA[基于floodlight&sflow的队列调整]]></title>
-    <link href="http://liushy.com/2015/01/27/sflow-queue/"/>
-    <id>http://liushy.com/2015/01/27/sflow-queue/</id>
-    <published>2015-01-26T16:00:00.000Z</published>
-    <updated>2017-03-12T13:28:37.000Z</updated>
-    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
-<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但<a href="https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-does-open-vswitch-support-openflow-meters" target="_blank" rel="external">OVS FAQ</a>有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。   </p>
-<h2 id="实验设计">实验设计</h2>
-<p>1.拓扑结构沿用上次实验的：switch+3hosts+floodlight+sflow如图：<br>　　<img src="/img/ddos-topo.png" alt="queue-topo"><br>2.设计思想：switch上有三个端口分别连接有host1,host2,host3。在端口3上设置3条队列，分别带宽设置为：<br>— —id=@q0 create queue other-config:min-rate=1000000000 other-config:max-rate=1000000000<br>— —id=@q1 create queue other-config:max-rate=20000000 other-config:min-rate=20000000<br>— —id=@q2 create queue other-config:max-rate=2000000 other-config:min-rate=2000000<br>让host1和host2同时向host3发包通过流量监控，获取端口1和端口2的速率分别为R1和R2，然后进行判断：<br>　　若R1&gt;R2:端口1到端口3的队列—&gt;q0    端口2到端口3的队列—&gt;q2<br>　　若R2&gt;R1:端口1到端口3的队列—&gt;q2    端口2到端口3的队列—&gt;q0<br>　　若R1=R2:端口1到端口3的队列—&gt;q1    端口2到端口3的队列—&gt;q1    </p>
-<h2 id="结果分析">结果分析</h2>
-<p>首先让host1和host2分别向host3泛洪：<br>　　h1&gt; ping -f h3<br>　　h2&gt; ping -f h3<br>执行队列调整应用后终端显示:<br>　　<img src="/img/console-view.png" alt="console"><br>可以看出，由于端口1(注意：eth0~eth2依次对应端口1~3)的速率比端口2的速率快，应用立即通知控制器下发流表给端口1和端口2设定不同的出口队列，再来看看控制器的流表：<br>　　<img src="/img/queue-flows.png" alt="queue-flow"><br>从流表可以看到，控制器已经下发了队列调整流表项。端口1的速率变化：<br>　　<img src="/img/s1-eth0-rate.png" alt="eth0-rate"><br>端口2的速率变化：<br>　　<img src="/img/s1-eth1-rate.png" alt="eth1-rate"><br>从图中我们可以看到，最初阶段，端口1和端口2的速率均在2M左右；从时间17:13:18开始，也就是实施队列调整应用后，端口1的速率上升到了大于2M阶段，而端口2的速率下降到了500k以下。</p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<h2 id="前言">前言</h2>
-<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddo]]>
-    </summary>
-    
-      <category term="sflow" scheme="http://liushy.com/tags/sflow/"/>
-    
-      <category term="floodlight" scheme="http://liushy.com/tags/floodlight/"/>
-    
-      <category term="queue" scheme="http://liushy.com/tags/queue/"/>
-    
-      <category term="qos" scheme="http://liushy.com/tags/qos/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
     <title><![CDATA[SDN环境下两主机通信过程]]></title>
     <link href="http://liushy.com/2014/11/15/floodlight-twohosts-ping/"/>
     <id>http://liushy.com/2014/11/15/floodlight-twohosts-ping/</id>
@@ -819,37 +819,6 @@
       <category term="openflow" scheme="http://liushy.com/tags/openflow/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[Hello World]]></title>
-    <link href="http://liushy.com/2014/11/14/hello-world/"/>
-    <id>http://liushy.com/2014/11/14/hello-world/</id>
-    <published>2014-11-13T16:00:00.000Z</published>
-    <updated>2017-03-12T13:34:55.000Z</updated>
-    <content type="html"><![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="http://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">trobuleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<h2 id="Quick_Start">Quick Start</h2>
-<h3 id="Create_a_new_post">Create a new post</h3>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
-
-<p>More info: <a href="http://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
-<h3 id="Run_server">Run server</h3>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
-
-<p>More info: <a href="http://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
-<h3 id="Generate_static_files">Generate static files</h3>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
-
-<p>More info: <a href="http://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
-<h3 id="Deploy_to_remote_sites">Deploy to remote sites</h3>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-
-<p>More info: <a href="http://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
-    </summary>
     
   </entry>
   
@@ -886,6 +855,37 @@
       <category term="OpenWrt" scheme="http://liushy.com/tags/OpenWrt/"/>
     
       <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[Hello World]]></title>
+    <link href="http://liushy.com/2014/11/13/hello-world/"/>
+    <id>http://liushy.com/2014/11/13/hello-world/</id>
+    <published>2014-11-12T16:00:00.000Z</published>
+    <updated>2017-03-13T12:21:35.000Z</updated>
+    <content type="html"><![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="http://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">trobuleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
+<h2 id="Quick_Start">Quick Start</h2>
+<h3 id="Create_a_new_post">Create a new post</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
+<h3 id="Run_server">Run server</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
+<h3 id="Generate_static_files">Generate static files</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
+<h3 id="Deploy_to_remote_sites">Deploy to remote sites</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
+
+<p>More info: <a href="http://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
+    </summary>
     
   </entry>
   

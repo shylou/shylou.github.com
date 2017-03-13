@@ -112,15 +112,14 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 
   <section class="post" itemscope itemprop="blogPost">
   
-    <a href="/2017/02/12/floodlight-topoins/" title="解析Floodlight之TopologyInstance模块" itemprop="url">
+    <a href="/2017/02/12/floodlight-linkdiscovermanager/" title="解析Floodlight之LinkDiscoveryManager模块" itemprop="url">
   
       <time datetime="2017-02-11T16:00:00.000Z" itemprop="datePublished">Feb 12 2017</time>
-    <h1 itemprop="name">解析Floodlight之TopologyInstance模块</h1>
+    <h1 itemprop="name">解析Floodlight之LinkDiscoveryManager模块</h1>
     
      
-           <p itemprop="description" >Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法compute()：compute()运行的大致流程：
-
-Step1：调用</p>
+           <p itemprop="description" >前言
+Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关</p>
         
     
   </a>
@@ -142,14 +141,15 @@ Step1：调用</p>
 
   <section class="post" itemscope itemprop="blogPost">
   
-    <a href="/2017/02/12/floodlight-linkdiscovermanager/" title="解析Floodlight之LinkDiscoveryManager模块" itemprop="url">
+    <a href="/2017/02/12/floodlight-topoins/" title="解析Floodlight之TopologyInstance模块" itemprop="url">
   
       <time datetime="2017-02-11T16:00:00.000Z" itemprop="datePublished">Feb 12 2017</time>
-    <h1 itemprop="name">解析Floodlight之LinkDiscoveryManager模块</h1>
+    <h1 itemprop="name">解析Floodlight之TopologyInstance模块</h1>
     
      
-           <p itemprop="description" >前言
-Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关</p>
+           <p itemprop="description" >Floodlight的拓扑计算模块是TopologyInstance类，该类主要是生成拓扑信息以及计算两节点间路径，与TopologyManager在系统中是同属一个代码目录。主要分析拓扑计算模块类中的方法compute()：compute()运行的大致流程：
+
+Step1：调用</p>
         
     
   </a>
