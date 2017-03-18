@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-03-13T12:26:51.340Z</updated>
+  <updated>2017-03-18T15:47:08.594Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,49 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[最近在干嘛]]></title>
+    <link href="http://liushy.com/2017/03/18/what-doing/"/>
+    <id>http://liushy.com/2017/03/18/what-doing/</id>
+    <published>2017-03-18T15:44:29.000Z</published>
+    <updated>2017-03-18T15:44:29.000Z</updated>
+    <content type="html"><![CDATA[<p>开年来了公司后，就一直很忙，最近的项目需要开发和测试两方人员协作，一直在测业务，解决故障，保证我们产品的稳定性，提供给前方人员。因为产品就快交付局方，很急。这段时间，整个项目组没有进行开发任务，所有的人力都投入的目前的任务中。项目很紧急，而且故障很杂，我却感觉有些百无聊赖。习惯了按任务单做事，即使困难但至少有个目标，不大习惯这种随时待命的工作状态。还好，项目终于告一段落了。         </p>
+<font color="red" size="5">#学了点啥:</font>   
+
+<p>我们的产品是虚拟防火墙，整个架构是NGFW（Next Generation Firewall，下一代防火墙），集成了一些网络功能像OSPF，BGP，BFD，VRRP等。这段时间我补了一下BFD，VRRP。这两个协议以前没深入了解过，最近测业务，出现的故障大多与它们都有联系，所以得了解一下。简单mark一下，就不做深入研究了：    </p>
+<p>BFD（Bidirectional Forwarding Detection，双向转发检测），主要用于检测链路双方的连通状态，提供毫秒级的的检测，BFD与上层的路由协议（如OSPF，VRRP）联动可以实现路由的快速收敛，确保业务的永续性。需要上层路由协议建立BFD会话，BFD会话周期性地检测会话双方的连通性，如果一方发生故障，则BFD通知上层路由协议，从而重新计算路由，可减少整个网络的收敛时间。   </p>
+<p>VRRP（Virtual Router Redundancy Protocol，虚拟路由冗余协议），主要用于路由备份的。即在主备路由的场景中，当主路由出现故障时，备份路由将持续保持业务的正常转发。VRRP将可以承担网关功能的路由器加入到备份组中，向外呈现一台路由器（虚拟路由器），网内的所有主机将其设为缺省网关。由VRRP的选举决定哪台路由器承担转发任务，一旦主路由发生故障，即刻选举下一个主路由。     </p>
+<font color="red" size="5">#瞎折腾:</font>        
+
+<p>终于还是买了MacBook Pro，哈，攒了好久的钱，其实早就能买了～_～。目前，这台MBP作为我的主力机，而我那服役了六年多的三星笔记本将用作备用机，说实话，生产环境还是要双显大屏幕才酸爽啊。为什么换电脑，很简单啊，因为MBP性能强劲，还高颜值，还有就是macOS。以前在校期间一直用ubuntu作为主要开发环境，但苦于系统没有可通讯的软件，每次都要转换到windows下。那时候，见过实验室一哥们用macOS做开发，有种瞬间惊艳的感觉，便想着macOS应该就是我理想的工作系统，期待着工作有钱了，一定要换MBP。买来后，花了一天时间把我以前的项目源码，博客，移植到了Mac上。   </p>
+<p>当然这里遇到一些小问题：   </p>
+<font color="green" size="4">#eclipse的tomcat插件:</font>    
+
+<p>在windows下的eclipse中配置tomcat很简单，插件很好安装，不过切换到macOS后，（ellipse版本为neon）安装tomcat插件却一直搞不定。网上搜了几种方法：在eclipse marketplace下载安装，可老是报网络问题，挂了VPN也不行；reload插件网址的方法也试过了，不行；也尝试下载插件<code>com.sysdeo.eclipse.tomcat_3.3.1.jar</code>到plugins文件夹下，也失败了。最后成功的办法是，在<a href="https://sourceforge.net/projects/tomcatplugin/files/updatesite/plugins/" target="_blank" rel="external">sourceforge.net/projects/tomcatplugin官网</a> 下载最新插件，比如我下载的是<code>net.sf.eclipse.tomcat_9.1.2.jar</code>，将其放到eclipse的plugins文件夹下，重启后若看到tom猫就成功了，接下来的配置就不细说了，网上教程很多。    </p>
+<font color="green" size="4">#AS运行报错:</font>   
+
+<p>运行android studio的时候报“Could not find any version that matches com.android.support:appcompat-v7:24.+”，出现类似错误，可以点击SDN Manager，进入后，在SDK Manager中勾选Android Support Repository，安装即可，问题就可以解决了。   </p>
+<font color="green" size="4">#博客移植:</font>     
+
+<p>我的博客是基于hexo的，移植后，重新在本地构建博客，无法生成文章，网上搜不到类似现象。最后发现一个问题是，在新的环境中，我的hexo是重新安装的，所以hexo应该是最新版本，而我之前一直是在hexo@2.8的老版本环境中构建博客。而新版本改动较大，结构解耦较多，所以会出现新旧版不兼容的问题。当然，解决方法很简单，在当前环境中回退到我之前的版本即可：<code>npm install -g hexo@版本号</code>    </p>
+<font color="red" size="5">#接下来干嘛:</font>     
+
+<p>有点懵，感觉要学的东西好多，而且非常想学，时间有点挤不出来。要说接下来干嘛，当然工作肯定是第一位的。然后，好好学学前端，一直都比较感兴趣，java也得持续学着，python有时间就看吧。嗯，差不多就这些吧，一口气打字，还是有点懵。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>开年来了公司后，就一直很忙，最近的项目需要开发和测试两方人员协作，一直在测业务，解决故障，保证我们产品的稳定性，提供给前方人员。因为产品就快交付局方，很急。这段时间，整个项目组没有进行开发任务，所有的人力都投入的目前的任务中。项目很紧急，而且故障很杂，我却感觉有些百无聊赖。]]>
+    </summary>
+    
+      <category term="mac" scheme="http://liushy.com/tags/mac/"/>
+    
+      <category term="eclipse" scheme="http://liushy.com/tags/eclipse/"/>
+    
+      <category term="android" scheme="http://liushy.com/tags/android/"/>
+    
+      <category term="Life" scheme="http://liushy.com/categories/Life/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[Iptables笔记]]></title>
@@ -110,40 +153,6 @@
   </entry>
   
   <entry>
-    <title><![CDATA[解析Floodlight之Forwarding模块]]></title>
-    <link href="http://liushy.com/2017/02/12/floodlight-forwarding/"/>
-    <id>http://liushy.com/2017/02/12/floodlight-forwarding/</id>
-    <published>2017-02-11T16:00:00.000Z</published>
-    <updated>2017-03-12T13:43:17.000Z</updated>
-    <content type="html"><![CDATA[<p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是<code>processPacketInMessage()</code>，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪<code>doFlood()</code>方法，其它类型数据包执行<code>doForwardFlow()</code>方法。<br>Forwarding类中对数据包的几种操作方法：</p>
-<ul>
-<li><code>doForwardFlow()</code>：转发</li>
-<li><code>doFlood()</code>：泛洪</li>
-<li><code>doDropFlow()</code>：丢包    </li>
-</ul>
-<p>接下来重点分析<code>doForwardFlow()</code>方法的实现流程。如图所示：<br><img src="/img/doforward.jpg" alt="doforward">    </p>
-<p>doForwardFlow方法的工作流程：</p>
-<ul>
-<li>Step1：首先该方法会获取Packet_in消息中的数据包的匹配域，提取数据包中的交换机信息，依次判断源/目的交换机是否存在，是则继续执行，否则执行泛洪<code>doFlood()</code>；</li>
-<li>Step2：当源、目的交换机均存在，接着会判断两者是否同属一个island(即同一个二层网络)，判断后的操作与前面步骤一样；</li>
-<li>Step3：若同属一个island，然后会判断源目的交换机是否同一端口；</li>
-<li>Step4：如果是在同一个island不同端口，便调取路径引擎(routingEngine)中的<code>getRoute()</code>方法获取源、目的交换机的路径，最后执行<code>pushRoute()</code>方法将路径下发到相应的交换机。</li>
-</ul>
-<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是<code>processPacketInMessage()</code>，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(Broa]]>
-    </summary>
-    
-      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
-    
-      <category term="Forwarding" scheme="http://liushy.com/tags/Forwarding/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
     <title><![CDATA[解析Floodlight之LinkDiscoveryManager模块]]></title>
     <link href="http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/"/>
     <id>http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/</id>
@@ -178,32 +187,6 @@
   </entry>
   
   <entry>
-    <title><![CDATA[解析Floodlight之TopologyManager模块]]></title>
-    <link href="http://liushy.com/2017/02/12/floodlight-topomanager/"/>
-    <id>http://liushy.com/2017/02/12/floodlight-topomanager/</id>
-    <published>2017-02-11T16:00:00.000Z</published>
-    <updated>2017-03-12T13:42:08.000Z</updated>
-    <content type="html"><![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>compute()</code>重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程<code>UpdateTopologyWorker</code>：<br><img src="/img/topoman.jpg" alt="topoman"><br><code>UpdateTopologyWorker</code>线程中只运行了一个方法<code>updateTopology()</code>，该方法大致的流程：</p>
-<ul>
-<li>Step1：首先调用<code>applyUpdates()</code>方法获取拓扑更新，如果链路有更新如新增链路就执行<code>addOrUpdateLink()</code>，如果链路down掉了，就执行删除<code>removeLink()</code>；</li>
-<li>Step2：然后调用<code>createNewInstance()</code>方法创建一个TopologyInstance实例，并运行方法<code>compute()</code>计算路径；</li>
-<li>Step3：<code>lastUpdateTime</code>用于记录上一次更新的时间，<code>informListeners()</code>向所有需要监听拓扑信息的模块传递拓扑更新信息</li>
-</ul>
-<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>comput]]>
-    </summary>
-    
-      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
-    
-      <category term="TopologyManager" scheme="http://liushy.com/tags/TopologyManager/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
     <title><![CDATA[解析Floodlight之TopologyInstance模块]]></title>
     <link href="http://liushy.com/2017/02/12/floodlight-topoins/"/>
     <id>http://liushy.com/2017/02/12/floodlight-topoins/</id>
@@ -226,6 +209,66 @@
       <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
     
       <category term="TopologyInstance" scheme="http://liushy.com/tags/TopologyInstance/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[解析Floodlight之Forwarding模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-forwarding/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-forwarding/</id>
+    <published>2017-02-11T16:00:00.000Z</published>
+    <updated>2017-03-12T13:43:17.000Z</updated>
+    <content type="html"><![CDATA[<p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是<code>processPacketInMessage()</code>，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪<code>doFlood()</code>方法，其它类型数据包执行<code>doForwardFlow()</code>方法。<br>Forwarding类中对数据包的几种操作方法：</p>
+<ul>
+<li><code>doForwardFlow()</code>：转发</li>
+<li><code>doFlood()</code>：泛洪</li>
+<li><code>doDropFlow()</code>：丢包    </li>
+</ul>
+<p>接下来重点分析<code>doForwardFlow()</code>方法的实现流程。如图所示：<br><img src="/img/doforward.jpg" alt="doforward">    </p>
+<p>doForwardFlow方法的工作流程：</p>
+<ul>
+<li>Step1：首先该方法会获取Packet_in消息中的数据包的匹配域，提取数据包中的交换机信息，依次判断源/目的交换机是否存在，是则继续执行，否则执行泛洪<code>doFlood()</code>；</li>
+<li>Step2：当源、目的交换机均存在，接着会判断两者是否同属一个island(即同一个二层网络)，判断后的操作与前面步骤一样；</li>
+<li>Step3：若同属一个island，然后会判断源目的交换机是否同一端口；</li>
+<li>Step4：如果是在同一个island不同端口，便调取路径引擎(routingEngine)中的<code>getRoute()</code>方法获取源、目的交换机的路径，最后执行<code>pushRoute()</code>方法将路径下发到相应的交换机。</li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是<code>processPacketInMessage()</code>，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(Broa]]>
+    </summary>
+    
+      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
+    
+      <category term="Forwarding" scheme="http://liushy.com/tags/Forwarding/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[解析Floodlight之TopologyManager模块]]></title>
+    <link href="http://liushy.com/2017/02/12/floodlight-topomanager/"/>
+    <id>http://liushy.com/2017/02/12/floodlight-topomanager/</id>
+    <published>2017-02-11T16:00:00.000Z</published>
+    <updated>2017-03-12T13:42:08.000Z</updated>
+    <content type="html"><![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>compute()</code>重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程<code>UpdateTopologyWorker</code>：<br><img src="/img/topoman.jpg" alt="topoman"><br><code>UpdateTopologyWorker</code>线程中只运行了一个方法<code>updateTopology()</code>，该方法大致的流程：</p>
+<ul>
+<li>Step1：首先调用<code>applyUpdates()</code>方法获取拓扑更新，如果链路有更新如新增链路就执行<code>addOrUpdateLink()</code>，如果链路down掉了，就执行删除<code>removeLink()</code>；</li>
+<li>Step2：然后调用<code>createNewInstance()</code>方法创建一个TopologyInstance实例，并运行方法<code>compute()</code>计算路径；</li>
+<li>Step3：<code>lastUpdateTime</code>用于记录上一次更新的时间，<code>informListeners()</code>向所有需要监听拓扑信息的模块传递拓扑更新信息</li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>comput]]>
+    </summary>
+    
+      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
+    
+      <category term="TopologyManager" scheme="http://liushy.com/tags/TopologyManager/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     
