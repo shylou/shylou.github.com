@@ -83,15 +83,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2017/03/18/what-doing/" title="最近在干嘛" itemprop="url">最近在干嘛</a>
+      <a href="/2017/03/19/what-doing/" title="最近在干嘛" itemprop="url">最近在干嘛</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://liushy.com" title="Liushy">Liushy</a>
     </p>
   <p class="article-time">
-    <time datetime="2017-03-18T15:44:29.000Z" itemprop="datePublished">Mar 18 2017</time>
-    Updated:<time datetime="2017-03-18T15:44:29.000Z" itemprop="dateModified">Mar 18 2017</time>
+    <time datetime="2017-03-19T02:31:48.000Z" itemprop="datePublished">Mar 19 2017</time>
+    Updated:<time datetime="2017-03-19T02:31:48.000Z" itemprop="dateModified">Mar 19 2017</time>
     
   </p>
 </header>
@@ -106,14 +106,14 @@
 <p>VRRP（Virtual Router Redundancy Protocol，虚拟路由冗余协议），主要用于路由备份的。即在主备路由的场景中，当主路由出现故障时，备份路由将持续保持业务的正常转发。VRRP将可以承担网关功能的路由器加入到备份组中，向外呈现一台路由器（虚拟路由器），网内的所有主机将其设为缺省网关。由VRRP的选举决定哪台路由器承担转发任务，一旦主路由发生故障，即刻选举下一个主路由。     </p>
 <font color="red" size="5">#瞎折腾:</font>        
 
-<p>终于还是买了MacBook Pro，哈，攒了好久的钱，其实早就能买了～_～。目前，这台MBP作为我的主力机，而我那服役了六年多的三星笔记本将用作备用机，说实话，生产环境还是要双显大屏幕才酸爽啊。为什么换电脑，很简单啊，因为MBP性能强劲，还高颜值，还有就是macOS。以前在校期间一直用ubuntu作为主要开发环境，但苦于系统没有可通讯的软件，每次都要转换到windows下。那时候，见过实验室一哥们用macOS做开发，有种瞬间惊艳的感觉，便想着macOS应该就是我理想的工作系统，期待着工作有钱了，一定要换MBP。买来后，花了一天时间把我以前的项目源码，博客，移植到了Mac上。   </p>
+<p>终于还是买了MBP，哈，攒了好久的钱，其实早就能买了～_～。目前，这台MBP作为我的主力机，而我那服役了六年多的三星笔记本将用作备用机，说实话，生产环境还是要双显大屏幕才酸爽啊。为什么换电脑，很简单啊，因为MBP性能强劲，还高颜值，还有就是macOS。以前在校期间一直用ubuntu作为主要开发环境，但苦于系统没有可通讯的软件，每次都要转换到windows下。那时候，见过实验室一哥们用macOS做开发，有种瞬间惊艳的感觉，便想着macOS应该就是我理想的工作系统，期待着工作有钱了，一定要换MBP。买来后，花了一天时间把我以前的项目源码，博客，移植到了Mac上。   </p>
 <p>当然这里遇到一些小问题：   </p>
 <font color="green" size="4">#eclipse的tomcat插件:</font>    
 
 <p>在windows下的eclipse中配置tomcat很简单，插件很好安装，不过切换到macOS后，（ellipse版本为neon）安装tomcat插件却一直搞不定。网上搜了几种方法：在eclipse marketplace下载安装，可老是报网络问题，挂了VPN也不行；reload插件网址的方法也试过了，不行；也尝试下载插件<code>com.sysdeo.eclipse.tomcat_3.3.1.jar</code>到plugins文件夹下，也失败了。最后成功的办法是，在<a href="https://sourceforge.net/projects/tomcatplugin/files/updatesite/plugins/" target="_blank" rel="external">sourceforge.net/projects/tomcatplugin官网</a> 下载最新插件，比如我下载的是<code>net.sf.eclipse.tomcat_9.1.2.jar</code>，将其放到eclipse的plugins文件夹下，重启后若看到tom猫就成功了，接下来的配置就不细说了，网上教程很多。    </p>
 <font color="green" size="4">#AS运行报错:</font>   
 
-<p>运行android studio的时候报“Could not find any version that matches com.android.support:appcompat-v7:24.+”，出现类似错误，可以点击SDN Manager，进入后，在SDK Manager中勾选Android Support Repository，安装即可，问题就可以解决了。   </p>
+<p>运行android studio的时候报“Could not find any version that matches com.android.support:appcompat-v7:24.+”，出现类似错误，可以点击SDK Manager，进入后，在SDK Manager中勾选Android Support Repository，安装即可，问题就可以解决了。   </p>
 <font color="green" size="4">#博客移植:</font>     
 
 <p>我的博客是基于hexo的，移植后，重新在本地构建博客，无法生成文章，网上搜不到类似现象。最后发现一个问题是，在新的环境中，我的hexo是重新安装的，所以hexo应该是最新版本，而我之前一直是在hexo@2.8的老版本环境中构建博客。而新版本改动较大，结构解耦较多，所以会出现新旧版不兼容的问题。当然，解决方法很简单，在当前环境中回退到我之前的版本即可：<code>npm install -g hexo@版本号</code>    </p>
@@ -126,7 +126,7 @@
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/mac/">mac</a><a href="/tags/eclipse/">eclipse</a><a href="/tags/android/">android</a>
+  <span></span> <a href="/tags/eclipse/">eclipse</a><a href="/tags/android/">android</a>
   </div>
 
 
@@ -139,7 +139,7 @@
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2017/03/18/what-doing/" data-title="最近在干嘛 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2017/03/19/what-doing/" data-title="最近在干嘛 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -162,7 +162,7 @@
 	
 <section class="comment">
 	<!-- 多说评论框 start -->
-	<div class="ds-thread" data-thread-key="2017/03/18/what-doing/" data-title="最近在干嘛" data-url="http://liushy.com/2017/03/18/what-doing/"></div>
+	<div class="ds-thread" data-thread-key="2017/03/19/what-doing/" data-title="最近在干嘛" data-url="http://liushy.com/2017/03/19/what-doing/"></div>
 <!-- 多说评论框 end -->
 <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
 <script type="text/javascript">
@@ -249,11 +249,11 @@ var duoshuoQuery = {short_name:"liushy"};
 		
 			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
 		
-			<li><a href="/tags/mac/" title="mac">mac<sup>1</sup></a></li>
-		
 			<li><a href="/tags/nat/" title="nat">nat<sup>1</sup></a></li>
 		
 			<li><a href="/tags/openflow/" title="openflow">openflow<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ping/" title="ping">ping<sup>1</sup></a></li>
 		
 		</ul>
 </div>
