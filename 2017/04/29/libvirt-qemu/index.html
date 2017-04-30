@@ -1,0 +1,572 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>虚拟化实践从qemu-kvm到libvirt | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="前言
+结合自己最近的学习和实践，总结了一下libvirt和qemu-kvm的理解和使用，其中包括工具链的安装以及部分操作命令。   
+QEMU简单入门
+qemu是什么，简单来说它是一个虚拟机的管理器，类似Virtualbox之类的。为了使虚机达到接近主机的性能，一般会结合kvm（或者Xen）对硬件虚">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/04/29/libvirt-qemu/" title="虚拟化实践从qemu-kvm到libvirt" itemprop="url">虚拟化实践从qemu-kvm到libvirt</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-04-29T08:03:00.000Z" itemprop="datePublished">Apr 29 2017</time>
+    Updated:<time datetime="2017-04-30T05:26:21.000Z" itemprop="dateModified">Apr 30 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h2 id="前言">前言</h2>
+<p>结合自己最近的学习和实践，总结了一下libvirt和qemu-kvm的理解和使用，其中包括工具链的安装以及部分操作命令。   </p>
+<h2 id="QEMU简单入门">QEMU简单入门</h2>
+<p>qemu是什么，简单来说它是一个虚拟机的管理器，类似Virtualbox之类的。为了使虚机达到接近主机的性能，一般会结合kvm（或者Xen）对硬件虚拟化。kvm负责cpu+mem虚拟化，但kvm不能模拟其他设备；qemu负责模拟IO设备（网卡，usb等），两者结合能实现真正意义上的全系统仿真。kvm与qemu的结构如图所示：<br><img src="/img/kvm-qemu.png" alt="kvm-qemu">  </p>
+ <font color="red" size="4">#安装qemu:</font>     
+
+<p>qemu的安装，ubuntu／Debian系列的发行版使用下面的命令安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> apt-get install qemu</div></pre></td></tr></table></figure>
+
+<p>redhat/centos系列的发行版使用如下命令安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> yum install qemu -y .</div></pre></td></tr></table></figure>
+
+
+<p>当然，也可以通过编译源码来安装。<a href="http://www.qemu.org/" target="_blank" rel="external">#qemu官网</a>    </p>
+ <font color="red" size="4">#检查kvm模块:</font>    
+
+<p>kvm作为Linux的内核模块，其运行需要硬件对虚拟化的支持，通过如下命令查看是否支持虚拟化：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">grep -E <span class="string">'vmx|svm'</span> /proc/cpuinfo</div></pre></td></tr></table></figure>
+
+
+<p> 有输出则说明支持虚拟化。检查kvm模块（intel处理器）是否加载:   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">liushy@ubuntu:/usr/bin$ lsmod | grep kvm</div><div class="line">kvm_intel             <span class="number">143590</span>  <span class="number">0</span></div><div class="line">kvm                   <span class="number">452043</span>  <span class="number">1</span> kvm_intel</div></pre></td></tr></table></figure>
+
+
+<p>若未加载，使用<code>modprobe kvm-intel</code>(amd处理器：kvm-amd）加载模块。   </p>
+<font color="red" size="4">#qemu-kwm起虚机:</font>    
+
+<p>基本的几条命令如下，第一步，创建一个虚拟机硬盘：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-img create <span class="operator">-f</span> qcow2 disk.img <span class="number">10</span>G</div></pre></td></tr></table></figure>
+
+
+<p>硬盘大小设置为10G，存放操作系统的。<code>-f qcow2</code>指定了硬盘格式，qcow2支持硬盘数据大小动态的增加。  </p>
+<p>第二步，安装操作系统：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-system-x86_64 -enable-kvm -m <span class="number">512</span> -smp <span class="number">2</span> -boot order=dc -hda /home/liushy/disk.img -cdrom /home/liushy/CentOS-<span class="number">6.4</span>-x86_64-minimal.iso -vnc <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30</span></div></pre></td></tr></table></figure>
+
+
+<p><code>-enable-kvm</code>启动kwm模块，开启硬件加速；<code>-m 512</code>设置内存为512m；<code>-smp 2</code>分配2个cpu；<code>-boot order=dc</code>指定系统启动顺序orber=dc为光驱(d:CD-ROM)、硬盘(c:hard Disk)；<code>-hda</code>和<code>-cdrom</code>分别指定硬盘和光驱(系统的安装镜像)；<code>-vnc</code>设置访问虚机的vnc端口。   </p>
+<p>安装完成后重起虚拟机便会从硬盘启动，之后再启动虚拟机只需要执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-system-x86_64 disk.img -m <span class="number">512</span> -enable-kvm</div></pre></td></tr></table></figure>
+
+
+<p>qemu起虚机的相关命令还有很多，比如指定网络设备，创建快照等，根据实际需求进行配置。</p>
+<h2 id="Libvirt基本玩法">Libvirt基本玩法</h2>
+<p>libvirt是一整套对kvm虚机进行管理的工具和应用程序接口，它包括一个API库，一个守护程序（libvirtd）和一个命令行工具（virsh）。libvirtd通过调用qemu-kvm操作虚拟机，libvirt与qemu的架构关系，图像更直观：<br><img src="/img/libvirt.jpg" alt="libvirt"><br>openstack的虚机管理默认基于qemu-kvm，但是它不直接调用qemu-kvm，而是调用libvirt的库去操作qemu-kvm。libvirt提供的库除了能够操作qemu-kvm，还提供了对vmware, virtualbox，xen的支持。    </p>
+<font color="red" size="4">#安装libvirt:</font>      
+
+<p>从<a href="http://libvirt.org/sources/" target="_blank" rel="external">libvirt官网</a>下载libvirt源，我用的libvirt-1.3.5.tar.gz，解压，配置，编译，安装，启动（root权限）：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">tar -zxvf libvirt-<span class="number">1.3</span>.<span class="number">5</span>.tar.gz</div><div class="line"><span class="built_in">cd</span> libvirt-<span class="number">1.3</span>.<span class="number">5</span></div><div class="line">./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc <span class="comment">#--prefix指定安装的目的路径,默认安装到/usr/local/bin</span></div><div class="line">make</div><div class="line">make install</div><div class="line">libvirtd <span class="operator">-d</span> <span class="comment">#启动libvirtd</span></div></pre></td></tr></table></figure>
+
+
+<p>如果在./configure这一步报error，可能是缺少相关依赖：libyajl-dev ,libxml2-dev ,libdevmapper1.0.2.1 ,ibdevmapper-dev  ,libpciaccess-dev ,libnl-dev。根据实际情况安装。   </p>
+<font color="red" size="4">#virsh管理虚机:</font>    
+
+<p>virsh是libvirt的命令行工具，可直接输入virsh进入一个特殊的shell。接下来简单几个步骤，利用virsh创建虚机：<br>第一步，创建虚机硬盘，如上节qemu的步骤一；<br>第二步，创建一个xml文件，配置虚机的内存，cpu，硬盘，光驱，vnc等信息，如下kali.xml：   </p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">domain</span> <span class="attribute">type</span>=<span class="value">"kvm"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">name</span>&gt;</span>kali<span class="tag">&lt;/<span class="title">name</span>&gt;</span>  <span class="comment">&lt;!--虚拟机名称--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">memory</span> <span class="attribute">unit</span>=<span class="value">"MiB"</span>&gt;</span>1024<span class="tag">&lt;/<span class="title">memory</span>&gt;</span>   <span class="comment">&lt;!--最大内存，单位k--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">currentMemory</span> <span class="attribute">unit</span>=<span class="value">"MiB"</span>&gt;</span>1024<span class="tag">&lt;/<span class="title">currentMemory</span>&gt;</span>  <span class="comment">&lt;!--可用内存，单位k--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">vcpu</span>&gt;</span>2<span class="tag">&lt;/<span class="title">vcpu</span>&gt;</span>   <span class="comment">&lt;!--虚拟cpu个数--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">os</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">type</span> <span class="attribute">arch</span>=<span class="value">"x86_64"</span> <span class="attribute">machine</span>=<span class="value">"pc"</span>&gt;</span>hvm<span class="tag">&lt;/<span class="title">type</span>&gt;</span> <span class="comment">&lt;!--半虚拟化--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">boot</span> <span class="attribute">dev</span>=<span class="value">"hd"</span> /&gt;</span>        <span class="comment">&lt;!--硬盘启动 --&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">boot</span> <span class="attribute">dev</span>=<span class="value">"cdrom"</span> /&gt;</span>     <span class="comment">&lt;!--光盘启动--&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">os</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">features</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">acpi</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">apic</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">pae</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">features</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">clock</span> <span class="attribute">offset</span>=<span class="value">"localtime"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_poweroff</span>&gt;</span>destroy<span class="tag">&lt;/<span class="title">on_poweroff</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_reboot</span>&gt;</span>restart<span class="tag">&lt;/<span class="title">on_reboot</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_crash</span>&gt;</span>destroy<span class="tag">&lt;/<span class="title">on_crash</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">devices</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">emulator</span>&gt;</span>/usr/bin/qemu<span class="tag">&lt;/<span class="title">emulator</span>&gt;</span>    <span class="comment">&lt;!--ubuntu和centos路径不同。可能会报错找不到，可以删掉这个标签规避--&gt;</span></div><div class="line">        <span class="comment">&lt;!--镜像配置--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">disk</span> <span class="attribute">type</span>=<span class="value">"file"</span> <span class="attribute">device</span>=<span class="value">"disk"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">driver</span> <span class="attribute">name</span>=<span class="value">"qemu"</span> <span class="attribute">type</span>=<span class="value">"qcow2"</span> /&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">source</span> <span class="attribute">file</span>=<span class="value">"/home/liushy/disk.img"</span> /&gt;</span>    <span class="comment">&lt;!--硬盘镜像路径--&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">target</span> <span class="attribute">dev</span>=<span class="value">"hda"</span> <span class="attribute">bus</span>=<span class="value">"ide"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="title">disk</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">disk</span> <span class="attribute">type</span>=<span class="value">"file"</span> <span class="attribute">device</span>=<span class="value">"cdrom"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">source</span> <span class="attribute">file</span>=<span class="value">"/media/liushy/CE270A25D4A27269/kali-linux-2.0-i386.iso"</span> /&gt;</span> <span class="comment">&lt;!--光盘镜像路径 --&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">target</span> <span class="attribute">dev</span>=<span class="value">"hdb"</span> <span class="attribute">bus</span>=<span class="value">"ide"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="title">disk</span>&gt;</span></div><div class="line">        <span class="comment">&lt;!--接口配置--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">interface</span> <span class="attribute">type</span>=<span class="value">'network'</span>&gt;</span>     <span class="comment">&lt;!--连接到虚拟网络，连接方式还有bridge，ethernet，hostdev等--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">mac</span> <span class="attribute">address</span>=<span class="value">'52:54:00:4f:1b:07'</span>/&gt;</span> </div><div class="line">           <span class="tag">&lt;<span class="title">source</span> <span class="attribute">network</span>=<span class="value">'default'</span>/&gt;</span>    <span class="comment">&lt;!--指定default网络，需要先virsh net-define创建--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">model</span> <span class="attribute">type</span>=<span class="value">'virtio'</span>/&gt;</span>         <span class="comment">&lt;!--virtio模式，网卡工作速率为1000M--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">address</span> <span class="attribute">type</span>=<span class="value">'pci'</span> <span class="attribute">domain</span>=<span class="value">'0x0000'</span> <span class="attribute">bus</span>=<span class="value">'0x00'</span> <span class="attribute">slot</span>=<span class="value">'0x03'</span> <span class="attribute">function</span>=<span class="value">'0x0'</span>/&gt;</span></div><div class="line">       <span class="tag">&lt;/<span class="title">interface</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"mouse"</span> <span class="attribute">bus</span>=<span class="value">"ps2"</span> /&gt;</span>   <span class="comment">&lt;!--鼠标--&gt;</span></div><div class="line">        <span class="comment">&lt;!--vnc端口号自动分配，自动加1--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">graphics</span> <span class="attribute">type</span>=<span class="value">"vnc"</span> <span class="attribute">port</span>=<span class="value">"-1"</span> <span class="attribute">autoport</span>=<span class="value">"yes"</span> <span class="attribute">listen</span>=<span class="value">"0.0.0.0"</span> <span class="attribute">keymap</span>=<span class="value">"en-us"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">devices</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">domain</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
+<p>第三步，virsh create kali.xml启动虚机，等同于执行：<br>virsh define kali.xml———注入xml文件的配置<br>virsh start kali———启动kali虚机<br>启动虚机后，可通过virsh list查看当前运行的虚机。xml文件可以复用，创建其他虚机，但注意修改其中的uuid，name，pci设备等唯一配置信息。    </p>
+<font color="red" size="4">#绑定pci设备:</font>    
+
+<p>如果要为虚机的接口绑定物理主机的网卡（pci passthrough，pci直通），则可以通过下面的操作完成：<br>第一步，lspci查看pci设备的信息：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">lspci</div><div class="line"><span class="number">04</span>:<span class="number">00.0</span> Ethernet controller: Intel Corporation <span class="number">82571</span>EB Gigabit Ethernet Controller (rev <span class="number">06</span>)</div><div class="line"><span class="number">04</span>:<span class="number">00.1</span> Ethernet controller: Intel Corporation <span class="number">82571</span>EB Gigabit Ethernet Controller (rev <span class="number">06</span>)</div></pre></td></tr></table></figure>
+
+
+<p>比如得到第一张网卡的编号04:00.0，然后通过以下指令找到对应的nodedev：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">virsh nodedev-list --tree</div><div class="line">+- pci_0000_00_07_0</div><div class="line">|   |</div><div class="line">|   +- pci_0000_04_00_0</div><div class="line">|   |   |</div><div class="line">|   |   +- net_p1p1_00_1b_21_88_69_dc</div><div class="line">|   |  </div><div class="line">|   +- pci_0000_04_00_1</div><div class="line">|       |</div><div class="line">|       +- net_p1p2_00_1b_21_88_69_dd</div></pre></td></tr></table></figure>
+
+
+<p>04:00.0对应的nodedev是pci_0000_04_00_0<br>第二步，得到对应网卡的xml配置：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">virsh nodedev-dumpxml pci_0000_04_00_0</div><div class="line">...</div></pre></td></tr></table></figure>
+
+
+<p>第三步，将网卡pci设备信息写入到虚机的xml文件中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&lt;hostdev mode=<span class="string">'subsystem'</span> <span class="built_in">type</span>=<span class="string">'pci'</span> managed=<span class="string">'yes'</span>&gt;</div><div class="line">     &lt;<span class="built_in">source</span>&gt;</div><div class="line">       &lt;address domain=<span class="string">'0x0000'</span> bus=<span class="string">'0x04'</span> slot=<span class="string">'0x00'</span> function=<span class="string">'0x0'</span>/&gt;</div><div class="line">     &lt;/<span class="built_in">source</span>&gt;</div><div class="line">&lt;/hostdev&gt;</div></pre></td></tr></table></figure>
+
+
+<p>其中的domain，bus，slot，function信息都是从网卡的xml配置中获取的。修改完虚机配置文件，重启虚机，就可以独占物理主机的网卡了。   </p>
+<font color="red" size="4">#virsh命令及调试:</font>    
+
+<p>virsh的一些常用命令：   </p>
+<blockquote>
+<p>virsh list————#查询本地active的虚拟机<br>virsh list –all———-#查询本地所有的虚拟机（active+inactive）<br>virsh define kali.xml———-#定义kali虚机的xml（虚拟机是inactive）<br>virsh undefine kali———-#移除虚机<br>virsh start kali———-#启动名字为kali的非活动虚拟机<br>virsh create kali.xml———-#创建虚拟机（虚拟机立即执行）<br>virsh edit kali———-#编辑配置文件<br>virsh domstate kali———-#显示虚拟机的当前状态<br>virsh dumpxml kali———-#显示虚拟机的当前配置文件<br>virsh suspend kali———-#挂起虚拟机<br>virsh resume kali———-#启动挂起的虚拟机<br>virsh shutdown kali———-#关闭虚拟机<br>virsh destroy kali———-#强制关闭虚拟机<br>virsh dominfo kali———-#显示虚拟机的基本信息<br>virsh domname 2 ———-#显示id号为2的虚拟机名<br>virsh domid kali———-#显示虚拟机id号<br>virsh domuuid kali————#显示虚拟机的uuid<br>virsh setvcpus kali 4———-#给不活动虚拟机设置cpu个数<br>virsh vncdisplay kali———-#查看虚机的vnc端口<br>virsh nodedev-list —tree————#查看pci设备信息<br>virsh nodedev-dumpxml pci_000_05_00_0———-#查看pci_000_05_00_0的xml配置<br>virsh net-dumpxml default———-#得到defaul网络的xml配置<br>virsh net-define default.xml————#配置default网络的xml<br>virsh net-start defalt ———-#运行defaukt网络<br>virsh net-destroy default ———-#移除default网络<br>libvirtd -l：libvirtd运行状态<br>libvirt-sock找不到该文件的情况，用find搜索，并ln -s软连接</p>
+</blockquote>
+<h2 id="总结">总结</h2>
+<p>本文简单介绍了虚拟化技术qemu-kvm和libvirt相关工具链的安装和基本使用，并未深入讨论一些技术细节。文末附上一些参考资料，可以加深理解，部分技术关键词比如virtio，sr-iov，pci passthrough，virsh配置网络，以及virsh虚机迁移等，都是比较有意思的，可以深入研究。</p>
+<p><font color="balck" size="5">参考资料:</font><br><a href="https://huangwei.me/wiki/tech_cloud_kvm_qemu_libvirt_openstack.html" target="_blank" rel="external">https://huangwei.me/wiki/tech_cloud_kvm_qemu_libvirt_openstack.html</a><br><a href="http://blog.csdn.net/panfengyun12345/article/details/16878873" target="_blank" rel="external">http://blog.csdn.net/panfengyun12345/article/details/16878873</a><br><a href="https://www.chenyudong.com/category/virtualization" target="_blank" rel="external">https://www.chenyudong.com/category/virtualization</a><br><a href="http://blog.chinaunix.net/uid-29312110-id-5763571.html" target="_blank" rel="external">http://blog.chinaunix.net/uid-29312110-id-5763571.html</a>   </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/qemu/">qemu</a><a href="/tags/kvm/">kvm</a><a href="/tags/libvirt/">libvirt</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2017/04/29/libvirt-qemu/" data-title="虚拟化实践从qemu-kvm到libvirt | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/03/18/what-doing/"  title="最近在干嘛">
+ <strong>NEXT:</strong><br/> 
+ <span>最近在干嘛
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	<!-- 多说评论框 start -->
+	<div class="ds-thread" data-thread-key="2017/04/29/libvirt-qemu/" data-title="虚拟化实践从qemu-kvm到libvirt" data-url="http://liushy.com/2017/04/29/libvirt-qemu/"></div>
+<!-- 多说评论框 end -->
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+var duoshuoQuery = {short_name:"liushy"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#QEMU简单入门"><span class="toc-number">2.</span> <span class="toc-text">QEMU简单入门</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Libvirt基本玩法"><span class="toc-number">3.</span> <span class="toc-text">Libvirt基本玩法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/kvm/" title="kvm">kvm<sup>1</sup></a></li>
+		
+			<li><a href="/tags/libvirt/" title="libvirt">libvirt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/nat/" title="nat">nat<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2017 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"liushy"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

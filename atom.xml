@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-03-19T02:47:15.086Z</updated>
+  <updated>2017-04-30T05:27:02.516Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,117 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[虚拟化实践从qemu-kvm到libvirt]]></title>
+    <link href="http://liushy.com/2017/04/29/libvirt-qemu/"/>
+    <id>http://liushy.com/2017/04/29/libvirt-qemu/</id>
+    <published>2017-04-29T08:03:00.000Z</published>
+    <updated>2017-04-30T05:26:21.000Z</updated>
+    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>结合自己最近的学习和实践，总结了一下libvirt和qemu-kvm的理解和使用，其中包括工具链的安装以及部分操作命令。   </p>
+<h2 id="QEMU简单入门">QEMU简单入门</h2>
+<p>qemu是什么，简单来说它是一个虚拟机的管理器，类似Virtualbox之类的。为了使虚机达到接近主机的性能，一般会结合kvm（或者Xen）对硬件虚拟化。kvm负责cpu+mem虚拟化，但kvm不能模拟其他设备；qemu负责模拟IO设备（网卡，usb等），两者结合能实现真正意义上的全系统仿真。kvm与qemu的结构如图所示：<br><img src="/img/kvm-qemu.png" alt="kvm-qemu">  </p>
+ <font color="red" size="4">#安装qemu:</font>     
+
+<p>qemu的安装，ubuntu／Debian系列的发行版使用下面的命令安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> apt-get install qemu</div></pre></td></tr></table></figure>
+
+<p>redhat/centos系列的发行版使用如下命令安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> yum install qemu -y .</div></pre></td></tr></table></figure>
+
+
+<p>当然，也可以通过编译源码来安装。<a href="http://www.qemu.org/" target="_blank" rel="external">#qemu官网</a>    </p>
+ <font color="red" size="4">#检查kvm模块:</font>    
+
+<p>kvm作为Linux的内核模块，其运行需要硬件对虚拟化的支持，通过如下命令查看是否支持虚拟化：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">grep -E <span class="string">'vmx|svm'</span> /proc/cpuinfo</div></pre></td></tr></table></figure>
+
+
+<p> 有输出则说明支持虚拟化。检查kvm模块（intel处理器）是否加载:   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">liushy@ubuntu:/usr/bin$ lsmod | grep kvm</div><div class="line">kvm_intel             <span class="number">143590</span>  <span class="number">0</span></div><div class="line">kvm                   <span class="number">452043</span>  <span class="number">1</span> kvm_intel</div></pre></td></tr></table></figure>
+
+
+<p>若未加载，使用<code>modprobe kvm-intel</code>(amd处理器：kvm-amd）加载模块。   </p>
+<font color="red" size="4">#qemu-kwm起虚机:</font>    
+
+<p>基本的几条命令如下，第一步，创建一个虚拟机硬盘：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-img create <span class="operator">-f</span> qcow2 disk.img <span class="number">10</span>G</div></pre></td></tr></table></figure>
+
+
+<p>硬盘大小设置为10G，存放操作系统的。<code>-f qcow2</code>指定了硬盘格式，qcow2支持硬盘数据大小动态的增加。  </p>
+<p>第二步，安装操作系统：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-system-x86_64 -enable-kvm -m <span class="number">512</span> -smp <span class="number">2</span> -boot order=dc -hda /home/liushy/disk.img -cdrom /home/liushy/CentOS-<span class="number">6.4</span>-x86_64-minimal.iso -vnc <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30</span></div></pre></td></tr></table></figure>
+
+
+<p><code>-enable-kvm</code>启动kwm模块，开启硬件加速；<code>-m 512</code>设置内存为512m；<code>-smp 2</code>分配2个cpu；<code>-boot order=dc</code>指定系统启动顺序orber=dc为光驱(d:CD-ROM)、硬盘(c:hard Disk)；<code>-hda</code>和<code>-cdrom</code>分别指定硬盘和光驱(系统的安装镜像)；<code>-vnc</code>设置访问虚机的vnc端口。   </p>
+<p>安装完成后重起虚拟机便会从硬盘启动，之后再启动虚拟机只需要执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-system-x86_64 disk.img -m <span class="number">512</span> -enable-kvm</div></pre></td></tr></table></figure>
+
+
+<p>qemu起虚机的相关命令还有很多，比如指定网络设备，创建快照等，根据实际需求进行配置。</p>
+<h2 id="Libvirt基本玩法">Libvirt基本玩法</h2>
+<p>libvirt是一整套对kvm虚机进行管理的工具和应用程序接口，它包括一个API库，一个守护程序（libvirtd）和一个命令行工具（virsh）。libvirtd通过调用qemu-kvm操作虚拟机，libvirt与qemu的架构关系，图像更直观：<br><img src="/img/libvirt.jpg" alt="libvirt"><br>openstack的虚机管理默认基于qemu-kvm，但是它不直接调用qemu-kvm，而是调用libvirt的库去操作qemu-kvm。libvirt提供的库除了能够操作qemu-kvm，还提供了对vmware, virtualbox，xen的支持。    </p>
+<font color="red" size="4">#安装libvirt:</font>      
+
+<p>从<a href="http://libvirt.org/sources/" target="_blank" rel="external">libvirt官网</a>下载libvirt源，我用的libvirt-1.3.5.tar.gz，解压，配置，编译，安装，启动（root权限）：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">tar -zxvf libvirt-<span class="number">1.3</span>.<span class="number">5</span>.tar.gz</div><div class="line"><span class="built_in">cd</span> libvirt-<span class="number">1.3</span>.<span class="number">5</span></div><div class="line">./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc <span class="comment">#--prefix指定安装的目的路径,默认安装到/usr/local/bin</span></div><div class="line">make</div><div class="line">make install</div><div class="line">libvirtd <span class="operator">-d</span> <span class="comment">#启动libvirtd</span></div></pre></td></tr></table></figure>
+
+
+<p>如果在./configure这一步报error，可能是缺少相关依赖：libyajl-dev ,libxml2-dev ,libdevmapper1.0.2.1 ,ibdevmapper-dev  ,libpciaccess-dev ,libnl-dev。根据实际情况安装。   </p>
+<font color="red" size="4">#virsh管理虚机:</font>    
+
+<p>virsh是libvirt的命令行工具，可直接输入virsh进入一个特殊的shell。接下来简单几个步骤，利用virsh创建虚机：<br>第一步，创建虚机硬盘，如上节qemu的步骤一；<br>第二步，创建一个xml文件，配置虚机的内存，cpu，硬盘，光驱，vnc等信息，如下kali.xml：   </p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">domain</span> <span class="attribute">type</span>=<span class="value">"kvm"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">name</span>&gt;</span>kali<span class="tag">&lt;/<span class="title">name</span>&gt;</span>  <span class="comment">&lt;!--虚拟机名称--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">memory</span> <span class="attribute">unit</span>=<span class="value">"MiB"</span>&gt;</span>1024<span class="tag">&lt;/<span class="title">memory</span>&gt;</span>   <span class="comment">&lt;!--最大内存，单位k--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">currentMemory</span> <span class="attribute">unit</span>=<span class="value">"MiB"</span>&gt;</span>1024<span class="tag">&lt;/<span class="title">currentMemory</span>&gt;</span>  <span class="comment">&lt;!--可用内存，单位k--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">vcpu</span>&gt;</span>2<span class="tag">&lt;/<span class="title">vcpu</span>&gt;</span>   <span class="comment">&lt;!--虚拟cpu个数--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">os</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">type</span> <span class="attribute">arch</span>=<span class="value">"x86_64"</span> <span class="attribute">machine</span>=<span class="value">"pc"</span>&gt;</span>hvm<span class="tag">&lt;/<span class="title">type</span>&gt;</span> <span class="comment">&lt;!--半虚拟化--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">boot</span> <span class="attribute">dev</span>=<span class="value">"hd"</span> /&gt;</span>        <span class="comment">&lt;!--硬盘启动 --&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">boot</span> <span class="attribute">dev</span>=<span class="value">"cdrom"</span> /&gt;</span>     <span class="comment">&lt;!--光盘启动--&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">os</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">features</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">acpi</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">apic</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">pae</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">features</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">clock</span> <span class="attribute">offset</span>=<span class="value">"localtime"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_poweroff</span>&gt;</span>destroy<span class="tag">&lt;/<span class="title">on_poweroff</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_reboot</span>&gt;</span>restart<span class="tag">&lt;/<span class="title">on_reboot</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_crash</span>&gt;</span>destroy<span class="tag">&lt;/<span class="title">on_crash</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">devices</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">emulator</span>&gt;</span>/usr/bin/qemu<span class="tag">&lt;/<span class="title">emulator</span>&gt;</span>    <span class="comment">&lt;!--ubuntu和centos路径不同。可能会报错找不到，可以删掉这个标签规避--&gt;</span></div><div class="line">        <span class="comment">&lt;!--镜像配置--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">disk</span> <span class="attribute">type</span>=<span class="value">"file"</span> <span class="attribute">device</span>=<span class="value">"disk"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">driver</span> <span class="attribute">name</span>=<span class="value">"qemu"</span> <span class="attribute">type</span>=<span class="value">"qcow2"</span> /&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">source</span> <span class="attribute">file</span>=<span class="value">"/home/liushy/disk.img"</span> /&gt;</span>    <span class="comment">&lt;!--硬盘镜像路径--&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">target</span> <span class="attribute">dev</span>=<span class="value">"hda"</span> <span class="attribute">bus</span>=<span class="value">"ide"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="title">disk</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">disk</span> <span class="attribute">type</span>=<span class="value">"file"</span> <span class="attribute">device</span>=<span class="value">"cdrom"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">source</span> <span class="attribute">file</span>=<span class="value">"/media/liushy/CE270A25D4A27269/kali-linux-2.0-i386.iso"</span> /&gt;</span> <span class="comment">&lt;!--光盘镜像路径 --&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">target</span> <span class="attribute">dev</span>=<span class="value">"hdb"</span> <span class="attribute">bus</span>=<span class="value">"ide"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="title">disk</span>&gt;</span></div><div class="line">        <span class="comment">&lt;!--接口配置--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">interface</span> <span class="attribute">type</span>=<span class="value">'network'</span>&gt;</span>     <span class="comment">&lt;!--连接到虚拟网络，连接方式还有bridge，ethernet，hostdev等--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">mac</span> <span class="attribute">address</span>=<span class="value">'52:54:00:4f:1b:07'</span>/&gt;</span> </div><div class="line">           <span class="tag">&lt;<span class="title">source</span> <span class="attribute">network</span>=<span class="value">'default'</span>/&gt;</span>    <span class="comment">&lt;!--指定default网络，需要先virsh net-define创建--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">model</span> <span class="attribute">type</span>=<span class="value">'virtio'</span>/&gt;</span>         <span class="comment">&lt;!--virtio模式，网卡工作速率为1000M--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">address</span> <span class="attribute">type</span>=<span class="value">'pci'</span> <span class="attribute">domain</span>=<span class="value">'0x0000'</span> <span class="attribute">bus</span>=<span class="value">'0x00'</span> <span class="attribute">slot</span>=<span class="value">'0x03'</span> <span class="attribute">function</span>=<span class="value">'0x0'</span>/&gt;</span></div><div class="line">       <span class="tag">&lt;/<span class="title">interface</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"mouse"</span> <span class="attribute">bus</span>=<span class="value">"ps2"</span> /&gt;</span>   <span class="comment">&lt;!--鼠标--&gt;</span></div><div class="line">        <span class="comment">&lt;!--vnc端口号自动分配，自动加1--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">graphics</span> <span class="attribute">type</span>=<span class="value">"vnc"</span> <span class="attribute">port</span>=<span class="value">"-1"</span> <span class="attribute">autoport</span>=<span class="value">"yes"</span> <span class="attribute">listen</span>=<span class="value">"0.0.0.0"</span> <span class="attribute">keymap</span>=<span class="value">"en-us"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">devices</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">domain</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
+<p>第三步，virsh create kali.xml启动虚机，等同于执行：<br>virsh define kali.xml———注入xml文件的配置<br>virsh start kali———启动kali虚机<br>启动虚机后，可通过virsh list查看当前运行的虚机。xml文件可以复用，创建其他虚机，但注意修改其中的uuid，name，pci设备等唯一配置信息。    </p>
+<font color="red" size="4">#绑定pci设备:</font>    
+
+<p>如果要为虚机的接口绑定物理主机的网卡（pci passthrough，pci直通），则可以通过下面的操作完成：<br>第一步，lspci查看pci设备的信息：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">lspci</div><div class="line"><span class="number">04</span>:<span class="number">00.0</span> Ethernet controller: Intel Corporation <span class="number">82571</span>EB Gigabit Ethernet Controller (rev <span class="number">06</span>)</div><div class="line"><span class="number">04</span>:<span class="number">00.1</span> Ethernet controller: Intel Corporation <span class="number">82571</span>EB Gigabit Ethernet Controller (rev <span class="number">06</span>)</div></pre></td></tr></table></figure>
+
+
+<p>比如得到第一张网卡的编号04:00.0，然后通过以下指令找到对应的nodedev：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">virsh nodedev-list --tree</div><div class="line">+- pci_0000_00_07_0</div><div class="line">|   |</div><div class="line">|   +- pci_0000_04_00_0</div><div class="line">|   |   |</div><div class="line">|   |   +- net_p1p1_00_1b_21_88_69_dc</div><div class="line">|   |  </div><div class="line">|   +- pci_0000_04_00_1</div><div class="line">|       |</div><div class="line">|       +- net_p1p2_00_1b_21_88_69_dd</div></pre></td></tr></table></figure>
+
+
+<p>04:00.0对应的nodedev是pci_0000_04_00_0<br>第二步，得到对应网卡的xml配置：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">virsh nodedev-dumpxml pci_0000_04_00_0</div><div class="line">...</div></pre></td></tr></table></figure>
+
+
+<p>第三步，将网卡pci设备信息写入到虚机的xml文件中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&lt;hostdev mode=<span class="string">'subsystem'</span> <span class="built_in">type</span>=<span class="string">'pci'</span> managed=<span class="string">'yes'</span>&gt;</div><div class="line">     &lt;<span class="built_in">source</span>&gt;</div><div class="line">       &lt;address domain=<span class="string">'0x0000'</span> bus=<span class="string">'0x04'</span> slot=<span class="string">'0x00'</span> function=<span class="string">'0x0'</span>/&gt;</div><div class="line">     &lt;/<span class="built_in">source</span>&gt;</div><div class="line">&lt;/hostdev&gt;</div></pre></td></tr></table></figure>
+
+
+<p>其中的domain，bus，slot，function信息都是从网卡的xml配置中获取的。修改完虚机配置文件，重启虚机，就可以独占物理主机的网卡了。   </p>
+<font color="red" size="4">#virsh命令及调试:</font>    
+
+<p>virsh的一些常用命令：   </p>
+<blockquote>
+<p>virsh list————#查询本地active的虚拟机<br>virsh list –all———-#查询本地所有的虚拟机（active+inactive）<br>virsh define kali.xml———-#定义kali虚机的xml（虚拟机是inactive）<br>virsh undefine kali———-#移除虚机<br>virsh start kali———-#启动名字为kali的非活动虚拟机<br>virsh create kali.xml———-#创建虚拟机（虚拟机立即执行）<br>virsh edit kali———-#编辑配置文件<br>virsh domstate kali———-#显示虚拟机的当前状态<br>virsh dumpxml kali———-#显示虚拟机的当前配置文件<br>virsh suspend kali———-#挂起虚拟机<br>virsh resume kali———-#启动挂起的虚拟机<br>virsh shutdown kali———-#关闭虚拟机<br>virsh destroy kali———-#强制关闭虚拟机<br>virsh dominfo kali———-#显示虚拟机的基本信息<br>virsh domname 2 ———-#显示id号为2的虚拟机名<br>virsh domid kali———-#显示虚拟机id号<br>virsh domuuid kali————#显示虚拟机的uuid<br>virsh setvcpus kali 4———-#给不活动虚拟机设置cpu个数<br>virsh vncdisplay kali———-#查看虚机的vnc端口<br>virsh nodedev-list —tree————#查看pci设备信息<br>virsh nodedev-dumpxml pci_000_05_00_0———-#查看pci_000_05_00_0的xml配置<br>virsh net-dumpxml default———-#得到defaul网络的xml配置<br>virsh net-define default.xml————#配置default网络的xml<br>virsh net-start defalt ———-#运行defaukt网络<br>virsh net-destroy default ———-#移除default网络<br>libvirtd -l：libvirtd运行状态<br>libvirt-sock找不到该文件的情况，用find搜索，并ln -s软连接</p>
+</blockquote>
+<h2 id="总结">总结</h2>
+<p>本文简单介绍了虚拟化技术qemu-kvm和libvirt相关工具链的安装和基本使用，并未深入讨论一些技术细节。文末附上一些参考资料，可以加深理解，部分技术关键词比如virtio，sr-iov，pci passthrough，virsh配置网络，以及virsh虚机迁移等，都是比较有意思的，可以深入研究。</p>
+<p><font color="balck" size="5">参考资料:</font><br><a href="https://huangwei.me/wiki/tech_cloud_kvm_qemu_libvirt_openstack.html" target="_blank" rel="external">https://huangwei.me/wiki/tech_cloud_kvm_qemu_libvirt_openstack.html</a><br><a href="http://blog.csdn.net/panfengyun12345/article/details/16878873" target="_blank" rel="external">http://blog.csdn.net/panfengyun12345/article/details/16878873</a><br><a href="https://www.chenyudong.com/category/virtualization" target="_blank" rel="external">https://www.chenyudong.com/category/virtualization</a><br><a href="http://blog.chinaunix.net/uid-29312110-id-5763571.html" target="_blank" rel="external">http://blog.chinaunix.net/uid-29312110-id-5763571.html</a>   </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h2 id="前言">前言</h2>
+<p>结合自己最近的学习和实践，总结了一下libvirt和qemu-kvm的理解和使用，其中包括工具链的安装以及部分操作命令。   </p>
+<h2 id="QEMU简单入门">QEMU简单入门</h2>
+<p>qemu是什么，简单来说它是]]>
+    </summary>
+    
+      <category term="qemu" scheme="http://liushy.com/tags/qemu/"/>
+    
+      <category term="kvm" scheme="http://liushy.com/tags/kvm/"/>
+    
+      <category term="libvirt" scheme="http://liushy.com/tags/libvirt/"/>
+    
+      <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[最近在干嘛]]></title>
@@ -332,7 +443,7 @@
     <link href="http://liushy.com/2016/12/21/docker+hadoop/"/>
     <id>http://liushy.com/2016/12/21/docker+hadoop/</id>
     <published>2016-12-20T16:00:00.000Z</published>
-    <updated>2017-03-12T13:39:14.000Z</updated>
+    <updated>2017-04-29T07:54:40.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言_"><strong>前言 </strong></h2>
 <p>这个部署是去年做的，有点久了，镜像上传在<a href="https://hub.docker.com/r/liushy/ubuntu/tags/" target="_blank" rel="external">dockerhub</a>，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，事情太多太杂，而自身精力涣散，三天打鱼两天晒网，实际也就没弄明白什么。平时读点博客，看到docker，hadoop等字眼就会不住高潮，内心想说这玩意我玩过啊，然后也就仅限于此了。术业有专攻，如果不是经常接触，搞不久就会忘，若时常回顾一下，等到用时，就不会那么陌生了。   </p>
 <h2 id="安装docker"><strong>安装docker</strong></h2>
