@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-04-30T05:27:02.516Z</updated>
+  <updated>2017-05-20T04:35:20.030Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://liushy.com/2017/04/29/libvirt-qemu/"/>
     <id>http://liushy.com/2017/04/29/libvirt-qemu/</id>
     <published>2017-04-29T08:03:00.000Z</published>
-    <updated>2017-04-30T05:26:21.000Z</updated>
+    <updated>2017-04-30T05:36:25.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言">前言</h2>
 <p>结合自己最近的学习和实践，总结了一下libvirt和qemu-kvm的理解和使用，其中包括工具链的安装以及部分操作命令。   </p>
 <h2 id="QEMU简单入门">QEMU简单入门</h2>
@@ -30,7 +30,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> apt-get install qemu</div></pre></td></tr></table></figure>
 
 <p>redhat/centos系列的发行版使用如下命令安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> yum install qemu -y .</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> yum install qemu -y</div></pre></td></tr></table></figure>
 
 
 <p>当然，也可以通过编译源码来安装。<a href="http://www.qemu.org/" target="_blank" rel="external">#qemu官网</a>    </p>
