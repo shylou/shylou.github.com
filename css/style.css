@@ -112,7 +112,7 @@ a img {
 }
 body {
   background: #fff;
-  font-family: "YouYuan", "Microsoft Jhenghei", "Hiragino Sans GB", "Microsoft YaHei";
+  font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
   font-size: 95%;
   color: #3d3d3d;
   line-height: 1.5;
@@ -2047,7 +2047,7 @@ footer {
   border-radius: 6px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "YouYuan", "Microsoft Jhenghei", "Hiragino Sans GB", "Microsoft YaHei";
+  font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
   width: 100%;
   color: color-black;
   text-align: center;
@@ -2155,7 +2155,7 @@ footer {
 .article-content .gist .gist-file .gist-meta {
   background: #fafafa;
   color: #969899;
-  font: 0.85em "Georgia", serif;
+  font: 0.85em "Times", "Times New Roman", serif;
   padding: 0;
   margin-top: 1em;
   text-shadow: none;
