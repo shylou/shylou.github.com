@@ -140,22 +140,20 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 <p>　　<font color="red" size="4">iptables　-L　-n　—line-number</font>   </p>
 <p>接下来举几个例子。</p>
 <p><font color="blue" size="4">#包过滤</font><br>包过滤也就是实现简单的防火墙功能，阻止或者允许指定包的通过。例如：<br>允许访问本机的ICMP包，丢弃经过本机转发的http（80端口）包： </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">iptables　-A　INPUT　-p　icmp　-j　ACCEPT     </div><div class="line">iptables　-A　FORWARD　-p　tcp　--dport　<span class="number">80</span>　-j　DROP</div></pre></td></tr></table></figure>
-
-
+<pre><code class="bash">iptables　-A　INPUT　-p　icmp　-j　ACCEPT     
+iptables　-A　FORWARD　-p　tcp　--dport　80　-j　DROP
+</code></pre>
 <p>其中，<code>-p</code>指定了协议，如<code>-p　icmp</code>指定了ICMP协议，<code>-p　tcp　--dport　80</code>指定了TCP协议，以及目的端口为80即http协议常用的tcp端口。</p>
 <p><font color="blue" size="4">#内外网访问</font><br>内外网访问，就需要为内网的虚机分配一个外网地址。这里两个概念需要简单介绍一下，那就是DNAT(目的IP网络地址转换)和SNAT(源IP网络地址转换)。两者的应用场景是，当外网访问内网服务器时，要对目的IP进行DNAT转换；而当内网主机要访问外网时，需进行SNAT转换。例如：  </p>
 <p>场景一：</p>
 <ul>
 <li>eth0:10 172.168.0.110（外网IP）   </li>
 <li>eth1:10.0.2.1（内网IP）     </li>
-<li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换： </li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>  </div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
-
-
-<p>以上命令可以理解为：</p>
-<ul>
+<li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换： <pre><code class="bash">ifconfig etho:10 172.168.0.110/24 up
+iptables -t nat -A PREROUTING -d 172.168.0.110 -j DNAT -to--destination 10.0.2.5  
+iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1
+</code></pre>
+以上命令可以理解为：</li>
 <li>将目的地址是172.168.0.110的数据包的目的地址修改为10.0.2.5</li>
 <li>将目的地址为10.0.2.5的数据包的源地址修改为10.0.2.1    </li>
 </ul>
@@ -165,14 +163,15 @@ Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)
 <li>eth0:10 172.168.0.110（外网IP）   </li>
 <li>eth1:10.0.2.1（内网IP）     </li>
 <li>内网虚机1：10.0.2.5 </li>
-<li>内网虚机2：10.0.2.6。外网主机能够访问两台虚机的http服务（80端口）：    </li>
+<li>内网虚机2：10.0.2.6。外网主机能够访问两台虚机的http服务（80端口）：    <pre><code class="bash">ifconfig etho:10 172.168.0.110/24 up
+iptables -t nat -A PREROUTING -d 172.168.0.110 -p tcp --dport 80 -j DNAT -to--destination 10.0.2.5:80
+iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1  
+iptables -t nat -A PREROUTING -d 172.168.0.110 -p tcp --dport 81 -j DNAT -to--destination 10.0.2.6:80 
+iptables -t nat -A POSTROUTING -d 10.0.2.6 -j SNAT -to--source 10.0.2.1
+</code></pre>
+上面的命令，我让两台虚机公用一个外网地址的不同端口号，简单的做了一个端口映射。外网主机可以通过172.168.0.110的80和81端口分别访问内网虚机1和2的http服务。<h2 id="总结">总结</h2>
+目前的云平台如OpenStack，其网络管理项目Neutron对租户的安全组也是基于Iptables来做的。前两天某云的租户互通事件，引起很大的讨论，可见云网络中安全问题越来受到重视。所以，熟练使用Iptables，也许会帮助你管理好自己的云网络。写的有点零碎，但尽量争取不了解的人一看就会用，自己回头看能很快明白，后续可能还会在此基础上进行补充，就这些吧。    </li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -p tcp --dport <span class="number">80</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>:<span class="number">80</span></div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span>  </div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -p tcp --dport <span class="number">81</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.6</span>:<span class="number">80</span> </div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.6</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
-
-
-<p>上面的命令，我让两台虚机公用一个外网地址的不同端口号，简单的做了一个端口映射。外网主机可以通过172.168.0.110的80和81端口分别访问内网虚机1和2的http服务。</p>
-<h2 id="总结">总结</h2>
-<p>目前的云平台如OpenStack，其网络管理项目Neutron对租户的安全组也是基于Iptables来做的。前两天某云的租户互通事件，引起很大的讨论，可见云网络中安全问题越来受到重视。所以，熟练使用Iptables，也许会帮助你管理好自己的云网络。写的有点零碎，但尽量争取不了解的人一看就会用，自己回头看能很快明白，后续可能还会在此基础上进行补充，就这些吧。    </p>
 <p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
   
 	</div>
