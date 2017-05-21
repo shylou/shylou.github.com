@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-05-21T05:47:37.054Z</updated>
+  <updated>2017-05-21T05:50:32.843Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -27,128 +27,75 @@
  <font color="red" size="4">#安装qemu:</font>     
 
 <p>qemu的安装，ubuntu／Debian系列的发行版使用下面的命令安装：</p>
-<pre><code class="bash">sudo apt-get install qemu
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> apt-get install qemu</div></pre></td></tr></table></figure>
+
 <p>redhat/centos系列的发行版使用如下命令安装：</p>
-<pre><code class="bash">sudo yum install qemu -y
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">sudo</span> yum install qemu -y</div></pre></td></tr></table></figure>
+
+
 <p>当然，也可以通过编译源码来安装。<a href="http://www.qemu.org/" target="_blank" rel="external">#qemu官网</a>    </p>
  <font color="red" size="4">#检查kvm模块:</font>    
 
 <p>kvm作为Linux的内核模块，其运行需要硬件对虚拟化的支持，通过如下命令查看是否支持虚拟化：   </p>
-<pre><code class="bash">grep -E &#39;vmx|svm&#39; /proc/cpuinfo
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">grep -E <span class="string">'vmx|svm'</span> /proc/cpuinfo</div></pre></td></tr></table></figure>
+
+
 <p> 有输出则说明支持虚拟化。检查kvm模块（intel处理器）是否加载:   </p>
-<pre><code class="bash">liushy@ubuntu:/usr/bin$ lsmod | grep kvm
-kvm_intel             143590  0
-kvm                   452043  1 kvm_intel
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">liushy@ubuntu:/usr/bin$ lsmod | grep kvm</div><div class="line">kvm_intel             <span class="number">143590</span>  <span class="number">0</span></div><div class="line">kvm                   <span class="number">452043</span>  <span class="number">1</span> kvm_intel</div></pre></td></tr></table></figure>
+
+
 <p>若未加载，使用<code>modprobe kvm-intel</code>(amd处理器：kvm-amd）加载模块。   </p>
 <font color="red" size="4">#qemu-kwm起虚机:</font>    
 
 <p>基本的几条命令如下，第一步，创建一个虚拟机硬盘：   </p>
-<pre><code class="bash">qemu-img create -f qcow2 disk.img 10G
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-img create <span class="operator">-f</span> qcow2 disk.img <span class="number">10</span>G</div></pre></td></tr></table></figure>
+
+
 <p>硬盘大小设置为10G，存放操作系统的。<code>-f qcow2</code>指定了硬盘格式，qcow2支持硬盘数据大小动态的增加。  </p>
 <p>第二步，安装操作系统：   </p>
-<pre><code class="bash">qemu-system-x86_64 -enable-kvm -m 512 -smp 2 -boot order=dc -hda /home/liushy/disk.img -cdrom /home/liushy/CentOS-6.4-x86_64-minimal.iso -vnc 127.0.0.1:30
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-system-x86_64 -enable-kvm -m <span class="number">512</span> -smp <span class="number">2</span> -boot order=dc -hda /home/liushy/disk.img -cdrom /home/liushy/CentOS-<span class="number">6.4</span>-x86_64-minimal.iso -vnc <span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">30</span></div></pre></td></tr></table></figure>
+
+
 <p><code>-enable-kvm</code>启动kwm模块，开启硬件加速；<code>-m 512</code>设置内存为512m；<code>-smp 2</code>分配2个cpu；<code>-boot order=dc</code>指定系统启动顺序orber=dc为光驱(d:CD-ROM)、硬盘(c:hard Disk)；<code>-hda</code>和<code>-cdrom</code>分别指定硬盘和光驱(系统的安装镜像)；<code>-vnc</code>设置访问虚机的vnc端口。   </p>
 <p>安装完成后重起虚拟机便会从硬盘启动，之后再启动虚拟机只需要执行：</p>
-<pre><code class="bash">qemu-system-x86_64 disk.img -m 512 -enable-kvm
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">qemu-system-x86_64 disk.img -m <span class="number">512</span> -enable-kvm</div></pre></td></tr></table></figure>
+
+
 <p>qemu起虚机的相关命令还有很多，比如指定网络设备，创建快照等，根据实际需求进行配置。</p>
 <h2 id="Libvirt基本玩法">Libvirt基本玩法</h2>
 <p>libvirt是一整套对kvm虚机进行管理的工具和应用程序接口，它包括一个API库，一个守护程序（libvirtd）和一个命令行工具（virsh）。libvirtd通过调用qemu-kvm操作虚拟机，libvirt与qemu的架构关系，图像更直观：<br><img src="/img/libvirt.jpg" alt="libvirt"><br>openstack的虚机管理默认基于qemu-kvm，但是它不直接调用qemu-kvm，而是调用libvirt的库去操作qemu-kvm。libvirt提供的库除了能够操作qemu-kvm，还提供了对vmware, virtualbox，xen的支持。    </p>
 <font color="red" size="4">#安装libvirt:</font>      
 
 <p>从<a href="http://libvirt.org/sources/" target="_blank" rel="external">libvirt官网</a>下载libvirt源，我用的libvirt-1.3.5.tar.gz，解压，配置，编译，安装，启动（root权限）：   </p>
-<pre><code class="bash">tar -zxvf libvirt-1.3.5.tar.gz
-cd libvirt-1.3.5
-./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc #--prefix指定安装的目的路径,默认安装到/usr/local/bin
-make
-make install
-libvirtd -d #启动libvirtd
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">tar -zxvf libvirt-<span class="number">1.3</span>.<span class="number">5</span>.tar.gz</div><div class="line"><span class="built_in">cd</span> libvirt-<span class="number">1.3</span>.<span class="number">5</span></div><div class="line">./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc <span class="comment">#--prefix指定安装的目的路径,默认安装到/usr/local/bin</span></div><div class="line">make</div><div class="line">make install</div><div class="line">libvirtd <span class="operator">-d</span> <span class="comment">#启动libvirtd</span></div></pre></td></tr></table></figure>
+
+
 <p>如果在./configure这一步报error，可能是缺少相关依赖：libyajl-dev ,libxml2-dev ,libdevmapper1.0.2.1 ,ibdevmapper-dev  ,libpciaccess-dev ,libnl-dev。根据实际情况安装。   </p>
 <font color="red" size="4">#virsh管理虚机:</font>    
 
 <p>virsh是libvirt的命令行工具，可直接输入virsh进入一个特殊的shell。接下来简单几个步骤，利用virsh创建虚机：<br>第一步，创建虚机硬盘，如上节qemu的步骤一；<br>第二步，创建一个xml文件，配置虚机的内存，cpu，硬盘，光驱，vnc等信息，如下kali.xml：   </p>
-<pre><code class="xml">&lt;domain type=&quot;kvm&quot;&gt;
-    &lt;name&gt;kali&lt;/name&gt;  &lt;!--虚拟机名称--&gt;
-    &lt;memory unit=&quot;MiB&quot;&gt;1024&lt;/memory&gt;   &lt;!--最大内存，单位k--&gt;
-    &lt;currentMemory unit=&quot;MiB&quot;&gt;1024&lt;/currentMemory&gt;  &lt;!--可用内存，单位k--&gt;
-    &lt;vcpu&gt;2&lt;/vcpu&gt;   &lt;!--虚拟cpu个数--&gt;
-    &lt;os&gt;
-        &lt;type arch=&quot;x86_64&quot; machine=&quot;pc&quot;&gt;hvm&lt;/type&gt; &lt;!--半虚拟化--&gt;
-        &lt;boot dev=&quot;hd&quot; /&gt;        &lt;!--硬盘启动 --&gt;
-        &lt;boot dev=&quot;cdrom&quot; /&gt;     &lt;!--光盘启动--&gt;
-    &lt;/os&gt;
-    &lt;features&gt;
-        &lt;acpi /&gt;
-        &lt;apic /&gt;
-        &lt;pae /&gt;
-    &lt;/features&gt;
-    &lt;clock offset=&quot;localtime&quot; /&gt;
-    &lt;on_poweroff&gt;destroy&lt;/on_poweroff&gt;
-    &lt;on_reboot&gt;restart&lt;/on_reboot&gt;
-    &lt;on_crash&gt;destroy&lt;/on_crash&gt;
-    &lt;devices&gt;
-        &lt;emulator&gt;/usr/bin/qemu&lt;/emulator&gt;    &lt;!--ubuntu和centos路径不同。可能会报错找不到，可以删掉这个标签规避--&gt;
-        &lt;!--镜像配置--&gt;
-        &lt;disk type=&quot;file&quot; device=&quot;disk&quot;&gt;
-            &lt;driver name=&quot;qemu&quot; type=&quot;qcow2&quot; /&gt;
-            &lt;source file=&quot;/home/liushy/disk.img&quot; /&gt;    &lt;!--硬盘镜像路径--&gt;
-            &lt;target dev=&quot;hda&quot; bus=&quot;ide&quot; /&gt;
-        &lt;/disk&gt;
-        &lt;disk type=&quot;file&quot; device=&quot;cdrom&quot;&gt;
-            &lt;source file=&quot;/media/liushy/CE270A25D4A27269/kali-linux-2.0-i386.iso&quot; /&gt; &lt;!--光盘镜像路径 --&gt;
-            &lt;target dev=&quot;hdb&quot; bus=&quot;ide&quot; /&gt;
-        &lt;/disk&gt;
-        &lt;!--接口配置--&gt;
-        &lt;interface type=&#39;network&#39;&gt;     &lt;!--连接到虚拟网络，连接方式还有bridge，ethernet，hostdev等--&gt;
-           &lt;mac address=&#39;52:54:00:4f:1b:07&#39;/&gt; 
-           &lt;source network=&#39;default&#39;/&gt;    &lt;!--指定default网络，需要先virsh net-define创建--&gt;
-           &lt;model type=&#39;virtio&#39;/&gt;         &lt;!--virtio模式，网卡工作速率为1000M--&gt;
-           &lt;address type=&#39;pci&#39; domain=&#39;0x0000&#39; bus=&#39;0x00&#39; slot=&#39;0x03&#39; function=&#39;0x0&#39;/&gt;
-       &lt;/interface&gt;
-        &lt;input type=&quot;mouse&quot; bus=&quot;ps2&quot; /&gt;   &lt;!--鼠标--&gt;
-        &lt;!--vnc端口号自动分配，自动加1--&gt;
-        &lt;graphics type=&quot;vnc&quot; port=&quot;-1&quot; autoport=&quot;yes&quot; listen=&quot;0.0.0.0&quot; keymap=&quot;en-us&quot; /&gt;
-    &lt;/devices&gt;
-&lt;/domain&gt;
-</code></pre>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">domain</span> <span class="attribute">type</span>=<span class="value">"kvm"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">name</span>&gt;</span>kali<span class="tag">&lt;/<span class="title">name</span>&gt;</span>  <span class="comment">&lt;!--虚拟机名称--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">memory</span> <span class="attribute">unit</span>=<span class="value">"MiB"</span>&gt;</span>1024<span class="tag">&lt;/<span class="title">memory</span>&gt;</span>   <span class="comment">&lt;!--最大内存，单位k--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">currentMemory</span> <span class="attribute">unit</span>=<span class="value">"MiB"</span>&gt;</span>1024<span class="tag">&lt;/<span class="title">currentMemory</span>&gt;</span>  <span class="comment">&lt;!--可用内存，单位k--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">vcpu</span>&gt;</span>2<span class="tag">&lt;/<span class="title">vcpu</span>&gt;</span>   <span class="comment">&lt;!--虚拟cpu个数--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">os</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">type</span> <span class="attribute">arch</span>=<span class="value">"x86_64"</span> <span class="attribute">machine</span>=<span class="value">"pc"</span>&gt;</span>hvm<span class="tag">&lt;/<span class="title">type</span>&gt;</span> <span class="comment">&lt;!--半虚拟化--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">boot</span> <span class="attribute">dev</span>=<span class="value">"hd"</span> /&gt;</span>        <span class="comment">&lt;!--硬盘启动 --&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">boot</span> <span class="attribute">dev</span>=<span class="value">"cdrom"</span> /&gt;</span>     <span class="comment">&lt;!--光盘启动--&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">os</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">features</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">acpi</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">apic</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">pae</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">features</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">clock</span> <span class="attribute">offset</span>=<span class="value">"localtime"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_poweroff</span>&gt;</span>destroy<span class="tag">&lt;/<span class="title">on_poweroff</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_reboot</span>&gt;</span>restart<span class="tag">&lt;/<span class="title">on_reboot</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">on_crash</span>&gt;</span>destroy<span class="tag">&lt;/<span class="title">on_crash</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">devices</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">emulator</span>&gt;</span>/usr/bin/qemu<span class="tag">&lt;/<span class="title">emulator</span>&gt;</span>    <span class="comment">&lt;!--ubuntu和centos路径不同。可能会报错找不到，可以删掉这个标签规避--&gt;</span></div><div class="line">        <span class="comment">&lt;!--镜像配置--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">disk</span> <span class="attribute">type</span>=<span class="value">"file"</span> <span class="attribute">device</span>=<span class="value">"disk"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">driver</span> <span class="attribute">name</span>=<span class="value">"qemu"</span> <span class="attribute">type</span>=<span class="value">"qcow2"</span> /&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">source</span> <span class="attribute">file</span>=<span class="value">"/home/liushy/disk.img"</span> /&gt;</span>    <span class="comment">&lt;!--硬盘镜像路径--&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">target</span> <span class="attribute">dev</span>=<span class="value">"hda"</span> <span class="attribute">bus</span>=<span class="value">"ide"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="title">disk</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">disk</span> <span class="attribute">type</span>=<span class="value">"file"</span> <span class="attribute">device</span>=<span class="value">"cdrom"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">source</span> <span class="attribute">file</span>=<span class="value">"/media/liushy/CE270A25D4A27269/kali-linux-2.0-i386.iso"</span> /&gt;</span> <span class="comment">&lt;!--光盘镜像路径 --&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">target</span> <span class="attribute">dev</span>=<span class="value">"hdb"</span> <span class="attribute">bus</span>=<span class="value">"ide"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="title">disk</span>&gt;</span></div><div class="line">        <span class="comment">&lt;!--接口配置--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">interface</span> <span class="attribute">type</span>=<span class="value">'network'</span>&gt;</span>     <span class="comment">&lt;!--连接到虚拟网络，连接方式还有bridge，ethernet，hostdev等--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">mac</span> <span class="attribute">address</span>=<span class="value">'52:54:00:4f:1b:07'</span>/&gt;</span> </div><div class="line">           <span class="tag">&lt;<span class="title">source</span> <span class="attribute">network</span>=<span class="value">'default'</span>/&gt;</span>    <span class="comment">&lt;!--指定default网络，需要先virsh net-define创建--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">model</span> <span class="attribute">type</span>=<span class="value">'virtio'</span>/&gt;</span>         <span class="comment">&lt;!--virtio模式，网卡工作速率为1000M--&gt;</span></div><div class="line">           <span class="tag">&lt;<span class="title">address</span> <span class="attribute">type</span>=<span class="value">'pci'</span> <span class="attribute">domain</span>=<span class="value">'0x0000'</span> <span class="attribute">bus</span>=<span class="value">'0x00'</span> <span class="attribute">slot</span>=<span class="value">'0x03'</span> <span class="attribute">function</span>=<span class="value">'0x0'</span>/&gt;</span></div><div class="line">       <span class="tag">&lt;/<span class="title">interface</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">input</span> <span class="attribute">type</span>=<span class="value">"mouse"</span> <span class="attribute">bus</span>=<span class="value">"ps2"</span> /&gt;</span>   <span class="comment">&lt;!--鼠标--&gt;</span></div><div class="line">        <span class="comment">&lt;!--vnc端口号自动分配，自动加1--&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">graphics</span> <span class="attribute">type</span>=<span class="value">"vnc"</span> <span class="attribute">port</span>=<span class="value">"-1"</span> <span class="attribute">autoport</span>=<span class="value">"yes"</span> <span class="attribute">listen</span>=<span class="value">"0.0.0.0"</span> <span class="attribute">keymap</span>=<span class="value">"en-us"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">devices</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">domain</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
 <p>第三步，virsh create kali.xml启动虚机，等同于执行：<br>virsh define kali.xml———注入xml文件的配置<br>virsh start kali———启动kali虚机<br>启动虚机后，可通过virsh list查看当前运行的虚机。xml文件可以复用，创建其他虚机，但注意修改其中的uuid，name，pci设备等唯一配置信息。    </p>
 <font color="red" size="4">#绑定pci设备:</font>    
 
 <p>如果要为虚机的接口绑定物理主机的网卡（pci passthrough，pci直通），则可以通过下面的操作完成：<br>第一步，lspci查看pci设备的信息：   </p>
-<pre><code class="bash">lspci
-04:00.0 Ethernet controller: Intel Corporation 82571EB Gigabit Ethernet Controller (rev 06)
-04:00.1 Ethernet controller: Intel Corporation 82571EB Gigabit Ethernet Controller (rev 06)
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">lspci</div><div class="line"><span class="number">04</span>:<span class="number">00.0</span> Ethernet controller: Intel Corporation <span class="number">82571</span>EB Gigabit Ethernet Controller (rev <span class="number">06</span>)</div><div class="line"><span class="number">04</span>:<span class="number">00.1</span> Ethernet controller: Intel Corporation <span class="number">82571</span>EB Gigabit Ethernet Controller (rev <span class="number">06</span>)</div></pre></td></tr></table></figure>
+
+
 <p>比如得到第一张网卡的编号04:00.0，然后通过以下指令找到对应的nodedev：</p>
-<pre><code class="bash">virsh nodedev-list --tree
-+- pci_0000_00_07_0
-|   |
-|   +- pci_0000_04_00_0
-|   |   |
-|   |   +- net_p1p1_00_1b_21_88_69_dc
-|   |  
-|   +- pci_0000_04_00_1
-|       |
-|       +- net_p1p2_00_1b_21_88_69_dd
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">virsh nodedev-list --tree</div><div class="line">+- pci_0000_00_07_0</div><div class="line">|   |</div><div class="line">|   +- pci_0000_04_00_0</div><div class="line">|   |   |</div><div class="line">|   |   +- net_p1p1_00_1b_21_88_69_dc</div><div class="line">|   |  </div><div class="line">|   +- pci_0000_04_00_1</div><div class="line">|       |</div><div class="line">|       +- net_p1p2_00_1b_21_88_69_dd</div></pre></td></tr></table></figure>
+
+
 <p>04:00.0对应的nodedev是pci_0000_04_00_0<br>第二步，得到对应网卡的xml配置：   </p>
-<pre><code class="bash">virsh nodedev-dumpxml pci_0000_04_00_0
-...
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">virsh nodedev-dumpxml pci_0000_04_00_0</div><div class="line">...</div></pre></td></tr></table></figure>
+
+
 <p>第三步，将网卡pci设备信息写入到虚机的xml文件中：</p>
-<pre><code class="bash">&lt;hostdev mode=&#39;subsystem&#39; type=&#39;pci&#39; managed=&#39;yes&#39;&gt;
-     &lt;source&gt;
-       &lt;address domain=&#39;0x0000&#39; bus=&#39;0x04&#39; slot=&#39;0x00&#39; function=&#39;0x0&#39;/&gt;
-     &lt;/source&gt;
-&lt;/hostdev&gt;
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&lt;hostdev mode=<span class="string">'subsystem'</span> <span class="built_in">type</span>=<span class="string">'pci'</span> managed=<span class="string">'yes'</span>&gt;</div><div class="line">     &lt;<span class="built_in">source</span>&gt;</div><div class="line">       &lt;address domain=<span class="string">'0x0000'</span> bus=<span class="string">'0x04'</span> slot=<span class="string">'0x00'</span> function=<span class="string">'0x0'</span>/&gt;</div><div class="line">     &lt;/<span class="built_in">source</span>&gt;</div><div class="line">&lt;/hostdev&gt;</div></pre></td></tr></table></figure>
+
+
 <p>其中的domain，bus，slot，function信息都是从网卡的xml配置中获取的。修改完虚机配置文件，重启虚机，就可以独占物理主机的网卡了。   </p>
 <font color="red" size="4">#virsh命令及调试:</font>    
 
@@ -266,20 +213,22 @@ libvirtd -d #启动libvirtd
 <p>　　<font color="red" size="4">iptables　-L　-n　—line-number</font>   </p>
 <p>接下来举几个例子。</p>
 <p><font color="blue" size="4">#包过滤</font><br>包过滤也就是实现简单的防火墙功能，阻止或者允许指定包的通过。例如：<br>允许访问本机的ICMP包，丢弃经过本机转发的http（80端口）包： </p>
-<pre><code class="bash">iptables　-A　INPUT　-p　icmp　-j　ACCEPT     
-iptables　-A　FORWARD　-p　tcp　--dport　80　-j　DROP
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">iptables　-A　INPUT　-p　icmp　-j　ACCEPT     </div><div class="line">iptables　-A　FORWARD　-p　tcp　--dport　<span class="number">80</span>　-j　DROP</div></pre></td></tr></table></figure>
+
+
 <p>其中，<code>-p</code>指定了协议，如<code>-p　icmp</code>指定了ICMP协议，<code>-p　tcp　--dport　80</code>指定了TCP协议，以及目的端口为80即http协议常用的tcp端口。</p>
 <p><font color="blue" size="4">#内外网访问</font><br>内外网访问，就需要为内网的虚机分配一个外网地址。这里两个概念需要简单介绍一下，那就是DNAT(目的IP网络地址转换)和SNAT(源IP网络地址转换)。两者的应用场景是，当外网访问内网服务器时，要对目的IP进行DNAT转换；而当内网主机要访问外网时，需进行SNAT转换。例如：  </p>
 <p>场景一：</p>
 <ul>
 <li>eth0:10 172.168.0.110（外网IP）   </li>
 <li>eth1:10.0.2.1（内网IP）     </li>
-<li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换： <pre><code class="bash">ifconfig etho:10 172.168.0.110/24 up
-iptables -t nat -A PREROUTING -d 172.168.0.110 -j DNAT -to--destination 10.0.2.5  
-iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1
-</code></pre>
-以上命令可以理解为：</li>
+<li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换： </li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>  </div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
+
+
+<p>以上命令可以理解为：</p>
+<ul>
 <li>将目的地址是172.168.0.110的数据包的目的地址修改为10.0.2.5</li>
 <li>将目的地址为10.0.2.5的数据包的源地址修改为10.0.2.1    </li>
 </ul>
@@ -289,15 +238,14 @@ iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1
 <li>eth0:10 172.168.0.110（外网IP）   </li>
 <li>eth1:10.0.2.1（内网IP）     </li>
 <li>内网虚机1：10.0.2.5 </li>
-<li>内网虚机2：10.0.2.6。外网主机能够访问两台虚机的http服务（80端口）：    <pre><code class="bash">ifconfig etho:10 172.168.0.110/24 up
-iptables -t nat -A PREROUTING -d 172.168.0.110 -p tcp --dport 80 -j DNAT -to--destination 10.0.2.5:80
-iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1  
-iptables -t nat -A PREROUTING -d 172.168.0.110 -p tcp --dport 81 -j DNAT -to--destination 10.0.2.6:80 
-iptables -t nat -A POSTROUTING -d 10.0.2.6 -j SNAT -to--source 10.0.2.1
-</code></pre>
-上面的命令，我让两台虚机公用一个外网地址的不同端口号，简单的做了一个端口映射。外网主机可以通过172.168.0.110的80和81端口分别访问内网虚机1和2的http服务。<h2 id="总结">总结</h2>
-目前的云平台如OpenStack，其网络管理项目Neutron对租户的安全组也是基于Iptables来做的。前两天某云的租户互通事件，引起很大的讨论，可见云网络中安全问题越来受到重视。所以，熟练使用Iptables，也许会帮助你管理好自己的云网络。写的有点零碎，但尽量争取不了解的人一看就会用，自己回头看能很快明白，后续可能还会在此基础上进行补充，就这些吧。    </li>
+<li>内网虚机2：10.0.2.6。外网主机能够访问两台虚机的http服务（80端口）：    </li>
 </ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">ifconfig etho:<span class="number">10</span> <span class="number">172.168</span>.<span class="number">0.110</span>/<span class="number">24</span> up</div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -p tcp --dport <span class="number">80</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.5</span>:<span class="number">80</span></div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.5</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span>  </div><div class="line">iptables -t nat -A PREROUTING <span class="operator">-d</span> <span class="number">172.168</span>.<span class="number">0.110</span> -p tcp --dport <span class="number">81</span> -j DNAT -to--destination <span class="number">10.0</span>.<span class="number">2.6</span>:<span class="number">80</span> </div><div class="line">iptables -t nat -A POSTROUTING <span class="operator">-d</span> <span class="number">10.0</span>.<span class="number">2.6</span> -j SNAT -to--source <span class="number">10.0</span>.<span class="number">2.1</span></div></pre></td></tr></table></figure>
+
+
+<p>上面的命令，我让两台虚机公用一个外网地址的不同端口号，简单的做了一个端口映射。外网主机可以通过172.168.0.110的80和81端口分别访问内网虚机1和2的http服务。</p>
+<h2 id="总结">总结</h2>
+<p>目前的云平台如OpenStack，其网络管理项目Neutron对租户的安全组也是基于Iptables来做的。前两天某云的租户互通事件，引起很大的讨论，可见云网络中安全问题越来受到重视。所以，熟练使用Iptables，也许会帮助你管理好自己的云网络。写的有点零碎，但尽量争取不了解的人一看就会用，自己回头看能很快明白，后续可能还会在此基础上进行补充，就这些吧。    </p>
 <p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
 ]]></content>
     <summary type="html">
@@ -500,30 +448,21 @@ iptables -t nat -A POSTROUTING -d 10.0.2.6 -j SNAT -to--source 10.0.2.1
 <p>这个部署是去年做的，有点久了，镜像上传在<a href="https://hub.docker.com/r/liushy/ubuntu/tags/" target="_blank" rel="external">dockerhub</a>，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，事情太多太杂，而自身精力涣散，三天打鱼两天晒网，实际也就没弄明白什么。平时读点博客，看到docker，hadoop等字眼就会不住高潮，内心想说这玩意我玩过啊，然后也就仅限于此了。术业有专攻，如果不是经常接触，搞不久就会忘，若时常回顾一下，等到用时，就不会那么陌生了。   </p>
 <h2 id="安装docker"><strong>安装docker</strong></h2>
 <p>安装docker的套路网上有教程，目前新的Ubuntu系统都有集成，不过<a href="https://www.oschina.net/translate/installing-docker-on-mac-os-x" target="_blank" rel="external">OSX系统跑docker</a>需要配合虚拟机如Virtualbox等来做，所以mac用户要稍微折腾一下了。本文的环境是在Ubuntu 14下做的，大致命令如下：   </p>
-<pre><code class="bash">$ sudo apt-get install apt-transport-https 
-$ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9 
-$ sudo bash -c &quot;echo deb https://get.docker.io/ubuntu docker main &gt; /etc/apt/sources.list.d/docker.list&quot; 
-$ sudo apt-get update 
-$ sudo apt-get install lxc-docker
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">sudo</span> apt-get install apt-transport-https </div><div class="line">$ <span class="built_in">sudo</span> apt-key adv --keyserver hkp://keyserver.ubuntu.com:<span class="number">80</span> --recv-keys <span class="number">36</span>A1D7869245C8950F966E92D8576A8BA88D21E9 </div><div class="line">$ <span class="built_in">sudo</span> bash -c <span class="string">"echo deb https://get.docker.io/ubuntu docker main &gt; /etc/apt/sources.list.d/docker.list"</span> </div><div class="line">$ <span class="built_in">sudo</span> apt-get update </div><div class="line">$ <span class="built_in">sudo</span> apt-get install lxc-docker</div></pre></td></tr></table></figure>
+
+
 <p>docker的安装可以参考<a href="http://www.cnblogs.com/xiaoluosun/p/5520510.html" target="_blank" rel="external">这个</a>   </p>
 <p>接下来要提到的是docker仓库的概念，熟悉github或使用过svn的都应该知道代码库吧，而我们也可以为docker创建仓库，这个库即是存放docker镜像的场所。比如我们做了个装有JDK的docker镜像，那么就可以将其存到仓库里，每次需要使用带Java的环境时，就可以可以使用该镜像，并在此基础上构建其它镜像。国内比较知名的docker库如<a href="https://github.com/DockerPool/" target="_blank" rel="external">dockerpool</a>，而我此次使用的是<a href="https://hub.docker.com/" target="_blank" rel="external">dockerhub</a>，国内访问剧慢，最好使用vpn加速。建议养成使用仓库的习惯，无论是代码还是docker。怎么使用docker仓库呢，首先需要在dockerhub官网创建一个账户，创建自己的仓库，然后在你的生产环境登陆<a href="https://hub.docker.com/" target="_blank" rel="external">dockerhub</a>，即可从<a href="https://hub.docker.com/" target="_blank" rel="external">dockerhub</a>上pull（拉取）镜像，当然也可以将本地的镜像push（上传）到仓库。大致流程可<a href="http://geek.csdn.net/news/detail/35121" target="_blank" rel="external">参考此文</a>。  </p>
 <p>登录到DockerHub：</p>
-<pre><code class="bash">$ docker login --username=账户 --email=邮箱@xxx.com
-PassWord:
-WARNING: login credentials saved in /home/hadoop/.docker/config.json
-Login Succeeded
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ docker login --username=账户 --email=邮箱@xxx.com</div><div class="line">PassWord:</div><div class="line">WARNING: login credentials saved <span class="keyword">in</span> /home/hadoop/.docker/config.json</div><div class="line">Login Succeeded</div></pre></td></tr></table></figure>
+
 <p>搞定仓库设置后，那么就可以从docker仓库中获取Ubuntu镜像了：   </p>
-<pre><code class="bash">docker pull ubuntu:14.04
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker pull ubuntu:<span class="number">14.04</span></div></pre></td></tr></table></figure>
+
 <p>使用<code>docker images</code>可以查看本地的所有镜像：</p>
-<pre><code class="bash">hadoop@hadoop:~$ docker images
-REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
-liushy/ubuntu       hadoop              358d6e31872e        13 months ago       1.276 GB
-liushy/ubuntu       java                50d62690f3f0        13 months ago       752.9 MB
-ubuntu              14.04               e9ae3c220b23        13 months ago       187.9 MB
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ docker images</div><div class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE</div><div class="line">liushy/ubuntu       hadoop              <span class="number">358</span>d6e31872e        <span class="number">13</span> months ago       <span class="number">1.276</span> GB</div><div class="line">liushy/ubuntu       java                <span class="number">50</span>d62690f3f0        <span class="number">13</span> months ago       <span class="number">752.9</span> MB</div><div class="line">ubuntu              <span class="number">14.04</span>               e9ae3c220b23        <span class="number">13</span> months ago       <span class="number">187.9</span> MB</div></pre></td></tr></table></figure>
+
+
 <p>显示的内容包括：   </p>
 <ul>
 <li>REPOSITORY：仓库名，例如liushy/ubuntu和ubuntu</li>
@@ -535,47 +474,32 @@ ubuntu              14.04               e9ae3c220b23        13 months ago       
 <p>那么，除此之外，还需要了解docker的一些常用操作。   </p>
 <h2 id="启动Docker容器_"><strong>启动Docker容器 </strong></h2>
 <p>启动docker容器，就可以构建部署hadoop集群了。使用如下命令启动docker容器：</p>
-<pre><code class="bash">docker run -ti ubuntu
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -ti ubuntu</div></pre></td></tr></table></figure>
+
 <p>docker run -ti ubuntu命令中没有指定执行程序，Docker默认执行/bin/bash。如下面这条命令：</p>
-<pre><code class="bash">hadoop@hadoop:~$  docker run liushy/ubuntu:java /bin/echo &#39;Hello world&#39;
-Hello world
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$  docker run liushy/ubuntu:java /bin/<span class="built_in">echo</span> <span class="string">'Hello world'</span></div><div class="line">Hello world</div></pre></td></tr></table></figure>
+
+
 <p>即是启动标记为java的镜像，运行bash打印“Hello world”。<br>接下来我们在Ubuntu基础镜像的上，安装Java，执行如下命令：   </p>
-<pre><code class="bash">root@50d62690f3f0:~#sudo apt-get install software-properties-common python-software-properties
-root@50d62690f3f0:~#sudo add-apt-repository ppa:webupd8team/java
-root@50d62690f3f0:~#sudo apt-get update
-root@50d62690f3f0:~#sudo apt-get install oracle-java7-installer
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo apt-get install software-properties-common python-software-properties</span></div><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo add-apt-repository ppa:webupd8team/java</span></div><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo apt-get update</span></div><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment">#sudo apt-get install oracle-java7-installer</span></div></pre></td></tr></table></figure>
+
+
 <p>安装结束后，可以将该镜像保存，以备以后使用：   </p>
-<pre><code class="bash">root@50d62690f3f0:~# exit
-docker commit -m &quot;java image&quot; 50d62690f3f0  liushy/ubuntu:java
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">50</span>d62690f3f0:~<span class="comment"># exit</span></div><div class="line">docker commit -m <span class="string">"java image"</span> <span class="number">50</span>d62690f3f0  liushy/ubuntu:java</div></pre></td></tr></table></figure>
+
+
 <p><code>-m</code>后面指定提交说明，<code>50d62690f3f0</code>是容器ID（也可以通过<code>docker ps</code>查询运行的容器），<code>liushy/ubuntu</code>是仓库，<code>:java</code>是标记。</p>
 <h2 id="构建Hadoop镜像"><strong>构建Hadoop镜像</strong></h2>
 <p>首先启动Java容器的镜像，下载Hadoop，输入如下命令：</p>
-<pre><code class="bash">hadoop@hadoop:~$ docker run -ti liushy/ubuntu:java
-root@7cf73e2147ec:/# 
-root@7cf73e2147ec:cd ~
-root@7cf73e2147ec:~# mkdir soft
-root@7cf73e2147ec:~# cd soft/
-root@7cf73e2147ec:~/soft# mkdir apache
-root@7cf73e2147ec:~/soft# cd apache/
-root@7cf73e2147ec:~/soft/apache# mkdir hadoop
-root@7cf73e2147ec:~/soft/apache# cd hadoop/
-root@7cf73e2147ec:~/soft/apache/hadoop# wget http://mirrors.sonic.net/apache/hadoop/common/hadoop-2.6.0/hadoop-2.6.0.tar.gz
-root@7cf73e2147ec:~/soft/apache/hadoop# tar xvzf hadoop-2.6.0.tar.gz
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ docker run -ti liushy/ubuntu:java</div><div class="line">root@<span class="number">7</span>cf73e2147ec:/<span class="comment"># </span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:<span class="built_in">cd</span> ~</div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># mkdir soft</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># cd soft/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft<span class="comment"># mkdir apache</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft<span class="comment"># cd apache/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache<span class="comment"># mkdir hadoop</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache<span class="comment"># cd hadoop/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop<span class="comment"># wget http://mirrors.sonic.net/apache/hadoop/common/hadoop-2.6.0/hadoop-2.6.0.tar.gz</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop<span class="comment"># tar xvzf hadoop-2.6.0.tar.gz</span></div></pre></td></tr></table></figure>
+
+
 <p>本次安装的是hdoop-2.6.0版的   </p>
 <h3 id="配置环境">配置环境</h3>
 <p>还需要配置环境变量，在~/.bashrc添加java和hadoop文件路径：</p>
-<pre><code class="bash">root@7cf73e2147ec:vi ~/.bashrc
-export JAVA_HOME=/usr/lib/jvm/java-7-oracle
-export HADOOP_HOME=/root/soft/apache/hadoop/hadoop-2.6.0
-export HADOOP_CONFIG_HOME=$HADOOP_HOME/etc/hadoop
-export PATH=$PATH:$HADOOP_HOME/bin
-export PATH=$PATH:$HADOOP_HOME/sbin
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:vi ~/.bashrc</div><div class="line"><span class="keyword">export</span> JAVA_HOME=/usr/lib/jvm/java-<span class="number">7</span>-oracle</div><div class="line"><span class="keyword">export</span> HADOOP_HOME=/root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span></div><div class="line"><span class="keyword">export</span> HADOOP_CONFIG_HOME=<span class="variable">$HADOOP_HOME</span>/etc/hadoop</div><div class="line"><span class="keyword">export</span> PATH=<span class="variable">$PATH</span>:<span class="variable">$HADOOP_HOME</span>/bin</div><div class="line"><span class="keyword">export</span> PATH=<span class="variable">$PATH</span>:<span class="variable">$HADOOP_HOME</span>/sbin</div></pre></td></tr></table></figure>
+
+
 <p>最后，一定记得要<code>source ~/.bashrc</code>使配置生效。</p>
 <h3 id="配置Hadoop">配置Hadoop</h3>
 <p>部署分布式的hadoop，主要分为两大角色：Master和Slave。从HDFS的角度，由若干个NameNode和DataNode组成（在分布式文件系统中，NameNode管理文件系统的命名空间，DataNode管理存储的数据）；从MapReduce的角度，将主机划分JobTracker 和TaskTracker(主节点的Job分配多个Task给从节点执行)。HDFS在集群上实现分布式文件系统，MapReduce在集群上实现了分布式计算和任务处理。HDFS在MapReduce任务处理过程中提供了文件操作和存储等支持，MapReduce在HDFS的基础上实现了任务的分发、跟踪、执行等工作，并收集结果，二者相互作用，完成了Hadoop分布式集群的主要任务<a href="http://blog.chinaunix.net/uid-25266990-id-3900239.html" target="_blank" rel="external">[参考]</a>。   </p>
@@ -583,94 +507,53 @@ export PATH=$PATH:$HADOOP_HOME/sbin
 <ul>
 <li>tmp：作为Hadoop的临时目录</li>
 <li>namenode：作为NameNode的存放目录</li>
-<li>datanode：作为DataNode的存放目录<pre><code class="bash">root@7cf73e2147ec:~# cd $HADOOP_HOME/
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0# mkdir tmp
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0# cd tmp/
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0/tmp# cd ../
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0# mkdir namenode
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0# cd namenode/
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0/namenode# cd ../
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0# mkdir datanode
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0# cd datanode/
-root@7cf73e2147ec::~/soft/apache/hadoop/hadoop-2.6.0/datanode# cd $HADOOP_CONFIG_HOME/
-root@7cf73e2147ec:~/soft/apache/hadoop/hadoop-2.6.0/etc/hadoop# cp mapred-site.xml.template mapred-site.xml
-</code></pre>
-接下来就是对上述几个文件进行配置：     </li>
+<li>datanode：作为DataNode的存放目录</li>
 </ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># cd $HADOOP_HOME/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># mkdir tmp</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># cd tmp/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/tmp<span class="comment"># cd ../</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># mkdir namenode</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># cd namenode/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/namenode<span class="comment"># cd ../</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># mkdir datanode</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span><span class="comment"># cd datanode/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec::~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/datanode<span class="comment"># cd $HADOOP_CONFIG_HOME/</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># cp mapred-site.xml.template mapred-site.xml</span></div></pre></td></tr></table></figure>
+
+
+<p>接下来就是对上述几个文件进行配置：     </p>
 <p><strong>core-site.xml配置：</strong></p>
-<pre><code class="xml">&lt;configuration&gt;
-    &lt;property&gt;
-            &lt;name&gt;hadoop.tmp.dir&lt;/name&gt;
-            &lt;value&gt;/root/soft/apache/hadoop/hadoop-2.6.0/tmp&lt;/value&gt;
-            &lt;description&gt;A base for other temporary directories.&lt;/description&gt;
-    &lt;/property&gt;
-    &lt;property&gt;
-            &lt;name&gt;fs.default.name&lt;/name&gt;
-            &lt;value&gt;hdfs://master:9000&lt;/value&gt;
-            &lt;final&gt;true&lt;/final&gt;
-            &lt;description&gt;xxxxxx.&lt;/description&gt;
-    &lt;/property&gt;
-&lt;/configuration&gt;
-</code></pre>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">name</span>&gt;</span>hadoop.tmp.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">value</span>&gt;</span>/root/soft/apache/hadoop/hadoop-2.6.0/tmp<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">description</span>&gt;</span>A base for other temporary directories.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">name</span>&gt;</span>fs.default.name<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">value</span>&gt;</span>hdfs://master:9000<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="title">description</span>&gt;</span>xxxxxx.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
 <ul>
 <li>hadoop.tmp.dir：配置为/root/soft/apache/hadoop/hadoop-2.6.0/tmp为此前创建的临时目录。</li>
 <li>fs.default.name：配置为hdfs://master:9000，指向Master节点  </li>
 </ul>
 <p><strong>hdfs-site.xml配置：</strong></p>
-<pre><code class="xml">&lt;configuration&gt;
-    &lt;property&gt;
-        &lt;name&gt;dfs.replication&lt;/name&gt;
-        &lt;value&gt;2&lt;/value&gt;
-        &lt;final&gt;true&lt;/final&gt;
-        &lt;description&gt;xxxxx.&lt;/description&gt;
-    &lt;/property&gt;
-    &lt;property&gt;
-        &lt;name&gt;dfs.namenode.name.dir&lt;/name&gt;
-        &lt;value&gt;/root/soft/apache/hadoop/hadoop-2.6.0/namenode&lt;/value&gt;
-        &lt;final&gt;true&lt;/final&gt;
-    &lt;/property&gt;
-    &lt;property&gt;
-        &lt;name&gt;dfs.datanode.data.dir&lt;/name&gt;
-        &lt;value&gt;/root/soft/apache/hadoop/hadoop-2.6.0/datanode&lt;/value&gt;
-        &lt;final&gt;true&lt;/final&gt;
-    &lt;/property&gt;
-&lt;/configuration&gt;
-</code></pre>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.replication<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>2<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">description</span>&gt;</span>xxxxx.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.namenode.name.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/root/soft/apache/hadoop/hadoop-2.6.0/namenode<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.datanode.data.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/root/soft/apache/hadoop/hadoop-2.6.0/datanode<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">final</span>&gt;</span>true<span class="tag">&lt;/<span class="title">final</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
 <ul>
 <li>dfs.replication：配置为2。指集群为一个Master节点和两个Slave节点。</li>
 <li>dfs.namenode.name.dir：配置为此前创建的NameNode目录</li>
 <li>dfs.datanode.data.dir：配置为此前创建的NaDataNode目录   </li>
 </ul>
 <p><strong>mapred-site.xml配置：</strong>   </p>
-<pre><code class="xml">&lt;configuration&gt;
-    &lt;property&gt;
-        &lt;name&gt;mapred.job.tracker&lt;/name&gt;
-        &lt;value&gt;master:9001&lt;/value&gt;
-        &lt;description&gt;xxxxxx.&lt;/description&gt;
-    &lt;/property&gt;
-&lt;/configuration&gt;
-</code></pre>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="title">property</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>mapred.job.tracker<span class="tag">&lt;/<span class="title">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>master:9001<span class="tag">&lt;/<span class="title">value</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="title">description</span>&gt;</span>xxxxxx.<span class="tag">&lt;/<span class="title">description</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="title">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></div></pre></td></tr></table></figure>
+
+
 <ul>
 <li>mapred.job.tracker：配置jobTracker在master节点。 </li>
 </ul>
 <p>除此之外，还要配置conf/hadoop-env.sh文件,修改为你的jdk的安装位置:   </p>
-<pre><code class="bash">export JAVA_HOME=/usr/lib/jvm/java-7-oracle
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">export</span> JAVA_HOME=/usr/lib/jvm/java-<span class="number">7</span>-oracle</div></pre></td></tr></table></figure>
+
+
 <p>还要格式化Namenode:<code>hadoop namenode -format</code></p>
 <h3 id="节点SSH互访">节点SSH互访</h3>
 <p>Hadoop启动以后，Namenode是通过SSH来启动和停止各个Datanode上的守护进程的，要求在节点之间执行指令的时候是不需要输入密码，故我们要配置SSH运用无密码公钥认证的形式。   </p>
 <p>首先，安装SSH   </p>
-<pre><code class="bash">root@7cf73e2147ec:~# sudo apt-get install ssh
-root@7cf73e2147ec:~# ssh localhost
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># sudo apt-get install ssh</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># ssh localhost</span></div></pre></td></tr></table></figure>
+
 <p>利用<code>ssh localhost</code>测试一下是否设置好无口令登陆，如果没有设置好，系统将要求你输入密码，通过下面的设置可以实现无口令登陆：   </p>
-<pre><code class="bash">root@7cf73e2147ec:~# ssh-keygen -t dsa -P &#39;&#39; -f ~/.ssh/id_dsa
-root@7cf73e2147ec:~# cat ~/.ssh/id_dsa.pub &gt;&gt; ~/.ssh/authorized_keys
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa</span></div><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># cat ~/.ssh/id_dsa.pub &gt;&gt; ~/.ssh/authorized_keys</span></div></pre></td></tr></table></figure>
+
+
 <p>最后，保存一份镜像:   </p>
-<pre><code class="bash">root@7cf73e2147ec:~# exit
-hadoop@hadoop:~$ docker commit -m &quot;hadoop image&quot; 358d6e31872e liushy/ubuntu:hadoop
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">root@<span class="number">7</span>cf73e2147ec:~<span class="comment"># exit</span></div><div class="line">hadoop@hadoop:~$ docker commit -m <span class="string">"hadoop image"</span> <span class="number">358</span>d6e31872e liushy/ubuntu:hadoop</div></pre></td></tr></table></figure>
+
 <h2 id="启动Hadoop集群"><strong>启动Hadoop集群</strong></h2>
 <p>接下来就是启动hadoop集群了，本次部署的hadoop方案是，一个Master节点，两个Slave节点： 　　</p>
 <font color="blue" size="4">#部署方案:</font>    
@@ -710,48 +593,33 @@ hadoop@hadoop:~$ docker commit -m &quot;hadoop image&quot; 358d6e31872e liushy/u
 <p>其中，<code>-h</code>指定的是容器的主机名，比如<code>master slave1 slave2</code><br>容器启动成功后，docker会为它们自动分配ip地址，是同一网段相互之间能够ping通，在容器中输入<code>ifconfig</code>查看。当然也可以修改ip，方法请自行百度。   </p>
 <h3 id="修改hosts">修改hosts</h3>
 <p>接下来修改各节点的hosts文件<code>vi /etc/hosts</code>，添加各节点的hostname和ip：   </p>
-<pre><code class="bash">172.17.0.2        master
-172.17.0.3        slave1
-172.17.0.4        slave2
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="number">172.17</span>.<span class="number">0.2</span>        master</div><div class="line"><span class="number">172.17</span>.<span class="number">0.3</span>        slave1</div><div class="line"><span class="number">172.17</span>.<span class="number">0.4</span>        slave2</div></pre></td></tr></table></figure>
+
+
 <h3 id="修改slaves">修改slaves</h3>
 <p>除此之外，还要在master节点上，配置slaves文件，该文件需要填写slave节点的hostname:   </p>
-<pre><code class="bash">root@master:~# cd $HADOOP_CONFIG_HOME/
-root@master:~/soft/apache/hadoop/hadoop-2.6.0/etc/hadoop# vi slaves
-slave1
-slave2
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@master:~<span class="comment"># cd $HADOOP_CONFIG_HOME/</span></div><div class="line">root@master:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># vi slaves</span></div><div class="line">slave1</div><div class="line">slave2</div></pre></td></tr></table></figure>
+
+
 <h3 id="启动Hadoop">启动Hadoop</h3>
 <p>在Master节点的hadoop目录下执行<code>start-all.sh</code>，启动Hadoop集群:   </p>
-<pre><code class="bash">root@master:~/soft/apache/hadoop/hadoop-2.6.0/etc/hadoop# start-all.sh 
-This script is Deprecated. Instead use start-dfs.sh and start-yarn.sh
-starting secondarynamenode, logging to /root/soft/apache/hadoop/hadoop-2.6.0/logs/hadoop-root-secondarynamenode-master.out
-starting yarn daemons
-...
-0.0.0.0:starting resourcemanager, logging to /root/soft/apache/hadoop/hadoop-2.6.0/logs/yarn--resourcemanager-master.out
-slave2: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-2.6.0/logs/yarn-root-nodemanager-slave2.out
-slave1: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-2.6.0/logs/yarn-root-nodemanager-slave1.out
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">root@master:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># start-all.sh </span></div><div class="line">This script is Deprecated. Instead use start-dfs.sh and start-yarn.sh</div><div class="line">starting secondarynamenode, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/hadoop-root-secondarynamenode-master.out</div><div class="line">starting yarn daemons</div><div class="line">...</div><div class="line"><span class="number">0.0</span>.<span class="number">0.0</span>:starting resourcemanager, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/yarn--resourcemanager-master.out</div><div class="line">slave2: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/yarn-root-nodemanager-slave2.out</div><div class="line">slave1: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/logs/yarn-root-nodemanager-slave1.out</div></pre></td></tr></table></figure>
+
 <p>打印上述日志，说明集群运行成功，碍于生产环境，运行较慢，可以多等等。使用jps命令可以查看各节点运行的进程。 </p>
 <p><strong>master节点：</strong>    </p>
-<pre><code class="bash">root@master:~/soft/apache/hadoop/hadoop-2.6.0/etc/hadoop# jps
-492 Jps
-429 ResourceManager
-295 SecondaryNameNode
-124 NameNode
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">root@master:~/soft/apache/hadoop/hadoop-<span class="number">2.6</span>.<span class="number">0</span>/etc/hadoop<span class="comment"># jps</span></div><div class="line"><span class="number">492</span> Jps</div><div class="line"><span class="number">429</span> ResourceManager</div><div class="line"><span class="number">295</span> SecondaryNameNode</div><div class="line"><span class="number">124</span> NameNode</div></pre></td></tr></table></figure>
+
+
+
 <p><strong>slave1节点：</strong></p>
-<pre><code class="bash">root@slave1:/# jps
-52 DataNode
-147 NodeManager
-240 Jps
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@slave1:/<span class="comment"># jps</span></div><div class="line"><span class="number">52</span> DataNode</div><div class="line"><span class="number">147</span> NodeManager</div><div class="line"><span class="number">240</span> Jps</div></pre></td></tr></table></figure>
+
+
+
 <p><strong>slave2节点：</strong>   </p>
-<pre><code class="bash">root@slave2:/# jps
-50 DataNode
-121 NodeManager
-250 Jps
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">root@slave2:/<span class="comment"># jps</span></div><div class="line"><span class="number">50</span> DataNode</div><div class="line"><span class="number">121</span> NodeManager</div><div class="line"><span class="number">250</span> Jps</div></pre></td></tr></table></figure>
+
+
 <p>通过web访问hadoop运行情况：<br><img src="/img/docker-hadoop.png" alt="hadoop-web"><br>针对hadoop的架构和操作此文就不深入阐述了。</p>
 <h2 id="结语"><strong>结语</strong></h2>
 <p>搭建环境是一件费时耗力，低效率的事情，搞不好就各种排错，甚至重来，这也是很多人不想接触环境的原因。如何做到少出错，快速定位问题，我想这也是很多正在搞环境的开发人员所渴望的一种工作状态。其实，没有什么捷径可走，还是要多积累，但有些事情必须得长期坚持，那就是学习操作系统，内存管理，网络等相关知识。很多疑难杂症多因环境变量的配置，硬盘故障，网络不通等引起，而我们往往因为对这些知识不熟悉，而手足无措。    </p>
@@ -780,8 +648,8 @@ slave1: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-2.6.0/l
     <content type="html"><![CDATA[<p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用：   </p>
 <h3 id="top">top</h3>
 <p>top命令是Linux下常用的性能分析工具，能够实时显示系统中进程的资源占用状况，类似于Windows的任务管理器可以直接使用top命令后，查看%MEM的内容。可以指定进程或者用户查看，如查看oracle用户的进程内存使用情况的话可以使用如下的命令：   </p>
-<pre><code class="bash">$ top -u oracle
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ top -u oracle</div></pre></td></tr></table></figure>
+
 <p>显示内容解释：</p>
 <blockquote>
 <p>PID：进程的ID<br>USER：进程所有者<br>PR：进程的优先级别，越小越优先被执行<br>NInice：值<br>VIRT：进程占用的虚拟内存<br>RES：进程占用的物理内存<br>SHR：进程使用的共享内存<br>S：进程的状态。S表示休眠，R表示正在运行，Z表示僵死状态，N表示该进程优先值为负数<br>%CPU：进程占用CPU的使用率<br>%MEM：进程使用的物理内存和总内存的百分比<br>TIME+：该进程启动后占用的总的CPU时间，即占用CPU使用时间的累加值。<br>COMMAND：进程启动命令名称   </p>
@@ -792,8 +660,9 @@ slave1: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-2.6.0/l
 </blockquote>
 <h3 id="pmap">pmap</h3>
 <p>可以根据进程查看进程相关信息占用的内存情况，(进程号可以通过ps查看)如下所示：</p>
-<pre><code class="bash">$ pmap -d 14596
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ pmap <span class="operator">-d</span> <span class="number">14596</span></div></pre></td></tr></table></figure>
+
+
 <h3 id="ps">ps</h3>
 <p>ps 的参数众多, 在此仅列出几个常用的参数：   </p>
 <blockquote>
@@ -812,62 +681,21 @@ slave1: starting nodemanager, logging to /root/soft/apache/hadoop/hadoop-2.6.0/l
 <p>free是最常用的查看内存占用的命令，有以下参数：   </p>
 <blockquote>
 <p>-b：以Byte为单位显示内存使用情况；<br> -k：以KB为单位显示内存使用情况；<br>-m：以MB为单位显示内存使用情况；<br>-o：不显示缓冲区调节列；<br>-s&lt;间隔秒数&gt;：持续观察内存使用状况；<br>-t：显示内存总和列；<br>-V：显示版本信息。<br>举例说明：  </p>
-<pre><code class="bash">free -m 
-            total  used  free shared  buffers cached 
-Mem:        2016   1973  42     0     163    1497 
--/+ buffers/cache: 312   1703 
-Swap:       4094    0    4094
-</code></pre>
-<p>输出的第一行：<br>total：内存总数；<br>used：已经使用的内存数；<br>free：空闲的内存数；<br>shared：当前已经废弃不用；<br>buffers Buffer：缓存内存数；<br>cached Page：缓存内存数。   </p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">free -m </div><div class="line">            total  used  free shared  buffers cached </div><div class="line">Mem:        <span class="number">2016</span>   <span class="number">1973</span>  <span class="number">42</span>     <span class="number">0</span>     <span class="number">163</span>    <span class="number">1497</span> </div><div class="line">-/+ buffers/cache: <span class="number">312</span>   <span class="number">1703</span> </div><div class="line">Swap:       <span class="number">4094</span>    <span class="number">0</span>    <span class="number">4094</span></div></pre></td></tr></table></figure>
+
+
+<p>输出的第一行：   </p>
+<blockquote>
+<p>total：内存总数；<br>used：已经使用的内存数；<br>free：空闲的内存数；<br>shared：当前已经废弃不用；<br>buffers Buffer：缓存内存数；<br>cached Page：缓存内存数。   </p>
 </blockquote>
 <p>第二行（-/+ buffers/cache）：   </p>
 <blockquote>
 <p>(-buffers/cache) used内存数：第一行Mem行中的 used – buffers – cached<br>(+buffers/cache) free内存数: 第一行Mem行中的 free + buffers + cached   </p>
 </blockquote>
 <p>第三行是交换区的使用情况，那么什么时候会用到交换区的内存呢，即当可用内存少于额定值的时候，就会进行交换。可以通过<code>cat /proc/meminfo</code>来查看内存额定值：</p>
-<pre><code class="bash">hadoop@hadoop:~$ cat /proc/meminfo 
-MemTotal:        1017576 kB
-MemFree:          206012 kB
-MemAvailable:     479832 kB
-Buffers:           47344 kB
-Cached:           333836 kB
-SwapCached:            0 kB
-Active:           455128 kB
-Inactive:         271084 kB
-Active(anon):     345856 kB
-Inactive(anon):     4140 kB
-Active(file):     109272 kB
-Inactive(file):   266944 kB
-Unevictable:          32 kB
-Mlocked:              32 kB
-SwapTotal:       1047548 kB
-SwapFree:        1047548 kB
-Dirty:               588 kB
-Writeback:             0 kB
-AnonPages:        345060 kB
-Mapped:           174264 kB
-Shmem:              4968 kB
-Slab:              38328 kB
-SReclaimable:      20452 kB
-SUnreclaim:        17876 kB
-KernelStack:        5312 kB
-PageTables:        23708 kB
-NFS_Unstable:          0 kB
-Bounce:                0 kB
-WritebackTmp:          0 kB
-CommitLimit:     1556336 kB
-Committed_AS:    2404256 kB
-VmallocTotal:   34359738367 kB
-VmallocUsed:       23324 kB
-VmallocChunk:   34359709832 kB
-HardwareCorrupted:     0 kB
-AnonHugePages:     65536 kB
-HugePages_Total:       0
-HugePages_Free:        0
-HugePages_Rsvd:        0
-HugePages_Surp:        0
-Hugepagesize:       2048 kB
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ cat /proc/meminfo </div><div class="line">MemTotal:        <span class="number">1017576</span> kB</div><div class="line">MemFree:          <span class="number">206012</span> kB</div><div class="line">MemAvailable:     <span class="number">479832</span> kB</div><div class="line">Buffers:           <span class="number">47344</span> kB</div><div class="line">Cached:           <span class="number">333836</span> kB</div><div class="line">SwapCached:            <span class="number">0</span> kB</div><div class="line">Active:           <span class="number">455128</span> kB</div><div class="line">Inactive:         <span class="number">271084</span> kB</div><div class="line">Active(anon):     <span class="number">345856</span> kB</div><div class="line">Inactive(anon):     <span class="number">4140</span> kB</div><div class="line">Active(file):     <span class="number">109272</span> kB</div><div class="line">Inactive(file):   <span class="number">266944</span> kB</div><div class="line">Unevictable:          <span class="number">32</span> kB</div><div class="line">Mlocked:              <span class="number">32</span> kB</div><div class="line">SwapTotal:       <span class="number">1047548</span> kB</div><div class="line">SwapFree:        <span class="number">1047548</span> kB</div><div class="line">Dirty:               <span class="number">588</span> kB</div><div class="line">Writeback:             <span class="number">0</span> kB</div><div class="line">AnonPages:        <span class="number">345060</span> kB</div><div class="line">Mapped:           <span class="number">174264</span> kB</div><div class="line">Shmem:              <span class="number">4968</span> kB</div><div class="line">Slab:              <span class="number">38328</span> kB</div><div class="line">SReclaimable:      <span class="number">20452</span> kB</div><div class="line">SUnreclaim:        <span class="number">17876</span> kB</div><div class="line">KernelStack:        <span class="number">5312</span> kB</div><div class="line">PageTables:        <span class="number">23708</span> kB</div><div class="line">NFS_Unstable:          <span class="number">0</span> kB</div><div class="line">Bounce:                <span class="number">0</span> kB</div><div class="line">WritebackTmp:          <span class="number">0</span> kB</div><div class="line">CommitLimit:     <span class="number">1556336</span> kB</div><div class="line">Committed_AS:    <span class="number">2404256</span> kB</div><div class="line">VmallocTotal:   <span class="number">34359738367</span> kB</div><div class="line">VmallocUsed:       <span class="number">23324</span> kB</div><div class="line">VmallocChunk:   <span class="number">34359709832</span> kB</div><div class="line">HardwareCorrupted:     <span class="number">0</span> kB</div><div class="line">AnonHugePages:     <span class="number">65536</span> kB</div><div class="line">HugePages_Total:       <span class="number">0</span></div><div class="line">HugePages_Free:        <span class="number">0</span></div><div class="line">HugePages_Rsvd:        <span class="number">0</span></div><div class="line">HugePages_Surp:        <span class="number">0</span></div><div class="line">Hugepagesize:       <span class="number">2048</span> kB</div></pre></td></tr></table></figure>
+
 ]]></content>
     <summary type="html">
     <![CDATA[<p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用：   </p>
@@ -889,36 +717,50 @@ Hugepagesize:       2048 kB
     <updated>2017-03-12T13:37:47.000Z</updated>
     <content type="html"><![CDATA[<p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)<br>以下是本人使用和收集的OVS相关配置命令：       </p>
 <p>建立 VXLAN Network ID (VNI) 和指定的 OpenFlow port number, eg: VNI=5566, OF_PORT=9   </p>
-<pre><code class="bash"> ovs-vsctl set interface vxlan type=vxlan option:remote_ip=x.x.x.x option:key=5566 ofport_request=9
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=x.x.x.x option:key=<span class="number">5566</span> ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
+
+
+
 <p>VNI flow by flow</p>
-<pre><code class="bash">ovs-vsctl set interface vxlan type=vxlan option:remote_ip=140.113.215.200 option:key=flow ofport_request=9
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=<span class="number">140.113</span>.<span class="number">215.200</span> option:key=flow ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
+
+
+
 <p>设置 VXLAN tunnel id   </p>
-<pre><code class="bash">ovs-ofctl add-flow ovs-br in_port=1,actions=set_field:5566-&gt;tun_id,output:2
-ovs-ofctl add-flow s1 in_port=2,tun_id=5566,actions=output:1
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ovs-ofctl add-flow ovs-br <span class="keyword">in</span>_port=<span class="number">1</span>,actions=<span class="keyword">set</span>_field:<span class="number">5566</span>-&gt;tun_id,output:<span class="number">2</span></div><div class="line">ovs-ofctl add-flow s1 <span class="keyword">in</span>_port=<span class="number">2</span>,tun_id=<span class="number">5566</span>,actions=output:<span class="number">1</span></div></pre></td></tr></table></figure>
+
+
+
 <p>查询out-of-band $ in-band   </p>
-<pre><code class="bash">ovs-vsctl get controller ovs-br connection-mode
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl get controller ovs-br connection-mode</div></pre></td></tr></table></figure>
+
+
+
 <p>Out-of-band   </p>
-<pre><code class="bash">ovs-vsctl set controller ovs-br connection-mode=out-of-band
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=out-of-band</div></pre></td></tr></table></figure>
+
+
+
 <p>In-band (default)   </p>
-<pre><code class="bash">ovs-vsctl set controller ovs-br connection-mode=in-band
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=<span class="keyword">in</span>-band</div></pre></td></tr></table></figure>
+
+
 <p>移除 hidden flow   </p>
-<pre><code class="bash">ovs-vsctl set bridge br0 other-config:disable-in-band=true
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> bridge br0 other-config:disable-in-band=<span class="literal">true</span></div></pre></td></tr></table></figure>
+
+
 <p>设置 GRE tunnel   </p>
-<pre><code class="bash">ovs−vsctl add−port ovs-br ovs-gre -- set interface ovs-gre type=gre options:remote_ip=1.2.3.4
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs−vsctl add−port ovs-br ovs-gre -- <span class="keyword">set</span> interface ovs-gre <span class="built_in">type</span>=gre options:remote_ip=<span class="number">1.2</span>.<span class="number">3.4</span></div></pre></td></tr></table></figure>
+
+
 <p>设置 Vlan trunk   </p>
-<pre><code class="bash">ovs-vsctl add-port ovs-br eth0 trunk=3,4,5,6
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl add-port ovs-br eth0 trunk=<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span></div></pre></td></tr></table></figure>
+
+
 <p>设置已 add 的 port 为 access port, vlan id 9</p>
-<pre><code class="bash">ovs-vsctl set port eth0 tag=9
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> port eth0 tag=<span class="number">9</span></div></pre></td></tr></table></figure>
+
+
 <p>网络工程是一门大学问，虽然本科四年里偶有涉及，硕士阶段专攻了一年多的路由交换原理，到目前开始从事网络安全开发工作，我也不敢说自己精通网络，深知自身仍然还有很多要学的地方，而对于网络知识的学习，我觉得最好的方式莫过于搞一套网络设备来慢慢折腾，模拟一个个应用场景，敲一下各种配置命令，能够一步步照着做了，想弄明白网络就不是难事，总的来说，急不得，在了解理论的基础上，动手实践理解会更深刻，还有一点就是多做记录，正所谓好记性不如烂笔头，我推荐做一个自己的博客或者使用笔记软件，记录自己平时的实践和理论学习。<br>参考网站：<br><a href="http://blog.csdn.net/beginning1126/article/details/41172365" title=" http://blog.csdn.net/beginning1126/article/details/41172365" target="_blank" rel="external"> http://blog.csdn.net/beginning1126/article/details/41172365</a><br><a href="http://blog.csdn.net/tantexian/article/details/46707175" title="http://blog.csdn.net/tantexian/article/details/46707175" target="_blank" rel="external">http://blog.csdn.net/tantexian/article/details/46707175</a></p>
 ]]></content>
     <summary type="html">
@@ -972,49 +814,29 @@ ovs-ofctl add-flow s1 in_port=2,tun_id=5566,actions=output:1
 <p>看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太多时间看源码，最近做实验啥的感觉瓶颈了，唉，遂决心好好研究一下源码，看是否能给自己新的灵感。此次参考的源码是我修改过的MACTracker，我将要分析的是其中对Packet_in事件处理的方法recevie（）   </p>
 <h2 id="Packet_in处理分析">Packet_in处理分析</h2>
 <p>首先，贴上代码，主要功能是获取连上控制器的主机的MAC地址，IP地址并在控制台显示出来。   </p>
-<pre><code class="java">public net.floodlightcontroller.core.IListener.Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
-Ethernet eth = IFloodlightProviderService.bcStore.get(cntx,IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
-Long sourceMACHash = Ethernet.toLong(eth.getSourceMACAddress());
-if(eth.getPayload() instanceof IPv4){
-  IPv4 pkt = (IPv4)eth.getPayload().clone();
-  String src = IPv4.fromIPv4Address(pkt.getSourceAddress());
-  String dst = IPv4.fromIPv4Address(pkt.getDestinationAddress());
-  if (!macAddresses.contains(sourceMACHash)) {
-     macAddresses.add(sourceMACHash);
-     logger.info(&quot;MAC Address: {} IP Address: {} seen on switch&quot;,HexString.toHexString(sourceMACHash),src);
-      }
-  }
-return Command.CONTINUE;
-}
-</code></pre>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> net.floodlightcontroller.core.IListener.Command <span class="title">receive</span>(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {</div><div class="line">Ethernet eth = IFloodlightProviderService.bcStore.get(cntx,IFloodlightProviderService.CONTEXT_PI_PAYLOAD);</div><div class="line">Long sourceMACHash = Ethernet.toLong(eth.getSourceMACAddress());</div><div class="line"><span class="keyword">if</span>(eth.getPayload() <span class="keyword">instanceof</span> IPv4){</div><div class="line">  IPv4 pkt = (IPv4)eth.getPayload().clone();</div><div class="line">  String src = IPv4.fromIPv4Address(pkt.getSourceAddress());</div><div class="line">  String dst = IPv4.fromIPv4Address(pkt.getDestinationAddress());</div><div class="line">  <span class="keyword">if</span> (!macAddresses.contains(sourceMACHash)) {</div><div class="line">	 macAddresses.add(sourceMACHash);</div><div class="line">	 logger.info(<span class="string">"MAC Address: {} IP Address: {} seen on switch"</span>,HexString.toHexString(sourceMACHash),src);</div><div class="line">      }</div><div class="line">  }</div><div class="line"><span class="keyword">return</span> Command.CONTINUE;</div><div class="line">}</div></pre></td></tr></table></figure>
+
+
 <h3 id="Packet_in包处理流程">Packet_in包处理流程</h3>
 <p>1.receive()是模块用来处理Packt_in数据包的函数，每个需要处理Packet_in包的模块均默认以它命名，所以它们获取OpenFlow消息的方式也是相同的。<br>2.首先通过代码：   </p>
-<pre><code class="java">Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD)
-</code></pre>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD)</div></pre></td></tr></table></figure>
+
+
 <p>获取消息。其中通过调用接口IFloodlightProviderService的静态方法bcstore获取OpenFlow消息，而该消息是一个Ethernet对象。我们可以通过Ethernet里的方法getSourceMACaddress()获取该报文的源MAC地址；然后再通过getPayload()获取报文的有效载荷(所谓有效载荷，指的是除去协议头部之外实际传输的数据)，根据有效载荷可以判断报文的协议类型：ARP,IPv4,ICMP,DUCP等网络层协议类型。<br>3.若是IPv4包：IPv4类里有个方法getSourceAddress()获取源IP地址(二进制)，通过方法fromIPv4Address将IP地址转换为点分十进制的。   </p>
 <h3 id="bcstore">bcstore</h3>
 <p>bcstore是接口IFloodlightProvider里定义的一个对象，主要是存储OpenFlow消息，消息的对象是Ethernet类型的。bcstore本身是FloodightContextStore&lt;&gt;类型的，该类型有个方法用来获取存储的消息：get(FloodlightContext bc,String key).方法具体实现如下：   </p>
-<pre><code class="java">public V get(FloodlightContext bc, String key) {
-        return (V)bc.storage.get(key);}
-</code></pre>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> V <span class="title">get</span>(FloodlightContext bc, String key) {</div><div class="line">        <span class="keyword">return</span> (V)bc.storage.get(key);}</div></pre></td></tr></table></figure>
+
+
 <h3 id="return-Command-CONTINUE">return.Command.CONTINUE</h3>
 <p>最开始照着开发者文档做的时候，看到recieve()结尾处的return.Command.CONTINUE的解释是“该方法返回Command.CONTINUE以便其他处理程序继续处理”，而且我查看了其他好几个模块recieve函数返回值都是Command.CONTINUE，于是就找到了Command的源头。原来Command是接口<em>Ilistener</em>下的一个枚举类型：   </p>
-<pre><code class="java">public enum Command {
-        CONTINUE, STOP
-    }
-</code></pre>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">enum</span> Command {</div><div class="line">        CONTINUE, STOP</div><div class="line">    }</div></pre></td></tr></table></figure>
+
+
 <p>当时我就纳闷了，返回一个枚举类型值，谁来处理它？怎么处理这个值以实现能让其他模块继续执行的功能？于是我挨个模块源码寻找,终于在模块<code>net.floodlight.core.internal.controller</code>找到了它的身影：   </p>
-<pre><code class="java"> pktinProcTime.recordStartTimePktIn();
- Command cmd;
- for (IOFMessageListener listener : listeners) {
-      pktinProcTime.recordStartTimeComp(listener);
-      cmd = listener.receive(sw, m, bc);
-      pktinProcTime.recordEndTimeComp(listener);
-      if (Command.STOP.equals(cmd)) {
-         break;
-      }
- }
-</code></pre>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">pktinProcTime.recordStartTimePktIn();</div><div class="line">Command cmd;</div><div class="line"><span class="keyword">for</span> (IOFMessageListener listener : listeners) {</div><div class="line">     pktinProcTime.recordStartTimeComp(listener);</div><div class="line">     cmd = listener.receive(sw, m, bc);</div><div class="line">     pktinProcTime.recordEndTimeComp(listener);</div><div class="line">     <span class="keyword">if</span> (Command.STOP.equals(cmd)) {</div><div class="line">        <span class="keyword">break</span>;</div><div class="line">     }</div><div class="line">}</div></pre></td></tr></table></figure>
+
+
 <p>这段代码就是对recevie()返回值进行处理，如果返回的是STOP，则该事件停止处理，也就是当前模块处理完后其他模块就没法处理了，而默认情况下事件会被每个模块遍历处理，所以我们会看到大多处理事件的模块返回的值都是CONTINUE。   </p>
 ]]></content>
     <summary type="html">
@@ -1072,32 +894,36 @@ return Command.CONTINUE;
 <p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如<a href="http://www.openflowhub.org/display/floodlightcontroller/FAQ+Floodlight+OpenFlow+Controller" title="Floodlight FAQ" target="_blank" rel="external">Floodlight FAQ</a>所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。   </p>
 <h2 id="实验环境">实验环境</h2>
 <p>本次实验是在一台物理主机上完成实验拓扑，控制器部署和sflow部署。通过mininet模拟一个switch，三台host。控制器使用Floodlight。由于mininet已经部署了sflow agent，所以只需要部署sflow collector。<br>实验拓扑如下图：<br><img src="/img/ddos-topo.png" alt="ddos-topo"><br>sflow官网推荐了几款sflow软件如sflow-trend,sflow-rt等，这里我选择的是sflow-rt，安装sflow-rt很简单。<br>1.首先，下载<a href="http://www.inmon.com/products/sFlow-RT.php" target="_blank" rel="external">官方压缩包</a><br>2.然后解压安装：    </p>
-<pre><code class="bash">$tar -zxvf sflow.tar.gz   
-$cd sflow/sflow-rt   
-$./start.sh
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$tar</span> -zxvf sflow.tar.gz   </div><div class="line"><span class="variable">$cd</span> sflow/sflow-rt   </div><div class="line">$./start.sh</div></pre></td></tr></table></figure>
+
+
 <p>在ovs交换机上还要配置sflow agent，输入以下命令：   </p>
-<pre><code class="bash">$sudo ovs-vsctl -- --id=@sflow create sflow agent=eth0 target=\&quot;192.168.2.233:6343\&quot; header=128 sampling=10 polling=1 -- set bridge s1 sflow=@sflow
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$sudo</span> ovs-vsctl -- --id=@sflow create sflow agent=eth0 target=\<span class="string">"192.168.2.233:6343\" header=128 sampling=10 polling=1 -- set bridge s1 sflow=@sflow</span></div></pre></td></tr></table></figure>
+
+
 <p>注意：agent是要监听的网卡，这个网卡一定要能监听到我们所需的交换机的流量，target是sflow collector所在的ip地址，bridge设定需要监听的交换机。   </p>
 <h2 id="实验原理">实验原理</h2>
 <p>sflow-rt统计到的每个接口的流量信息，我们可以通过sflow-rt的rest api获取json数据并对json数据进行解析获得。对解析到的数据进行判断分析后即可实施策略。本次实验原理如下：<br>1.首先对sflow-rt进行配置，设定metric=ddos,并设定它的阈值，当监测到的流量超过这个阈值时即判断为ddos；<br><em>定义地址组</em>：   </p>
-<pre><code class="bash">curl -H &quot;Content-Type:application/json&quot; -X PUT --data &quot;{external:[&#39;0.0.0.0/0&#39;], internal:[&#39;10.0.0.0/8&#39;]}&quot; http://localhost:8008/group/json
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -H <span class="string">"Content-Type:application/json"</span> -X PUT --data <span class="string">"{external:['0.0.0.0/0'], internal:['10.0.0.0/8']}"</span> http://localhost:<span class="number">8008</span>/group/json</div></pre></td></tr></table></figure>
+
+
 <p><em>定义流 </em>：   </p>
-<pre><code class="bash">curl -H &quot;Content-Type:application/json&quot; -X PUT --data &quot;{keys:&#39;ipsource,ipdestination&#39;, value:&#39;frames&#39;, filter:&#39;sourcegroup=external&amp;destinationgroup=internal&#39;}&quot; http://localhost:8008/flow/incoming/json
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -H <span class="string">"Content-Type:application/json"</span> -X PUT --data <span class="string">"{keys:'ipsource,ipdestination', value:'frames', filter:'sourcegroup=external&destinationgroup=internal'}"</span> http://localhost:<span class="number">8008</span>/flow/incoming/json</div></pre></td></tr></table></figure>
+
+
 <p><em>定义阈值</em>：   </p>
-<pre><code class="bash">curl -H &quot;Content-Type:application/json&quot; -X PUT --data &quot;{metric:&#39;ddos&#39;, value:1000}&quot; http://localhost:8008/threshold/incoming/json
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -H <span class="string">"Content-Type:application/json"</span> -X PUT --data <span class="string">"{metric:'ddos', value:1000}"</span> http://localhost:<span class="number">8008</span>/threshold/incoming/json</div></pre></td></tr></table></figure>
+
 <p>2.若判断为ddos，即调用Floodlight的staticflowentrypusher对ddos攻击包进行丢弃；<br>由于sflow获取的的openflow信息是使用snmp中定义的ifindex对各接口进行标记，而openflow有它自己的标记方式，所以应该对openflow端口号和ifindex端口号进行映射。本次实验采用nodejs作为应用语言。    </p>
 <h2 id="实验结果">实验结果</h2>
 <p>本次实验ddos攻击采取host1向host2泛洪的方式。命令如下：   </p>
-<pre><code class="bash">mininet&gt;h1 ping -f h2
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mininet&gt;h1 ping <span class="operator">-f</span> h2</div></pre></td></tr></table></figure>
+
+
 <p>运行ddos防御应用前：<br><img src="/img/ddos泛洪.png" alt="ddos"><br>我们可以看到，未运行ddos防御应用时，h1向h2泛洪的数据包达到了大约每秒30k个包。<br>接下来运行ddos防御应用：   </p>
-<pre><code class="bash">nodejs ddosm.js
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">nodejs ddosm.js</div></pre></td></tr></table></figure>
+
+
 <p>运行ddos防御应用后：<br><img src="/img/ddos截取.png" alt="ddos2"><br>可以看出，运行ddos防御应用后，h1向h2泛洪的包迅速被完全的丢弃了。   </p>
 <h2 id="总结">总结</h2>
 <p>写这篇文主要目的不是介绍怎么写应用，而是对sflow性能的一个展示。流量监控是sdn中很重要的一环，我们在获取各个接口的实时信息后，可以实现很多的服务，比如负载均衡，QOS，流量工程等。这也是我初次尝试sflow,还有很多不解的地方，我的想法是，做好sflow与控制器的交互，完善流量监控的功能，为以后的各种服务提供帮助。<br><strong>参考网站</strong>：<a href="http://blog.sflow.com/2013/05/controlling-large-flows-with-openflow.html" target="_blank" rel="external">sflow官博</a><br><strong>DDOS源码参考</strong>：<a href="https://github.com/shylou/floodlight-ddos" target="_blank" rel="external">DDOS源码</a></p>
@@ -1158,67 +984,19 @@ $./start.sh
 <a id="more"></a>     
 
 <p>接下来是添加模块具体步骤：<br>1.进入trunk的package文件夹，创建模块目录：<br>cd trunk/package<br>mkdir example<br>2.进入example目录，创建Mackefile文件和代码路径：<br>cd example<br>touch Mackefile<br>mkdir src<br>Makefile代码如下：  </p>
-<pre><code>    include $(TOPDIR)/rules.mk   
-    include $(INCLUDE_DIR)/kernel.mk   
-    PKG_NAME:=example
-    PKG_RELEASE:=1
-    include $(INCLUDE_DIR)/package.mk
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">include</span> <span class="variable">$(</span><span class="constant">TOPDIR</span>)/rules.mk   </div><div class="line"><span class="keyword">include</span> <span class="variable">$(</span><span class="constant">INCLUDE_DIR</span>)/kernel.mk   </div><div class="line"><span class="constant">PKG_NAME</span><span class="symbol">:</span>=example</div><div class="line"><span class="constant">PKG_RELEASE</span><span class="symbol">:</span>=<span class="number">1</span></div><div class="line"><span class="keyword">include</span> <span class="variable">$(</span><span class="constant">INCLUDE_DIR</span>)/package.mk</div><div class="line">   </div><div class="line">define <span class="constant">KernelPackage</span>/example</div><div class="line">  <span class="constant">SUBMENU</span><span class="symbol">:</span>=<span class="constant">Other</span> modules</div><div class="line">  <span class="constant">TITLE</span><span class="symbol">:</span>=example driver</div><div class="line">  <span class="constant">DEPENDS</span><span class="symbol">:</span>=<span class="variable">@LINUX_2_6</span></div><div class="line">  <span class="constant">FILES</span><span class="symbol">:</span>=<span class="variable">$(</span><span class="constant">PKG_BUILD_DIR</span>)/*.<span class="variable">$(</span><span class="constant">LINUX_KMOD_SUFFIX</span>)</div><div class="line">  <span class="constant">KCONFIG</span><span class="symbol">:</span>=</div><div class="line">endef</div><div class="line">    </div><div class="line">define <span class="constant">KernelPackage</span>/example/description</div><div class="line">  <span class="constant">Kernel</span> <span class="class"><span class="keyword">module</span> <span class="title">to</span> <span class="title">example</span></span></div><div class="line">endef</div><div class="line">   </div><div class="line"><span class="constant">EXTRA_KCONFIG</span><span class="symbol">:</span>= \</div><div class="line">	<span class="constant">CONFIG_EXAMPLE</span>=m</div><div class="line"><span class="constant">EXTRA_CFLAGS</span><span class="symbol">:</span>= \</div><div class="line">	<span class="variable">$(</span>patsubst <span class="constant">CONFIG_</span>%, -<span class="constant">DCONFIG_</span>%=<span class="number">1</span>, <span class="variable">$(</span>patsubst %=m,%,<span class="variable">$(</span>filter %=m,<span class="variable">$(</span><span class="constant">EXTRA_KCONFIG</span>)))) \</div><div class="line">	<span class="variable">$(</span>patsubst <span class="constant">CONFIG_</span>%, -<span class="constant">DCONFIG_</span>%=<span class="number">1</span>, <span class="variable">$(</span>patsubst %=y,%,<span class="variable">$(</span>filter %=y,<span class="variable">$(</span><span class="constant">EXTRA_KCONFIG</span>)))) \</div><div class="line"><span class="constant">MAKE_OPTS</span><span class="symbol">:</span>= \</div><div class="line">	<span class="constant">ARCH</span>=<span class="string">"$(LINUX_KARCH)"</span> \</div><div class="line">	<span class="constant">CROSS_COMPILE</span>=<span class="string">"$(TARGET_CROSS)"</span> \</div><div class="line">	<span class="constant">SUBDIRS</span>=<span class="string">"$(PKG_BUILD_DIR)"</span> \</div><div class="line">	<span class="constant">EXTRA_CFLAGS</span>=<span class="string">"$(EXTRA_CFLAGS)"</span> \</div><div class="line">	<span class="variable">$(</span><span class="constant">EXTRA_KCONFIG</span>)</div><div class="line">   </div><div class="line">define <span class="constant">Build</span>/<span class="constant">Prepare</span></div><div class="line">	mkdir -p <span class="variable">$(</span><span class="constant">PKG_BUILD_DIR</span>)</div><div class="line">	<span class="variable">$(</span><span class="constant">CP</span>) ./src/* <span class="variable">$(</span><span class="constant">PKG_BUILD_DIR</span>)/</div><div class="line">endef</div><div class="line">       </div><div class="line">define <span class="constant">Build</span>/<span class="constant">Compile</span></div><div class="line">	<span class="variable">$(</span><span class="constant">MAKE</span>) -<span class="constant">C</span> <span class="string">"$(LINUX_DIR)"</span> \</div><div class="line">		<span class="variable">$(</span><span class="constant">MAKE_OPTS</span>) \</div><div class="line">		modules</div><div class="line">endef</div><div class="line"><span class="variable">$(</span>eval <span class="variable">$(</span>call <span class="constant">KernelPackage</span>,example))</div></pre></td></tr></table></figure>
 
-    define KernelPackage/example
-      SUBMENU:=Other modules
-      TITLE:=example driver
-      DEPENDS:=@LINUX_2_6
-      FILES:=$(PKG_BUILD_DIR)/*.$(LINUX_KMOD_SUFFIX)
-      KCONFIG:=
-    endef
 
-    define KernelPackage/example/description
-      Kernel module to example
-    endef
 
-    EXTRA_KCONFIG:= \
-        CONFIG_EXAMPLE=m
-    EXTRA_CFLAGS:= \
-        $(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(EXTRA_KCONFIG)))) \
-        $(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=y,%,$(filter %=y,$(EXTRA_KCONFIG)))) \
-    MAKE_OPTS:= \
-        ARCH=&quot;$(LINUX_KARCH)&quot; \
-        CROSS_COMPILE=&quot;$(TARGET_CROSS)&quot; \
-        SUBDIRS=&quot;$(PKG_BUILD_DIR)&quot; \
-        EXTRA_CFLAGS=&quot;$(EXTRA_CFLAGS)&quot; \
-        $(EXTRA_KCONFIG)
+<p>3.进入src目录，创建代码路径和相关源文件<br>cd src<br>touch example.c Kconfig Makefile<br>example.c代码：    </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;linux/init.h&gt;</span></div><div class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;linux/module.h&gt;</span></div><div class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;linux/kernel.h&gt;</span></div><div class="line"><span class="comment">/* hello_init ---- 初始化函数，当模块装载时被调用，如果成功装载返回0 否则返回非0值 */</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">int</span> __init hello_init(<span class="keyword">void</span>)</div><div class="line">{</div><div class="line">	printk(<span class="string">"I bear a charmed life.\n"</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">}</div><div class="line"><span class="comment">/* hello_exit ---- 退出函数，当模块卸载时被调用 */</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">void</span> __exit hello_exit(<span class="keyword">void</span>)</div><div class="line">{</div><div class="line">	printk(<span class="string">"Out, out, brief candle\n"</span>);</div><div class="line">}</div><div class="line">module_init(hello_init);</div><div class="line">module_exit(hello_exit);</div><div class="line">MODULE_LICENSE(<span class="string">"GPL"</span>);</div><div class="line">MODULE_AUTHOR(<span class="string">"liuxie"</span>);</div></pre></td></tr></table></figure>
 
-    define Build/Prepare
-        mkdir -p $(PKG_BUILD_DIR)
-        $(CP) ./src/* $(PKG_BUILD_DIR)/
-    endef
 
-    define Build/Compile
-        $(MAKE) -C &quot;$(LINUX_DIR)&quot; \
-            $(MAKE_OPTS) \
-            modules
-    endef
-    $(eval $(call KernelPackage,example))
-</code></pre><p>3.进入src目录，创建代码路径和相关源文件<br>cd src<br>touch example.c Kconfig Makefile<br>example.c代码：    </p>
-<pre><code class="c">    #include &lt;linux/init.h&gt;
-    #include &lt;linux/module.h&gt;
-    #include &lt;linux/kernel.h&gt;
-    /* hello_init ---- 初始化函数，当模块装载时被调用，如果成功装载返回0 否则返回非0值 */
-    static int __init hello_init(void)
-    {
-        printk(&quot;I bear a charmed life.\n&quot;);
-        return 0;
-    }
-    /* hello_exit ---- 退出函数，当模块卸载时被调用 */
-    static void __exit hello_exit(void)
-    {
-        printk(&quot;Out, out, brief candle\n&quot;);
-    }
-    module_init(hello_init);
-    module_exit(hello_exit);
-    MODULE_LICENSE(&quot;GPL&quot;);
-    MODULE_AUTHOR(&quot;liuxie&quot;);
-</code></pre>
+
+
+
+
+
 ]]></content>
     <summary type="html">
     <![CDATA[<p>这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.     </p>
@@ -1241,20 +1019,20 @@ $./start.sh
     <content type="html"><![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="http://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">trobuleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
 <h2 id="Quick_Start">Quick Start</h2>
 <h3 id="Create_a_new_post">Create a new post</h3>
-<pre><code class="bash">$ hexo new &quot;My New Post&quot;
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
+
 <p>More info: <a href="http://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
 <h3 id="Run_server">Run server</h3>
-<pre><code class="bash">$ hexo server
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
+
 <p>More info: <a href="http://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
 <h3 id="Generate_static_files">Generate static files</h3>
-<pre><code class="bash">$ hexo generate
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
+
 <p>More info: <a href="http://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
 <h3 id="Deploy_to_remote_sites">Deploy to remote sites</h3>
-<pre><code class="bash">$ hexo deploy
-</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
+
 <p>More info: <a href="http://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
 ]]></content>
     <summary type="html">
