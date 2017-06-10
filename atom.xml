@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-05-21T07:55:50.978Z</updated>
+  <updated>2017-06-10T09:50:26.739Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,78 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[Java数据库一般操作]]></title>
+    <link href="http://liushy.com/2017/06/10/jdbc/"/>
+    <id>http://liushy.com/2017/06/10/jdbc/</id>
+    <published>2017-06-10T05:38:00.000Z</published>
+    <updated>2017-06-10T09:47:13.000Z</updated>
+    <content type="html"><![CDATA[<font color="red" size="5">#SQL常用命令</font>       
+
+<p>连接：<code>mysql -u user -p passwd</code>;<br>创建库：<code>CREATE DATABASE 数据库名</code>;<br>删除库：<code>DROP DATABASE 数据库名</code>;<br>使用库：<code>USE 数据库名</code>;<br>查看表：<code>DESC 表名</code>;<br>创建表：<code>CREATE TABLE 表名 （字段名1 字段类型 [default 默认值] [约束]，字段名2 ....）</code>；<br>插入表：<code>INSERT INTO 表名[字段1，字段2，...] VALUES(值1，值2，...)</code>;<br>删除记录：<code>DELETE FROM 表名 where ....</code>;<br>修改记录：<code>UPDATE 表名 SET 字段1=值1，字段2=值2.... where .....</code>;<br>查询记录：<code>SELECT 字段1，字段2... FROM 表名</code>;<br>        <code>SELECT *FROM 表名 字段1 LIKE &#39;%..%&#39; LIMIT 0,5</code>;（%表示匹配任意数据，_表示一个字符，limit指定开始结束行）            </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="operator"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> <span class="keyword">IF</span> <span class="keyword">EXISTS</span> <span class="string">`items`</span>;</span></div><div class="line"><span class="operator"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`items`</span> (</span></div><div class="line">  <span class="string">`id`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> auto_increment,</div><div class="line">  <span class="string">`name`</span> <span class="built_in">varchar</span>(<span class="number">50</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`city`</span> <span class="built_in">varchar</span>(<span class="number">50</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`price`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`number`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`picture`</span> <span class="built_in">varchar</span>(<span class="number">500</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="keyword">PRIMARY</span> <span class="keyword">KEY</span>  (<span class="string">`id`</span>)</div><div class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> AUTO_INCREMENT=<span class="number">11</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8;</div><div class="line"><span class="operator"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="string">`items`</span> <span class="keyword">VALUES</span> (<span class="string">'1'</span>, <span class="string">'沃特篮球鞋'</span>, <span class="string">'佛山'</span>, <span class="string">'180'</span>, <span class="string">'500'</span>, <span class="string">'001.jpg'</span>);</span></div></pre></td></tr></table></figure>
+
+
+
+<font color="red" size="5">#JDBC主要类和接口</font>     
+
+<p><code>java.sql.DriverManager</code>:用于管理JDBC驱动程序；<br><code>java.sql.Connection</code>:用于建立与特定数据库的连接，一个连接即一个会话；<br><code>java.sql.Statement</code>：一个statement对象用于执行静态sql语句；<br><code>java.sql.PrepareStatement</code>:与statement相对应，创建一个可编译的sql语句对象，该对象可多次运行；<br><code>java.sql.ResultSet</code>：创建sql语句检索结果的结果集，完成对数据库的访问。    </p>
+<font color="red" size="5">#JAVA操作数据库</font>      
+
+<p>DriverManager静态方法：    </p>
+<ul>
+<li><code>public static Connection getConnection(String url,String user,String passwd)</code>返回connection对象       </li>
+</ul>
+<p>Connection对象：    </p>
+<ul>
+<li><code>StateMent createStatement()</code>创建一个statemen对象    </li>
+<li><code>PrepareStatement prepareStatement(String sql)</code>创建一个prepareStatement对象，预处理sql语句    </li>
+</ul>
+<p>Statement对象：    </p>
+<ul>
+<li><code>int executeUpdate(String sql)</code> 执行数据库更新，插入，删除等语句     </li>
+<li><code>ResultSet executeQuery(String sql)</code> 执行数据库查询操作，返回结果集      </li>
+<li><code>close()</code>操作关闭        </li>
+</ul>
+<p>PreparedStatement对象：        </p>
+<ul>
+<li><code>int executeUpdate()</code> 执行设置的预处理sql     </li>
+<li><code>ResultSet executeQuery()</code> 执行数据库查询操作，返回结果集     </li>
+<li><code>setInt(int parameterIndex, int x)</code> 指定索引编号，设置整型内容     </li>
+<li><code>setString(int parameterIndex, String x)</code> 指定索引编号，设置字符串内容     </li>
+<li><code>setFloat(int parameterIndex, Float x)</code> 指定索引编号，设置浮点内容    </li>
+<li><code>setDate(int parameterIndex, Date x)</code> 指定索引编号，设置日期内容     </li>
+</ul>
+<p>ResultSet对象：      </p>
+<ul>
+<li><code>boolean next()</code> 将指针指向下一行    </li>
+<li><code>getInt(int columnIdex)</code> 获取编号指定列的内容，整型     </li>
+<li><code>getInt(String columnName)</code> 获取指定列的内容，整型     </li>
+<li><code>getFloat(int columnIdex)</code> 获取编号指定列的内容，浮点型     </li>
+<li><code>getFloat(String columnName)</code> 获取指定列的内容，浮点型      </li>
+<li><code>getString(int columnIdex)</code> 获取编号指定列的内容，字符串     </li>
+<li><code>getString(String columnName)</code> 获取指定列的内容，字符串      </li>
+<li><code>getDate(int columnIdex)</code> 获取编号指定列的内容，日期     </li>
+<li><code>getDate(String columnName)</code> 获取指定列的内容，日期         </li>
+</ul>
+<p>附上一段代码：   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String driver = <span class="string">"com.mysql.jdbc.Driver"</span>;<span class="comment">// mysql驱动</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String url = <span class="string">"jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=UTF-8"</span>;<span class="comment">// 数据库url地址</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String username = <span class="string">"root"</span>;</div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String password = <span class="string">"root"</span>;</div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Connection con = <span class="keyword">null</span>;<span class="comment">//数据库连接</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> PreparedStatement stmt = <span class="keyword">null</span>;</div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ResultSet rs = <span class="keyword">null</span>;</div><div class="line">       </div><div class="line"><span class="comment">// 静态代码块,加载驱动</span></div><div class="line"><span class="keyword">static</span> {</div><div class="line">    <span class="keyword">try</span> {</div><div class="line">        Class.forName(driver);</div><div class="line">    } <span class="keyword">catch</span> (Exception e) {</div><div class="line">        e.printStackTrace();</div><div class="line">    }</div><div class="line">}</div><div class="line">       </div><div class="line"><span class="comment">// 单例模式返回数据库连接对象</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> Connection <span class="title">getConnection</span>() <span class="keyword">throws</span> Exception {</div><div class="line">    <span class="keyword">if</span> (con == <span class="keyword">null</span>) {</div><div class="line">        con = DriverManager.getConnection(url, username, password);</div><div class="line">        <span class="keyword">return</span> con;</div><div class="line">    }</div><div class="line">    <span class="keyword">return</span> con;</div><div class="line">}</div><div class="line">          </div><div class="line">String sqlQuery = <span class="string">"select * from stu;"</span>;<span class="comment">// sql查询语句</span></div><div class="line">stmt = con.prepareStatement(sqlQuery);</div><div class="line">rs = stmt.executeQuery();<span class="comment">// 读数据库，获取条目</span></div><div class="line">       </div><div class="line">String sqlInst = <span class="string">"INSERT INTO stu(name,passwd)"</span>+<span class="string">" VALUES(?,?)"</span> ;<span class="comment">//sql插入语句</span></div><div class="line">PreparedStatement ps = con.prepareStatement(sqlInst);<span class="comment">//</span></div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) <span class="comment">// 定义个100次的循环，往表里插入一百条信息。</span></div><div class="line">{</div><div class="line">    ps.setString(<span class="number">1</span>, <span class="string">"boss"</span> + i);</div><div class="line">    ps.setInt(<span class="number">2</span>,  i);</div><div class="line">    ps.executeUpdate();</div><div class="line">}</div></pre></td></tr></table></figure>
+
+]]></content>
+    <summary type="html">
+    <![CDATA[<font color="red" size="5">#SQL常用命令</font>       
+
+<p>连接：<code>mysql -u user -p passwd</code>;<br>创建库：<code>CREATE DATABASE 数据库名</code>;<br>]]>
+    </summary>
+    
+      <category term="sql" scheme="http://liushy.com/tags/sql/"/>
+    
+      <category term="java" scheme="http://liushy.com/tags/java/"/>
+    
+      <category term="Code" scheme="http://liushy.com/categories/Code/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[虚拟化实践从qemu-kvm到libvirt]]></title>

@@ -1,0 +1,519 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>Java数据库一般操作 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="#SQL常用命令       
+
+连接：mysql -u user -p passwd;创建库：CREATE DATABASE 数据库名;删除库：DROP DATABASE 数据库名;使用库：USE 数据库名;查看表：DESC 表名;创建表：CREATE TABLE 表名 （字段名1 字段类型 [d">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Code">Code</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/06/10/jdbc/" title="Java数据库一般操作" itemprop="url">Java数据库一般操作</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-06-10T05:38:00.000Z" itemprop="datePublished">Jun 10 2017</time>
+    Updated:<time datetime="2017-06-10T09:47:13.000Z" itemprop="dateModified">Jun 10 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<font color="red" size="5">#SQL常用命令</font>       
+
+<p>连接：<code>mysql -u user -p passwd</code>;<br>创建库：<code>CREATE DATABASE 数据库名</code>;<br>删除库：<code>DROP DATABASE 数据库名</code>;<br>使用库：<code>USE 数据库名</code>;<br>查看表：<code>DESC 表名</code>;<br>创建表：<code>CREATE TABLE 表名 （字段名1 字段类型 [default 默认值] [约束]，字段名2 ....）</code>；<br>插入表：<code>INSERT INTO 表名[字段1，字段2，...] VALUES(值1，值2，...)</code>;<br>删除记录：<code>DELETE FROM 表名 where ....</code>;<br>修改记录：<code>UPDATE 表名 SET 字段1=值1，字段2=值2.... where .....</code>;<br>查询记录：<code>SELECT 字段1，字段2... FROM 表名</code>;<br>        <code>SELECT *FROM 表名 字段1 LIKE &#39;%..%&#39; LIMIT 0,5</code>;（%表示匹配任意数据，_表示一个字符，limit指定开始结束行）            </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="operator"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> <span class="keyword">IF</span> <span class="keyword">EXISTS</span> <span class="string">`items`</span>;</span></div><div class="line"><span class="operator"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`items`</span> (</span></div><div class="line">  <span class="string">`id`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> auto_increment,</div><div class="line">  <span class="string">`name`</span> <span class="built_in">varchar</span>(<span class="number">50</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`city`</span> <span class="built_in">varchar</span>(<span class="number">50</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`price`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`number`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="string">`picture`</span> <span class="built_in">varchar</span>(<span class="number">500</span>) <span class="keyword">default</span> <span class="literal">NULL</span>,</div><div class="line">  <span class="keyword">PRIMARY</span> <span class="keyword">KEY</span>  (<span class="string">`id`</span>)</div><div class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> AUTO_INCREMENT=<span class="number">11</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8;</div><div class="line"><span class="operator"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="string">`items`</span> <span class="keyword">VALUES</span> (<span class="string">'1'</span>, <span class="string">'沃特篮球鞋'</span>, <span class="string">'佛山'</span>, <span class="string">'180'</span>, <span class="string">'500'</span>, <span class="string">'001.jpg'</span>);</span></div></pre></td></tr></table></figure>
+
+
+
+<font color="red" size="5">#JDBC主要类和接口</font>     
+
+<p><code>java.sql.DriverManager</code>:用于管理JDBC驱动程序；<br><code>java.sql.Connection</code>:用于建立与特定数据库的连接，一个连接即一个会话；<br><code>java.sql.Statement</code>：一个statement对象用于执行静态sql语句；<br><code>java.sql.PrepareStatement</code>:与statement相对应，创建一个可编译的sql语句对象，该对象可多次运行；<br><code>java.sql.ResultSet</code>：创建sql语句检索结果的结果集，完成对数据库的访问。    </p>
+<font color="red" size="5">#JAVA操作数据库</font>      
+
+<p>DriverManager静态方法：    </p>
+<ul>
+<li><code>public static Connection getConnection(String url,String user,String passwd)</code>返回connection对象       </li>
+</ul>
+<p>Connection对象：    </p>
+<ul>
+<li><code>StateMent createStatement()</code>创建一个statemen对象    </li>
+<li><code>PrepareStatement prepareStatement(String sql)</code>创建一个prepareStatement对象，预处理sql语句    </li>
+</ul>
+<p>Statement对象：    </p>
+<ul>
+<li><code>int executeUpdate(String sql)</code> 执行数据库更新，插入，删除等语句     </li>
+<li><code>ResultSet executeQuery(String sql)</code> 执行数据库查询操作，返回结果集      </li>
+<li><code>close()</code>操作关闭        </li>
+</ul>
+<p>PreparedStatement对象：        </p>
+<ul>
+<li><code>int executeUpdate()</code> 执行设置的预处理sql     </li>
+<li><code>ResultSet executeQuery()</code> 执行数据库查询操作，返回结果集     </li>
+<li><code>setInt(int parameterIndex, int x)</code> 指定索引编号，设置整型内容     </li>
+<li><code>setString(int parameterIndex, String x)</code> 指定索引编号，设置字符串内容     </li>
+<li><code>setFloat(int parameterIndex, Float x)</code> 指定索引编号，设置浮点内容    </li>
+<li><code>setDate(int parameterIndex, Date x)</code> 指定索引编号，设置日期内容     </li>
+</ul>
+<p>ResultSet对象：      </p>
+<ul>
+<li><code>boolean next()</code> 将指针指向下一行    </li>
+<li><code>getInt(int columnIdex)</code> 获取编号指定列的内容，整型     </li>
+<li><code>getInt(String columnName)</code> 获取指定列的内容，整型     </li>
+<li><code>getFloat(int columnIdex)</code> 获取编号指定列的内容，浮点型     </li>
+<li><code>getFloat(String columnName)</code> 获取指定列的内容，浮点型      </li>
+<li><code>getString(int columnIdex)</code> 获取编号指定列的内容，字符串     </li>
+<li><code>getString(String columnName)</code> 获取指定列的内容，字符串      </li>
+<li><code>getDate(int columnIdex)</code> 获取编号指定列的内容，日期     </li>
+<li><code>getDate(String columnName)</code> 获取指定列的内容，日期         </li>
+</ul>
+<p>附上一段代码：   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String driver = <span class="string">"com.mysql.jdbc.Driver"</span>;<span class="comment">// mysql驱动</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String url = <span class="string">"jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=UTF-8"</span>;<span class="comment">// 数据库url地址</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String username = <span class="string">"root"</span>;</div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String password = <span class="string">"root"</span>;</div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Connection con = <span class="keyword">null</span>;<span class="comment">//数据库连接</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> PreparedStatement stmt = <span class="keyword">null</span>;</div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ResultSet rs = <span class="keyword">null</span>;</div><div class="line">       </div><div class="line"><span class="comment">// 静态代码块,加载驱动</span></div><div class="line"><span class="keyword">static</span> {</div><div class="line">    <span class="keyword">try</span> {</div><div class="line">        Class.forName(driver);</div><div class="line">    } <span class="keyword">catch</span> (Exception e) {</div><div class="line">        e.printStackTrace();</div><div class="line">    }</div><div class="line">}</div><div class="line">       </div><div class="line"><span class="comment">// 单例模式返回数据库连接对象</span></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> Connection <span class="title">getConnection</span>() <span class="keyword">throws</span> Exception {</div><div class="line">    <span class="keyword">if</span> (con == <span class="keyword">null</span>) {</div><div class="line">        con = DriverManager.getConnection(url, username, password);</div><div class="line">        <span class="keyword">return</span> con;</div><div class="line">    }</div><div class="line">    <span class="keyword">return</span> con;</div><div class="line">}</div><div class="line">          </div><div class="line">String sqlQuery = <span class="string">"select * from stu;"</span>;<span class="comment">// sql查询语句</span></div><div class="line">stmt = con.prepareStatement(sqlQuery);</div><div class="line">rs = stmt.executeQuery();<span class="comment">// 读数据库，获取条目</span></div><div class="line">       </div><div class="line">String sqlInst = <span class="string">"INSERT INTO stu(name,passwd)"</span>+<span class="string">" VALUES(?,?)"</span> ;<span class="comment">//sql插入语句</span></div><div class="line">PreparedStatement ps = con.prepareStatement(sqlInst);<span class="comment">//</span></div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) <span class="comment">// 定义个100次的循环，往表里插入一百条信息。</span></div><div class="line">{</div><div class="line">    ps.setString(<span class="number">1</span>, <span class="string">"boss"</span> + i);</div><div class="line">    ps.setInt(<span class="number">2</span>,  i);</div><div class="line">    ps.executeUpdate();</div><div class="line">}</div></pre></td></tr></table></figure>
+
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/sql/">sql</a><a href="/tags/java/">java</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Code/">Code</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2017/06/10/jdbc/" data-title="Java数据库一般操作 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/04/29/libvirt-qemu/"  title="虚拟化实践从qemu-kvm到libvirt">
+ <strong>NEXT:</strong><br/> 
+ <span>虚拟化实践从qemu-kvm到libvirt
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+<script src="https://img1.cache.netease.com/f2e/tie/yun/sdk/loader.js"></script>
+<script>
+var cloudTieConfig = {
+  url: document.location.href, 
+  sourceId: "",
+  productKey: "1dd951f1d9a84cdf8279f98fb392485e",
+  target: "cloud-tie-wrapper"
+};
+var yunManualLoad = true;
+Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true);
+</script>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>1</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>1</sup></a></li>
+		
+			<li><a href="/tags/kvm/" title="kvm">kvm<sup>1</sup></a></li>
+		
+			<li><a href="/tags/libvirt/" title="libvirt">libvirt<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2017 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
