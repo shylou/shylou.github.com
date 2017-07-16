@@ -100,7 +100,7 @@ pip install scpclient
     </p>
   <p class="article-time">
     <time datetime="2017-07-16T10:40:00.000Z" itemprop="datePublished">Jul 16 2017</time>
-    Updated:<time datetime="2017-07-16T09:40:20.000Z" itemprop="dateModified">Jul 16 2017</time>
+    Updated:<time datetime="2017-07-16T09:50:11.000Z" itemprop="dateModified">Jul 16 2017</time>
     
   </p>
 </header>
@@ -120,7 +120,7 @@ pip install scpclient
 
 <p>其中，<code>ssh.connect()</code>中需要指定远程访问的服务器的ip端口，用户名以及密码；<code>scpclient.Write()</code>中指定远程服务器的路径<code>remote_path</code>；<code>scp.send_file()</code>中指定本地传输的文件名(全路径)，远程主机的文件名<code>remote_filename</code>。大概就是这些地方需要注意的。    </p>
 <p><font color="red" size="5">#进阶小工具</font><br>小工具的目的是能够好用，所以我增加了几个cli命令，可以在运行工具的时候输入本地路径以及文件名。当然cli命令是可以增加的：    </p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">parser = argparse.ArgumentParser(description=<span class="string">'scp function for .pkg between two servers'</span>)</div><div class="line">    parser.add_argument(<span class="string">'--path'</span>, type=str, dest=<span class="string">'path'</span>,default = os.path.dirname(os.path.realpath(__file__)),help=<span class="string">'pkg path：default is current path'</span>)</div><div class="line">    parser.add_argument(<span class="string">'--pkg'</span>, type=str, dest=<span class="string">'pkg'</span>,default = <span class="keyword">None</span>, help=<span class="string">'pkg filename: must be specified !'</span>)</div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">parser = argparse.ArgumentParser(description=<span class="string">'scp function for .pkg between two servers'</span>)</div><div class="line">    parser.add_argument(<span class="string">'--path'</span>, type=str, dest=<span class="string">'path'</span>,default = os.path.dirname(os.path.realpath(__file__)),help=<span class="string">'pkg path：default is current path'</span>)</div><div class="line">    parser.add_argument(<span class="string">'--file'</span>, type=str, dest=<span class="string">'file'</span>,default = <span class="keyword">None</span>, help=<span class="string">'pkg filename: must be specified !'</span>)</div></pre></td></tr></table></figure>
 
 
 <p>可以看看效果：<br><img src="/img/scpy.png" alt="scpy"><br>是不是很简单😁<a href="https://github.com/shylou/ntopy/blob/master/scpy.py" target="_blank" rel="external">#附上源码</a>   </p>
