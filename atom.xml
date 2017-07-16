@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-06-10T10:51:30.354Z</updated>
+  <updated>2017-07-16T09:41:41.735Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -15,11 +15,49 @@
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
   
   <entry>
+    <title><![CDATA[Python的scp小工具]]></title>
+    <link href="http://liushy.com/2017/07/16/scpy/"/>
+    <id>http://liushy.com/2017/07/16/scpy/</id>
+    <published>2017-07-16T10:40:00.000Z</published>
+    <updated>2017-07-16T09:40:20.000Z</updated>
+    <content type="html"><![CDATA[<font color="red" size="5">#scp简单实现</font>      
+
+<p>scp是我们在shell上经常使用的命令，用来远程传输文件。python上也能做到scp的功能，需要依赖以下库：     </p>
+<ul>
+<li>pip install paramiko        </li>
+<li>pip install scpclient       </li>
+</ul>
+<p>实际实现也就几行代码：         </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#创建ssh访问</span></div><div class="line">ssh = paramiko.SSHClient()</div><div class="line">ssh.load_system_host_keys()</div><div class="line">ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())<span class="comment">#允许连接不在know_hosts文件中的主机</span></div><div class="line">ssh.connect(hostname, port=<span class="number">22</span>, username=zhangsan, password=password)<span class="comment">#远程访问的服务器信息</span></div><div class="line">   </div><div class="line"><span class="comment">#创建scp</span></div><div class="line"><span class="keyword">with</span> closing(scpclient.Write(ssh.get_transport(), remote_path=remote_path)) <span class="keyword">as</span> scp:</div><div class="line">    scp.send_file(local_filename, preserve_times=<span class="keyword">True</span>, remote_filename=remote_filename)</div></pre></td></tr></table></figure>
+
+
+<p>其中，<code>ssh.connect()</code>中需要指定远程访问的服务器的ip端口，用户名以及密码；<code>scpclient.Write()</code>中指定远程服务器的路径<code>remote_path</code>；<code>scp.send_file()</code>中指定本地传输的文件名(全路径)，远程主机的文件名<code>remote_filename</code>。大概就是这些地方需要注意的。    </p>
+<p><font color="red" size="5">#进阶小工具</font><br>小工具的目的是能够好用，所以我增加了几个cli命令，可以在运行工具的时候输入本地路径以及文件名。当然cli命令是可以增加的：    </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">parser = argparse.ArgumentParser(description=<span class="string">'scp function for .pkg between two servers'</span>)</div><div class="line">    parser.add_argument(<span class="string">'--path'</span>, type=str, dest=<span class="string">'path'</span>,default = os.path.dirname(os.path.realpath(__file__)),help=<span class="string">'pkg path：default is current path'</span>)</div><div class="line">    parser.add_argument(<span class="string">'--pkg'</span>, type=str, dest=<span class="string">'pkg'</span>,default = <span class="keyword">None</span>, help=<span class="string">'pkg filename: must be specified !'</span>)</div></pre></td></tr></table></figure>
+
+
+<p>可以看看效果：<br><img src="/img/scpy.png" alt="scpy"><br>是不是很简单😁<a href="https://github.com/shylou/ntopy/blob/master/scpy.py" target="_blank" rel="external">#附上源码</a>   </p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<font color="red" size="5">#scp简单实现</font>      
+
+<p>scp是我们在shell上经常使用的命令，用来远程传输文件。python上也能做到scp的功能，需要依赖以下库：     </p>
+<ul>
+<li>pip install ]]>
+    </summary>
+    
+      <category term="python" scheme="http://liushy.com/tags/python/"/>
+    
+      <category term="Code" scheme="http://liushy.com/categories/Code/"/>
+    
+  </entry>
+  
+  <entry>
     <title><![CDATA[Java数据库一般操作]]></title>
     <link href="http://liushy.com/2017/06/10/jdbc/"/>
     <id>http://liushy.com/2017/06/10/jdbc/</id>
     <published>2017-06-10T05:38:00.000Z</published>
-    <updated>2017-06-10T10:50:55.000Z</updated>
+    <updated>2017-07-16T09:20:51.000Z</updated>
     <content type="html"><![CDATA[<font color="red" size="5">#SQL常用命令</font>       
 
 <p>连接：<code>mysql -u user -p passwd</code>;<br>创建库：<code>CREATE DATABASE 数据库名</code>;<br>删除库：<code>DROP DATABASE 数据库名</code>;<br>使用库：<code>USE 数据库名</code>;<br>查看表：<code>DESC 表名</code>;<br>创建表：<code>CREATE TABLE 表名 （字段名1 字段类型 [default 默认值] [约束]，字段名2 ....）</code>；<br>插入表：<code>INSERT INTO 表名[字段1，字段2，...] VALUES(值1，值2，...)</code>;<br>删除记录：<code>DELETE FROM 表名 where ....</code>;<br>修改记录：<code>UPDATE 表名 SET 字段1=值1，字段2=值2.... where .....</code>;<br>查询记录：<code>SELECT 字段1，字段2... FROM 表名</code>;<br>        <code>SELECT *FROM 表名 字段1 LIKE &#39;%..%&#39; LIMIT 0,5</code>;（%表示匹配任意数据，_表示一个字符，limit指定开始结束行）            </p>
