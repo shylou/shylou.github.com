@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://liushy.com/about/index.html</loc>
+    <lastmod>2017-08-04T13:37:05.000Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://liushy.com/2017/07/16/scpy/</loc>
     <lastmod>2017-07-16T09:50:11.000Z</lastmod>
   </url>
@@ -99,11 +104,6 @@
   <url>
     <loc>http://liushy.com/2015/11/20/talk--life/</loc>
     <lastmod>2017-03-12T13:32:44.000Z</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://liushy.com/about/index.html</loc>
-    <lastmod>2016-11-26T13:00:40.000Z</lastmod>
   </url>
   
   <url>
