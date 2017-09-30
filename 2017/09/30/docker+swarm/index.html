@@ -1,0 +1,539 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>Docker编排工具之Swarm | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="前言
+提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Code">Code</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/09/30/docker+swarm/" title="Docker编排工具之Swarm" itemprop="url">Docker编排工具之Swarm</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-09-30T08:03:00.000Z" itemprop="datePublished">Sep 30 2017</time>
+    Updated:<time datetime="2017-09-30T12:29:21.000Z" itemprop="dateModified">Sep 30 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h2 id="前言"><strong>前言</strong></h2>
+<p>提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本文还将提到docker三剑客的docker-machine，我将利用其创建docker主机集群。        </p>
+<h2 id="docker-machine创建主机"><strong>docker-machine创建主机</strong></h2>
+<p>docker-machine是docker原生工具【三剑客】之一（另外：docker-compse和swarm），主要用于创建docker主机，这里的主机指的就是运行docker daemon的虚拟机。docker daemon即是运行docker的后台守护进程，运行着docker server，engine和job，server接收docker client ，并在engine中处理请求，然后创建出指定的job并运行。所以我们可以通过ssh的方式，发送请求给docker-machine，然后进行创建docker容器，运行任务等操作。   </p>
+<h3 id="安装docker-machine"><strong>安装docker-machine</strong></h3>
+<ul>
+<li>Linux系统</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ curl -L https://github.com/docker/machine/releases/download/v0.<span class="number">12.2</span>/docker-machine-`uname <span class="operator">-s</span>`-`uname -m` &gt;/tmp/docker-machine &&</div><div class="line">chmod +x /tmp/docker-machine &&</div><div class="line"><span class="built_in">sudo</span> cp /tmp/docker-machine /usr/local/bin/docker-machine</div></pre></td></tr></table></figure>
+
+
+<ul>
+<li>Macos系统</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ curl -L https://github.com/docker/machine/releases/download/v0.<span class="number">12.2</span>/docker-machine-`uname <span class="operator">-s</span>`-`uname -m` &gt;/usr/local/bin/docker-machine && \</div><div class="line">  chmod +x /usr/local/bin/docker-machine</div></pre></td></tr></table></figure>
+
+
+<ul>
+<li>Windows with Git BASH</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">if</span> [[ ! <span class="operator">-d</span> <span class="string">"<span class="variable">$HOME</span>/bin"</span> ]]; <span class="keyword">then</span> mkdir -p <span class="string">"<span class="variable">$HOME</span>/bin"</span>; <span class="keyword">fi</span> && \</div><div class="line">curl -L https://github.com/docker/machine/releases/download/v0.<span class="number">12.2</span>/docker-machine-Windows-x86_64.exe &gt; <span class="string">"<span class="variable">$HOME</span>/bin/docker-machine.exe"</span> && \</div><div class="line">chmod +x <span class="string">"<span class="variable">$HOME</span>/bin/docker-machine.exe"</span></div></pre></td></tr></table></figure>
+
+
+<p>安装结束后，可以通过<code>docker-machine version</code>查看docker-machine的版本。</p>
+<h3 id="创建docker虚机"><strong>创建docker虚机</strong></h3>
+<p>利用<code>docker-machine create</code>命令创建docker虚机，这里需要指定在哪种集成环境中部署docker虚机，比如virtualbox通过<code>--driver</code>指定：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker-machine create --driver virtualbox vbox</div></pre></td></tr></table></figure>
+
+
+<p>docker-machine支持的<code>driver</code>可以参考<a href="https://docs.docker.com/machine/drivers/" target="_blank" rel="external">官网</a>。<br>创建成功后，可以通过<code>docker-machine env vbox</code>来查看虚机<code>vbox</code>的信息，还可以通过<code>docker-machine ssh vbox</code>进入<code>vbox</code>虚机。创建过程中如果出现类似<em>【x509: certificate is valid for 192.168.99.100, not 192.168.99.101】</em>错误，可通过<code>docker-machine regenerate-certs</code>解决。<br>同样的命令创建<code>vbox2</code>和<code>vbox2</code>。通过下面的命令查看创建的虚机：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">liushy <span class="keyword">in</span> ~  docker-machine ls</div><div class="line">NAME    ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER        ERRORS</div><div class="line">vbox    -        virtualbox   Running   tcp://<span class="number">192.168</span>.<span class="number">99.100</span>:<span class="number">2376</span>           v17.<span class="number">06.2</span>-ce</div><div class="line">vbox2   -        virtualbox   Running   tcp://<span class="number">192.168</span>.<span class="number">99.101</span>:<span class="number">2376</span>           v17.<span class="number">06.2</span>-ce</div><div class="line">vbox3   -        virtualbox   Running   tcp://<span class="number">192.168</span>.<span class="number">99.102</span>:<span class="number">2376</span>           v17.<span class="number">06.2</span>-ce</div></pre></td></tr></table></figure>
+
+
+<p>也可以打开virtualbox，看到创建的这几台虚机：<br><img src="/img/docker-virtualbox.png" alt="virtualbox">     </p>
+<h2 id="swarm集群管理"><strong>swarm集群管理</strong></h2>
+<p>前面我们已经创建了几台docker虚拟机，目前来讲，这几台docker主机相互之间是没有关联的。不同虚机里创建的docker容器还不能算是同一个集群。这时候，我们需要在每台虚机里启动swarm，来建立不同docker虚机内部容器之间的关联。集群中的角色分为manager和worker，manager管理和创建service，service描述了task如何执行，worker执行task创建容器并执行任务，默认情况下manager也会执行task。</p>
+<h3 id="swarm初始化集群"><strong>swarm初始化集群</strong></h3>
+<p>将<code>vbox</code>作为集群的manager，进入vbox虚机里，初始化swarm集群：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">docker@vbox:~$ docker swarm init --listen-addr <span class="number">192.168</span>.<span class="number">99.100</span>:<span class="number">2377</span> --advertise-addr <span class="number">192.168</span>.<span class="number">99.100</span></div><div class="line">Swarm initialized: current node (<span class="number">9</span>pvoc8y1ouu1zl4dzd0fojtl2) is now a manager.</div><div class="line">         </div><div class="line">To add a worker to this swarm, run the following command:</div><div class="line">         </div><div class="line">    docker swarm join --token SWMTKN-<span class="number">1</span>-<span class="number">2</span>ns4voyrkx885wzh9l2bo69bbrg70sonkcpuxi0wz5ywvzqofb-<span class="number">8</span>xd74j4wxn5it3euiko5m899z <span class="number">192.168</span>.<span class="number">99.100</span>:<span class="number">2377</span></div><div class="line">        </div><div class="line">To add a manager to this swarm, run <span class="string">'docker swarm join-token manager'</span> and follow the instructions.</div></pre></td></tr></table></figure>
+
+
+<p><code>--listen-addr</code>指定监听地址，即manager节点的docker服务所在的IP:PORT，<code>--advertise-addr</code>指定广播的地址，即其他节点加入该swarm集群时需要访问的IP。执行命令后，我们可以看到反馈的信息，分别交代了其它节点如何以worker或者manager加入集群。没必要记住生成的token，可以通过<code>docker swarm join-token worker</code>或者<code>docker swarm join-token manager</code>查看token。   </p>
+<h3 id="节点加入集群"><strong>节点加入集群</strong></h3>
+<p>可以不用ssh进入虚机，直接通过docker-machine命令将节点<code>vbox2</code>加入集群中作为worker：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">liushy <span class="keyword">in</span> ~  docker-machine ssh vbox2 docker swarm join --token SWMTKN-<span class="number">1</span>-<span class="number">2</span>ns4voyrkx885wzh9l2bo69bbrg70sonkcpuxi0wz5ywvzqofb-<span class="number">8</span>xd74j4wxn5it3euiko5m899z <span class="number">192.168</span>.<span class="number">99.100</span>:<span class="number">2377</span></div><div class="line">This node joined a swarm as a worker.</div></pre></td></tr></table></figure>
+
+
+<p>同样的方式将<code>vbox3</code>加入集群作为worker。只有manager节点才有权限查看集群状态，在<code>vbox</code>上查看以及管理集群：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">docker@vbox:~$ docker node ls</div><div class="line">ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS</div><div class="line"><span class="number">9</span>pvoc8y1ouu1zl4dzd0fojtl2 *   vbox                Ready               Active              Leader</div><div class="line">rgrof4dclul3kki4uo76k0kn6     vbox3               Ready               Active</div><div class="line">zngbo89y89gczgd7dljq9r06l     vbox2               Ready               Active</div></pre></td></tr></table></figure>
+
+
+<p>离开集群命令<code>docker swarm leave</code>。     </p>
+<h3 id="创建service"><strong>创建service</strong></h3>
+<p>集群的service即是在节点内创建容器，并在容器内执行任务。登陆进manager节点<code>vbox</code>创建service：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker@vbox:~$ docker service create --replicas <span class="number">2</span> --name ping centos ping docker.com</div></pre></td></tr></table></figure>
+
+
+<p><code>--replicas</code> 指定service需要的任务数量，<code>--name</code> 指定了service的名称，在这里使用了镜像centos，执行的任务是<code>ping docker.com</code>。在manager节点上查看service:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">docker@vbox:~$ docker service ls</div><div class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</div><div class="line">vjxa7mdk1tvm        ping                replicated          <span class="number">2</span>/<span class="number">2</span>                 centos:latest</div></pre></td></tr></table></figure>
+
+
+<p>目前执行任务的节点有两个，主要是两个worker。可以在任意一个节点上查看容器运行情况：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">docker@vbox2:~$ docker ps</div><div class="line">CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES</div><div class="line">e3222a5593e2        centos:latest       <span class="string">"ping docker.com"</span>   <span class="number">26</span> seconds ago      Up <span class="number">26</span> secon                        ping.<span class="number">2.933</span>k23xvqwh7p0k15j2wqkuql</div></pre></td></tr></table></figure>
+
+
+<p>任务的数量也是可以改变的，比如，将任务数增加到4个：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">docker@vbox:~$ docker service scale ping=<span class="number">4</span></div><div class="line">ping scaled to <span class="number">4</span></div><div class="line">docker@vbox:~$ docker service ls</div><div class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</div><div class="line">vjxa7mdk1tvm        ping                replicated          <span class="number">4</span>/<span class="number">4</span>                 centos:latest   </div><div class="line">docker@vbox:~$ docker ps</div><div class="line">CONTAINER ID        IMAGE               COMMAND             CREATED                  STATUS                  PORTS               NAMES</div><div class="line">b4b5c3350b6b        centos:latest       <span class="string">"ping docker.com"</span>   Less than a second ago   Up Less than a second                       ping.<span class="number">4</span>.xrel6v9kp138zme0029d80c8d</div><div class="line"><span class="number">468295</span>b3bed0        centos:latest       <span class="string">"ping docker.com"</span>   Less than a second ago   Up Less than a second                       ping.<span class="number">3</span>.zgviw21i3oz39atekofethg34</div></pre></td></tr></table></figure>
+
+
+<p>扩容后，会发现在manager节点上增加了两个容器，并正在执行<code>ping</code>任务。加上一直在执行的其它两个节点上的任务，数量达到了4个。   </p>
+<h2 id="总结"><strong>总结</strong></h2>
+<p>对于swarm集群的玩法，大概就是这些了，可以看出来，比较简单易上手。对于一些小规模的生产环境来说，使用swarm效率会很高，而且运维难度不大。当然，考虑可扩展性的话，可以选择更全面的k8s或者mesos。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/docker/">docker</a><a href="/tags/swarm/">swarm</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2017/09/30/docker+swarm/" data-title="Docker编排工具之Swarm | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/08/12/what-doing2/"  title="技术杂记">
+ <strong>NEXT:</strong><br/> 
+ <span>技术杂记
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+<script src="https://img1.cache.netease.com/f2e/tie/yun/sdk/loader.js"></script>
+<script>
+var cloudTieConfig = {
+  url: document.location.href, 
+  sourceId: "",
+  productKey: "1dd951f1d9a84cdf8279f98fb392485e",
+  target: "cloud-tie-wrapper"
+};
+var yunManualLoad = true;
+Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true);
+</script>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker-machine创建主机"><span class="toc-number">2.</span> <span class="toc-text">docker-machine创建主机</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#安装docker-machine"><span class="toc-number">2.1.</span> <span class="toc-text">安装docker-machine</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#创建docker虚机"><span class="toc-number">2.2.</span> <span class="toc-text">创建docker虚机</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#swarm集群管理"><span class="toc-number">3.</span> <span class="toc-text">swarm集群管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#swarm初始化集群"><span class="toc-number">3.1.</span> <span class="toc-text">swarm初始化集群</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#节点加入集群"><span class="toc-number">3.2.</span> <span class="toc-text">节点加入集群</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#创建service"><span class="toc-number">3.3.</span> <span class="toc-text">创建service</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kvm/" title="kvm">kvm<sup>1</sup></a></li>
+		
+			<li><a href="/tags/libvirt/" title="libvirt">libvirt<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2017 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
