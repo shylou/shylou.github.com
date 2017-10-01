@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2017-09-30T12:30:30.122Z</updated>
+  <updated>2017-10-01T00:47:25.005Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://liushy.com/2017/09/30/docker+swarm/"/>
     <id>http://liushy.com/2017/09/30/docker+swarm/</id>
     <published>2017-09-30T08:03:00.000Z</published>
-    <updated>2017-09-30T12:29:21.000Z</updated>
+    <updated>2017-10-01T00:47:01.000Z</updated>
     <content type="html"><![CDATA[<h2 id="前言"><strong>前言</strong></h2>
 <p>提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本文还将提到docker三剑客的docker-machine，我将利用其创建docker主机集群。        </p>
 <h2 id="docker-machine创建主机"><strong>docker-machine创建主机</strong></h2>
@@ -91,7 +91,8 @@
 
 <p>扩容后，会发现在manager节点上增加了两个容器，并正在执行<code>ping</code>任务。加上一直在执行的其它两个节点上的任务，数量达到了4个。   </p>
 <h2 id="总结"><strong>总结</strong></h2>
-<p>对于swarm集群的玩法，大概就是这些了，可以看出来，比较简单易上手。对于一些小规模的生产环境来说，使用swarm效率会很高，而且运维难度不大。当然，考虑可扩展性的话，可以选择更全面的k8s或者mesos。</p>
+<p>对于swarm集群的玩法，大概就是这些了，可以看出来，比较简单易上手。对于一些小规模的生产环境来说，使用swarm效率会很高，而且运维难度不大。当然，考虑可扩展性的话，可以选择更全面的k8s或者mesos。  </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
 ]]></content>
     <summary type="html">
     <![CDATA[<h2 id="前言"><strong>前言</strong></h2>
