@@ -94,7 +94,7 @@
     </p>
   <p class="article-time">
     <time datetime="2017-09-30T08:03:00.000Z" itemprop="datePublished">Sep 30 2017</time>
-    Updated:<time datetime="2017-10-01T00:47:01.000Z" itemprop="dateModified">Oct 1 2017</time>
+    Updated:<time datetime="2017-10-06T04:19:17.000Z" itemprop="dateModified">Oct 6 2017</time>
     
   </p>
 </header>
@@ -104,7 +104,7 @@
 		<h2 id="前言"><strong>前言</strong></h2>
 <p>提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本文还将提到docker三剑客的docker-machine，我将利用其创建docker主机集群。        </p>
 <h2 id="docker-machine创建主机"><strong>docker-machine创建主机</strong></h2>
-<p>docker-machine是docker原生工具【三剑客】之一（另外：docker-compse和swarm），主要用于创建docker主机，这里的主机指的就是运行docker daemon的虚拟机。docker daemon即是运行docker的后台守护进程，运行着docker server，engine和job，server接收docker client ，并在engine中处理请求，然后创建出指定的job并运行。所以我们可以通过ssh的方式，发送请求给docker-machine，然后进行创建docker容器，运行任务等操作。   </p>
+<p>docker-machine是docker原生工具【三剑客】之一（另外：docker-compose和swarm），主要用于创建docker主机，这里的主机指的就是运行docker daemon的虚拟机。docker daemon即是运行docker的后台守护进程，运行着docker server，engine和job，server接收docker client ，并在engine中处理请求，然后创建出指定的job并运行。所以我们可以通过ssh的方式，发送请求给docker-machine，然后进行创建docker容器，运行任务等操作。   </p>
 <h3 id="安装docker-machine"><strong>安装docker-machine</strong></h3>
 <ul>
 <li>Linux系统</li>
