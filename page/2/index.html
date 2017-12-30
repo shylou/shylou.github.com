@@ -85,6 +85,20 @@
 
   <section class="post" itemscope itemprop="blogPost">
   
+    <a href="/2017/02/12/floodlight-topomanager/" title="解析Floodlight之TopologyManager模块" itemprop="url">
+  
+      <time datetime="2017-02-12T02:00:10.000Z" itemprop="datePublished">Feb 12 2017</time>
+    <h1 itemprop="name">解析Floodlight之TopologyManager模块</h1>
+    
+     
+           <p itemprop="description" >Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数compute()重新计算路径</p>
+        
+    
+  </a>
+</section>
+
+  <section class="post" itemscope itemprop="blogPost">
+  
     <a href="/2017/02/12/floodlight-linkdiscovermanager/" title="解析Floodlight之LinkDiscoveryManager模块" itemprop="url">
   
       <time datetime="2017-02-12T02:00:01.000Z" itemprop="datePublished">Feb 12 2017</time>
@@ -217,21 +231,6 @@ top命令是Linux下常用的性能分析工具，能够实时显示系统中进
      
            <p itemprop="description" >前言
 最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越</p>
-        
-    
-  </a>
-</section>
-
-  <section class="post" itemscope itemprop="blogPost">
-  
-    <a href="/2014/11/15/floodlight-twohosts-ping/" title="SDN环境下两主机通信过程" itemprop="url">
-  
-      <time datetime="2014-11-14T16:00:00.000Z" itemprop="datePublished">Nov 15 2014</time>
-    <h1 itemprop="name">SDN环境下两主机通信过程</h1>
-    
-     
-           <p itemprop="description" >感悟
-SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉</p>
         
     
   </a>
