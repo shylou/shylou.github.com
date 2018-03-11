@@ -1,0 +1,509 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>neutron代码解析之l3-agent的启动 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="每个 L3 Agent 运行在一个 network namespace 中，以 qrouter-命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces = True开启namespace。本文只做单纯的分析代码">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Code">Code</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2018/03/11/neutron-l3-agent/" title="neutron代码解析之l3-agent的启动" itemprop="url">neutron代码解析之l3-agent的启动</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2018-03-10T16:00:00.000Z" itemprop="datePublished">Mar 11 2018</time>
+    Updated:<time datetime="2018-03-11T09:40:33.496Z" itemprop="dateModified">Mar 11 2018</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<p>每个 L3 Agent 运行在一个 <em>network namespace</em> 中，以 qrouter-<router-uuid>命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces = True开启namespace。本文只做单纯的分析代码，研究了neutron的l3-agent代码（m版本），代码路径为<em>/neutron/agent/l3/agent.py</em>。主要的类是：     </router-uuid></p>
+<ul>
+<li>class L3PluginApi(object): l3-agent的rpc接口，用于回复和查询l3-plugin的。    </li>
+<li>class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,ha.AgentMixin,dvr.AgentMixin,manager.Manager): l3-agent实现类。       </li>
+</ul>
+<p>主要来说说<strong><em>L3NATAgent</em></strong>。该类在运行的时候，会启动两个周期任务：</p>
+<ul>
+<li>periodic_sync_routers_task：周期性获取router列表，并将需要操作的router加入到队列中；</li>
+<li>_process_routers_loop：从上个任务中获取队列中的router，并进行处理（增删和更新）。<br>接下来依次分析这两个任务。    </li>
+</ul>
+<h3 id="periodic_sync_routers_task"><strong>periodic_sync_routers_task</strong></h3>
+<p>注意该类继承了FWaaSL3AgentRpcCallback和<code>Manager</code>两个类。Manager类里有个方法<code>periodic_tasks</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Manager</span><span class="params">(periodic_task.PeriodicTasks)</span>:</span></div><div class="line">       </div><div class="line">    <span class="comment"># Set RPC API version to 1.0 by default.</span></div><div class="line">    target = oslo_messaging.Target(version=<span class="string">'1.0'</span>)</div><div class="line">          </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">periodic_tasks</span><span class="params">(self, context, raise_on_error=False)</span>:</span></div><div class="line">        self.run_periodic_tasks(context, raise_on_error=raise_on_error)</div></pre></td></tr></table></figure>
+
+
+<p>在neutron/service.py里的类Service，启动<code>start</code>的时候，会加载Manager的periodic_tasks方法，并设置周期时间：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Service</span><span class="params">(n_rpc.Service)</span>:</span></div><div class="line">       </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">start</span><span class="params">(self)</span>:</span></div><div class="line">        self.manager.init_host()</div><div class="line">        super(Service, self).start()</div><div class="line">        <span class="keyword">if</span> self.report_interval:</div><div class="line">            pulse = loopingcall.FixedIntervalLoopingCall(self.report_state)</div><div class="line">            pulse.start(interval=self.report_interval,initial_delay=self.report_interval)</div><div class="line">            self.timers.append(pulse)</div><div class="line">           </div><div class="line">        <span class="keyword">if</span> self.periodic_interval:</div><div class="line">            <span class="keyword">if</span> self.periodic_fuzzy_delay:</div><div class="line">                initial_delay = random.randint(<span class="number">0</span>, self.periodic_fuzzy_delay)</div><div class="line">            <span class="keyword">else</span>:</div><div class="line">                initial_delay = <span class="keyword">None</span></div><div class="line">          </div><div class="line">            periodic = loopingcall.FixedIntervalLoopingCall(self.periodic_tasks)</div><div class="line">            periodic.start(interval=self.periodic_interval,initial_delay=initial_delay)</div><div class="line">            self.timers.append(periodic)</div><div class="line">        self.manager.after_start()</div><div class="line">            </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">periodic_tasks</span><span class="params">(self, raise_on_error=False)</span>:</span></div><div class="line">        <span class="string">"""Tasks to be run at a periodic interval."""</span></div><div class="line">        ctxt = context.get_admin_context()</div><div class="line">        self.manager.periodic_tasks(ctxt, raise_on_error=raise_on_error)</div></pre></td></tr></table></figure>
+
+
+<p>然后说回L3NATAgent类，它定义了一个方法<code>periodic_sync_routers_task</code>，被<em>@periodic_task.periodic_task(spacing=1, run_immediately=True)</em>进行了装饰，可以理解为间隔时间为1秒运行一次任务。periodic_task是<em>oslo_service/periodic_task.py</em>里的装饰器方法，用于将被装饰的方法声明为一个周期性任务；而该文件里还有一个方法也就是上文提到的run_periodic_tasks，用于运行所有的周期任务：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># NOTE(kevinbenton): this is set to 1 second because the actual interval</span></div><div class="line"><span class="comment"># is controlled by a FixedIntervalLoopingCall in neutron/service.py that</span></div><div class="line"><span class="comment"># is responsible for task execution.</span></div><div class="line"><span class="decorator">@periodic_task.periodic_task(spacing=1, run_immediately=True)</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">periodic_sync_routers_task</span><span class="params">(self, context)</span>:</span></div><div class="line">...</div><div class="line"></div><div class="line">    <span class="keyword">try</span>:</div><div class="line">        <span class="keyword">with</span> self.namespaces_manager <span class="keyword">as</span> ns_manager:</div><div class="line">            self.fetch_and_sync_all_routers(context, ns_manager)</div></pre></td></tr></table></figure>
+
+
+<p>periodic_sync_routers_task执行了一个任务<code>fetch_and_sync_all_routers</code>，即是通过<strong><em>l3-plugin RPC</em></strong>获取到router列表，然后将需要进行操作的router加入到 _queue 中。理解了这个，就能明白接下来的一个线程循环任务 _process_routers_loop。</p>
+<h3 id="_process_routers_loop"><strong>_process_routers_loop</strong></h3>
+<p>在l3-agent开始启动过程<code>after_start</code>中，还会启动一个线程来循环执行一个任务<code>_process_routers_loop</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">after_start</span><span class="params">(self)</span>:</span></div><div class="line">    <span class="comment"># Note: the FWaaS' vArmourL3NATAgent is a subclass of L3NATAgent. It</span></div><div class="line">    <span class="comment"># calls this method here. So Removing this after_start() would break</span></div><div class="line">    <span class="comment"># vArmourL3NATAgent. We need to find out whether vArmourL3NATAgent</span></div><div class="line">    <span class="comment"># can have L3NATAgentWithStateReport as its base class instead of</span></div><div class="line">    <span class="comment"># L3NATAgent.</span></div><div class="line">    eventlet.spawn_n(self._process_routers_loop)</div><div class="line">    LOG.info(_LI(<span class="string">"L3 agent started"</span>))</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_routers_loop</span><span class="params">(self)</span>:</span></div><div class="line">    LOG.debug(<span class="string">"Starting _process_routers_loop"</span>)</div><div class="line">    pool = eventlet.GreenPool(size=<span class="number">8</span>)</div><div class="line">    <span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">        pool.spawn_n(self._process_router_update)</div></pre></td></tr></table></figure>
+
+
+<p>再来看看方法<code>_process_router_update</code>，方法一开始就会通过<em>_queue.each_update_to_next_router</em>从上一个任务的队列里获取需要进行操作的router信息。然后会针对不通的action，进行一些处理，真正进行router操作的是<code>_process_router_if_compatible</code>:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_router_update</span><span class="params">(self)</span>:</span></div><div class="line">    <span class="keyword">for</span> rp, update <span class="keyword">in</span> self._queue.each_update_to_next_router():</div><div class="line">        LOG.debug(<span class="string">"Starting router update for %s, action %s, priority %s"</span>,</div><div class="line">                  update.id, update.action, update.priority)</div><div class="line">        <span class="keyword">if</span> update.action == queue.PD_UPDATE:</div><div class="line">            self.pd.process_prefix_update()</div><div class="line">            LOG.debug(<span class="string">"Finished a router update for %s"</span>, update.id)</div><div class="line">            <span class="keyword">continue</span></div><div class="line">        router = update.router</div><div class="line">        ......</div><div class="line">        <span class="keyword">try</span>:</div><div class="line">            self._process_router_if_compatible(router)</div><div class="line">        ......</div><div class="line">  </div><div class="line">        LOG.debug(<span class="string">"Finished a router update for %s"</span>, update.id)</div><div class="line">        rp.fetched_and_processed(update.timestamp)</div></pre></td></tr></table></figure>
+
+
+<p>_process_router_if_compatible方法的主要实现，在最后：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_router_if_compatible</span><span class="params">(self, router)</span>:</span></div><div class="line">    ......</div><div class="line">    <span class="keyword">if</span> router[<span class="string">'id'</span>] <span class="keyword">not</span> <span class="keyword">in</span> self.router_info:</div><div class="line">        self._process_added_router(router)</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        self._process_updated_router(router)</div></pre></td></tr></table></figure>
+
+
+<p>以<code>_process_updated_router</code>为例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_updated_router</span><span class="params">(self, router)</span>:</span></div><div class="line">    ri = self.router_info[router[<span class="string">'id'</span>]]</div><div class="line">    ri.router = router</div><div class="line">    registry.notify(resources.ROUTER, events.BEFORE_UPDATE,self, router=ri)</div><div class="line">    ri.process(self)</div><div class="line">    registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)</div></pre></td></tr></table></figure>
+
+
+<p>针对router的所有操作都在<em>neutron/agent/l3/router_info.py</em>中的方法<code>process</code>里。具体细节在这里就不做分析了，包括对external-port，internal-port和floating ip的一系列处理。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/neutron/">neutron</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/SDN/">SDN</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2018/03/11/neutron-l3-agent/" data-title="neutron代码解析之l3-agent的启动 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/12/26/goon-2017/"  title="来日方长">
+ <strong>NEXT:</strong><br/> 
+ <span>来日方长
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+<script src="https://img1.cache.netease.com/f2e/tie/yun/sdk/loader.js"></script>
+<script>
+var cloudTieConfig = {
+  url: document.location.href, 
+  sourceId: "",
+  productKey: "1dd951f1d9a84cdf8279f98fb392485e",
+  target: "cloud-tie-wrapper"
+};
+var yunManualLoad = true;
+Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true);
+</script>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#periodic_sync_routers_task"><span class="toc-number">1.</span> <span class="toc-text">periodic_sync_routers_task</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#_process_routers_loop"><span class="toc-number">2.</span> <span class="toc-text">_process_routers_loop</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kvm/" title="kvm">kvm<sup>1</sup></a></li>
+		
+			<li><a href="/tags/libvirt/" title="libvirt">libvirt<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2018 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
