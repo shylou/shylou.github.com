@@ -1,0 +1,527 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>lbv2启用loadbalancer ssl卸载服务 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="安装lbv2
+首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：1.控制节点：yum install -y  openstack-neutron-lbaas2.修改配置文件(采用octavia参考config-lbaas)：neutron.conf:
+12345[defualt">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Code">Code</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2018/04/01/neutron-lbv2-setup/" title="lbv2启用loadbalancer ssl卸载服务" itemprop="url">lbv2启用loadbalancer ssl卸载服务</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2018-03-31T16:00:00.000Z" itemprop="datePublished">Apr 1 2018</time>
+    Updated:<time datetime="2018-04-01T06:29:00.000Z" itemprop="dateModified">Apr 1 2018</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h3 id="安装lbv2"><strong>安装lbv2</strong></h3>
+<p>首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：<br>1.控制节点：yum install -y  openstack-neutron-lbaas<br>2.修改配置文件(采用<code>octavia</code>参考<a href="https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html" target="_blank" rel="external">config-lbaas</a>)：<br>neutron.conf:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[defualt]</div><div class="line">service_plugins = [existing service plugins],neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2</div><div class="line">        </div><div class="line">[service_providers]</div><div class="line">service_provider = LOADBALANCERV2:Haproxy:neutron_lbaas.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default</div></pre></td></tr></table></figure>
+
+
+<p>lbaas_agent.ini:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver</div></pre></td></tr></table></figure>
+
+
+<p>3.更新数据库：neutron-db-manage —subproject neutron-lbaas upgrade head<br>4.启动agent：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">systemctl enable neutron-lbaasv2-agent</div><div class="line">systemctl start neutron-lbaasv2-agent</div><div class="line">systemctl restart neutron-server</div></pre></td></tr></table></figure>
+
+
+<p>5.安装dashboard：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">git clone https://git.openstack.org/openstack/neutron-lbaas-dashboard -b stable/pike</div><div class="line"><span class="built_in">cd</span>  neutron-lbaas-dashboard     </div><div class="line">python setup.py install  </div><div class="line">      </div><div class="line">cp neutron_lbaas_dashboard/enabled/_1481_project_ng_loadbalancersv2_panel.py     /usr/share/openstack-dashboard/openstack_dashboard/local/enabled/      </div><div class="line">          </div><div class="line">./manage.py collectstatic</div><div class="line">./manage.py compress       </div><div class="line">       </div><div class="line"><span class="comment">####最后/etc/openstack-dashboard/ 的local_settings开启 UI：</span></div><div class="line">OPENSTACK_NEUTRON_NETWORK = {</div><div class="line"><span class="string">'enable_lb'</span>: True,</div><div class="line">...</div><div class="line">}</div><div class="line"><span class="comment">###重启httpd</span></div><div class="line">systemctl restart httpd</div></pre></td></tr></table></figure>
+
+
+<h3 id="安装barbican"><strong>安装barbican</strong></h3>
+<p>barbican是openstack单独的一个组件，主要用于密钥管理（key manage）。目前有很多组件使用了barbican的密钥管理。对于lbaas来讲，可以使用barbican为loadbalancer提供ssl的密钥管理。     </p>
+<p>接下来记录下barbican的安装流程:具体的步骤可以参考：<a href="https://docs.openstack.org/barbican/queens/install/install-rdo.html" target="_blank" rel="external">barbican-install</a>   </p>
+<p>但上面的这个步骤，有几处注意一下：<br>1.编辑/etc/httpd/conf.d/wsgi-barbican.conf 文件时，我使用<em>VirtualHost 0.0.0.0:9311替换了VirtualHost [::1]:9311</em>并且在/etc/httpd/conf/ports文件里添加了<em>Listen 0.0.0.0:9311</em>才使得httpd加载barbican服务。还有如下修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">vim /etc/httpd/conf.d/wsgi-barbican.conf</div><div class="line">&lt;VirtualHost <span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">9311</span>&gt;</div><div class="line">    ServerName <span class="number">192.168</span>.<span class="number">99.2</span></div><div class="line">      </div><div class="line">    <span class="comment">## Logging</span></div><div class="line">    ErrorLog <span class="string">"/var/log/httpd/barbican_wsgi_main_error_ssl.log"</span></div><div class="line">    LogLevel debug</div><div class="line">    ServerSignature Off</div><div class="line">    CustomLog <span class="string">"/var/log/httpd/barbican_wsgi_main_access_ssl.log"</span> combined</div><div class="line">      </div><div class="line">    &lt;Directory <span class="string">"/usr/lib/python2.7/site-packages/barbican"</span>&gt;</div><div class="line">      Options Indexes FollowSymLinks MultiViews</div><div class="line">      AllowOverride None</div><div class="line">      Allow from all</div><div class="line">      Require all granted</div><div class="line">    &lt;/Directory&gt;</div><div class="line">         </div><div class="line">    WSGIApplicationGroup %{GLOBAL}</div><div class="line">    WSGIDaemonProcess barbican-api display-name=barbican-api group=barbican processes=<span class="number">2</span> threads=<span class="number">8</span> user=barbican</div><div class="line">    WSGIProcessGroup barbican-api</div><div class="line">    WSGIScriptAlias / <span class="string">"/usr/lib/python2.7/site-packages/barbican/api/app.wsgi"</span></div><div class="line">    WSGIPassAuthorization On</div><div class="line">&lt;/VirtualHost&gt;</div></pre></td></tr></table></figure>
+
+
+
+<p>2.编辑/etc/barbican/barbican.conf，修改和增加如下配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[DEFAULT]</div><div class="line">transport_url = rabbit://guest:guest@controller</div><div class="line">host_href = http://xxx.xxx.xxx.xxx:<span class="number">9311</span></div><div class="line">log_file = /var/log/barbican/api.log</div></pre></td></tr></table></figure>
+
+
+<p>3.检查barbican服务是否启动，可以先通过以下命令查看是否者报错：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">openstack secret list</div><div class="line">+--------------------------------------------------------------------------+-------------+---------------------------+--------+-----------------------------+-----------+------------+-------------+------+------------+</div><div class="line">| Secret href                                                              | Name        | Created                   | Status | Content types               | Algorithm | Bit length | Secret <span class="built_in">type</span> | Mode | Expiration |</div><div class="line">+--------------------------------------------------------------------------+-------------+---------------------------+--------+-----------------------------+-----------+------------+-------------+------+------------+</div><div class="line">| http://<span class="number">192.168</span>.<span class="number">99.2</span>:<span class="number">9311</span>/v1/secrets/<span class="number">8</span>a1b6444-<span class="number">216</span>e-<span class="number">44</span>a7<span class="operator">-a</span>049-<span class="number">8</span>b15d83dcdc1 | mysecret    | <span class="number">2018</span>-<span class="number">03</span>-<span class="number">25</span>T17:<span class="number">40</span>:<span class="number">58</span>+<span class="number">00</span>:<span class="number">00</span> | ACTIVE | {u<span class="string">'default'</span>: u<span class="string">'text/plain'</span>} | aes       |        <span class="number">256</span> | opaque      | cbc  | None</div></pre></td></tr></table></figure>
+
+
+<p>若报错，可以再查看9311端口是否监听，以及查看日志/var/log/barbican/api.log和/var/log/httpd/：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">netstat -lnp | grep <span class="number">9311</span></div><div class="line">tcp        <span class="number">0</span>      <span class="number">0</span> <span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">9311</span>            <span class="number">0.0</span>.<span class="number">0.0</span>:*               LISTEN      <span class="number">15773</span>/httpd</div></pre></td></tr></table></figure>
+
+
+<p>4.允许外部访问9311端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">iptables -I INPUT -p tcp --dport <span class="number">9311</span> -j ACCEPT</div></pre></td></tr></table></figure>
+
+
+<h3 id="lbv2启用ssl卸载服务"><strong>lbv2启用ssl卸载服务</strong></h3>
+<p>ssl卸载服务（TERMINATED_HTTPS）：lbv2的loadbalancer可以对外提供https服务，对于到来的流量会将ssl卸载，并提供给内部的http服务器。<br>具体的步骤可以参考：<a href="https://wiki.openstack.org/wiki/Network/LBaaS/docs/how-to-create-tls-loadbalancer" target="_blank" rel="external">tls-balancer-install</a>     </p>
+<p>上面的步骤对于现在的版本，有些过时了，所以有以下几处注意的：<br>1.首先，barbican客户端属于将要废弃的，所以使用openstack客户端命令，例如创建secret（其它步骤类似）:     </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">openstack secret store --payload-content-type=<span class="string">'text/plain'</span> --name=<span class="string">'certificate'</span> --payload=<span class="string">"<span class="variable">$(cat server.crt)</span>"</span></div></pre></td></tr></table></figure>
+
+
+<p>2.修改/etc/neutron/neutron_lbaas.conf不能按照官方的配置<code>auth_uri</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">auth_url = <span class="number">192.168</span>.<span class="number">99.2</span>:<span class="number">5000</span>/v2.<span class="number">0</span></div><div class="line">auth_version = <span class="number">3</span></div></pre></td></tr></table></figure>
+
+
+<p>3.创建安全组规则的命令，也废弃了，我采用的neutron客户端（default是对象组名，这里简略，应采用对象组id）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">neutron neutron security-group-rule-create --direction ingress --protocol tcp --port-range-min <span class="number">22</span> --port-range-max <span class="number">22</span> default</div><div class="line">neutron neutron security-group-rule-create --direction egress --protocol tcp --port-range-min <span class="number">22</span> --port-range-max <span class="number">22</span> default</div><div class="line">neutron security-group-rule-create --direction ingress --protocol icmp default</div></pre></td></tr></table></figure>
+
+
+<p>除此之外，还有好些命令都已过时，使用的时候，最好先了解命令参数的意思，然后正确使用。</p>
+<h3 id="总结"><strong>总结</strong></h3>
+<p>以上是lbv2启用ssl卸载服务的步骤，并没有详细叙述安装的细节，因为官方安装步骤都有，重要的是指出安装的几处坑，避免下次安装的时候再次踩坑。当然，不得不提的是Octavia项目将会取代lbv2，也就是说如果换成Octavia，前面所提到的安装配置，就要以Octavia相关的为准。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/neutron/">neutron</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/SDN/">SDN</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2018/04/01/neutron-lbv2-setup/" data-title="lbv2启用loadbalancer ssl卸载服务 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/03/11/neutron-l3-agent/"  title="neutron代码解析之l3-agent的启动">
+ <strong>NEXT:</strong><br/> 
+ <span>neutron代码解析之l3-agent的启动
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+<script src="https://img1.cache.netease.com/f2e/tie/yun/sdk/loader.js"></script>
+<script>
+var cloudTieConfig = {
+  url: document.location.href, 
+  sourceId: "",
+  productKey: "1dd951f1d9a84cdf8279f98fb392485e",
+  target: "cloud-tie-wrapper"
+};
+var yunManualLoad = true;
+Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true);
+</script>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#安装lbv2"><span class="toc-number">1.</span> <span class="toc-text">安装lbv2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#安装barbican"><span class="toc-number">2.</span> <span class="toc-text">安装barbican</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#lbv2启用ssl卸载服务"><span class="toc-number">3.</span> <span class="toc-text">lbv2启用ssl卸载服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kvm/" title="kvm">kvm<sup>1</sup></a></li>
+		
+			<li><a href="/tags/libvirt/" title="libvirt">libvirt<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2018 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

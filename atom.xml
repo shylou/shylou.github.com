@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2018-03-11T09:47:36.946Z</updated>
+  <updated>2018-04-01T07:00:27.307Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -15,11 +15,88 @@
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
   
   <entry>
+    <title><![CDATA[lbv2启用loadbalancer ssl卸载服务]]></title>
+    <link href="http://liushy.com/2018/04/01/neutron-lbv2-setup/"/>
+    <id>http://liushy.com/2018/04/01/neutron-lbv2-setup/</id>
+    <published>2018-03-31T16:00:00.000Z</published>
+    <updated>2018-04-01T06:29:00.000Z</updated>
+    <content type="html"><![CDATA[<h3 id="安装lbv2"><strong>安装lbv2</strong></h3>
+<p>首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：<br>1.控制节点：yum install -y  openstack-neutron-lbaas<br>2.修改配置文件(采用<code>octavia</code>参考<a href="https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html" target="_blank" rel="external">config-lbaas</a>)：<br>neutron.conf:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[defualt]</div><div class="line">service_plugins = [existing service plugins],neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2</div><div class="line">        </div><div class="line">[service_providers]</div><div class="line">service_provider = LOADBALANCERV2:Haproxy:neutron_lbaas.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default</div></pre></td></tr></table></figure>
+
+
+<p>lbaas_agent.ini:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver</div></pre></td></tr></table></figure>
+
+
+<p>3.更新数据库：neutron-db-manage —subproject neutron-lbaas upgrade head<br>4.启动agent：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">systemctl enable neutron-lbaasv2-agent</div><div class="line">systemctl start neutron-lbaasv2-agent</div><div class="line">systemctl restart neutron-server</div></pre></td></tr></table></figure>
+
+
+<p>5.安装dashboard：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">git clone https://git.openstack.org/openstack/neutron-lbaas-dashboard -b stable/pike</div><div class="line"><span class="built_in">cd</span>  neutron-lbaas-dashboard     </div><div class="line">python setup.py install  </div><div class="line">      </div><div class="line">cp neutron_lbaas_dashboard/enabled/_1481_project_ng_loadbalancersv2_panel.py     /usr/share/openstack-dashboard/openstack_dashboard/local/enabled/      </div><div class="line">          </div><div class="line">./manage.py collectstatic</div><div class="line">./manage.py compress       </div><div class="line">       </div><div class="line"><span class="comment">####最后/etc/openstack-dashboard/ 的local_settings开启 UI：</span></div><div class="line">OPENSTACK_NEUTRON_NETWORK = {</div><div class="line"><span class="string">'enable_lb'</span>: True,</div><div class="line">...</div><div class="line">}</div><div class="line"><span class="comment">###重启httpd</span></div><div class="line">systemctl restart httpd</div></pre></td></tr></table></figure>
+
+
+<h3 id="安装barbican"><strong>安装barbican</strong></h3>
+<p>barbican是openstack单独的一个组件，主要用于密钥管理（key manage）。目前有很多组件使用了barbican的密钥管理。对于lbaas来讲，可以使用barbican为loadbalancer提供ssl的密钥管理。     </p>
+<p>接下来记录下barbican的安装流程:具体的步骤可以参考：<a href="https://docs.openstack.org/barbican/queens/install/install-rdo.html" target="_blank" rel="external">barbican-install</a>   </p>
+<p>但上面的这个步骤，有几处注意一下：<br>1.编辑/etc/httpd/conf.d/wsgi-barbican.conf 文件时，我使用<em>VirtualHost 0.0.0.0:9311替换了VirtualHost [::1]:9311</em>并且在/etc/httpd/conf/ports文件里添加了<em>Listen 0.0.0.0:9311</em>才使得httpd加载barbican服务。还有如下修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">vim /etc/httpd/conf.d/wsgi-barbican.conf</div><div class="line">&lt;VirtualHost <span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">9311</span>&gt;</div><div class="line">    ServerName <span class="number">192.168</span>.<span class="number">99.2</span></div><div class="line">      </div><div class="line">    <span class="comment">## Logging</span></div><div class="line">    ErrorLog <span class="string">"/var/log/httpd/barbican_wsgi_main_error_ssl.log"</span></div><div class="line">    LogLevel debug</div><div class="line">    ServerSignature Off</div><div class="line">    CustomLog <span class="string">"/var/log/httpd/barbican_wsgi_main_access_ssl.log"</span> combined</div><div class="line">      </div><div class="line">    &lt;Directory <span class="string">"/usr/lib/python2.7/site-packages/barbican"</span>&gt;</div><div class="line">      Options Indexes FollowSymLinks MultiViews</div><div class="line">      AllowOverride None</div><div class="line">      Allow from all</div><div class="line">      Require all granted</div><div class="line">    &lt;/Directory&gt;</div><div class="line">         </div><div class="line">    WSGIApplicationGroup %{GLOBAL}</div><div class="line">    WSGIDaemonProcess barbican-api display-name=barbican-api group=barbican processes=<span class="number">2</span> threads=<span class="number">8</span> user=barbican</div><div class="line">    WSGIProcessGroup barbican-api</div><div class="line">    WSGIScriptAlias / <span class="string">"/usr/lib/python2.7/site-packages/barbican/api/app.wsgi"</span></div><div class="line">    WSGIPassAuthorization On</div><div class="line">&lt;/VirtualHost&gt;</div></pre></td></tr></table></figure>
+
+
+
+<p>2.编辑/etc/barbican/barbican.conf，修改和增加如下配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[DEFAULT]</div><div class="line">transport_url = rabbit://guest:guest@controller</div><div class="line">host_href = http://xxx.xxx.xxx.xxx:<span class="number">9311</span></div><div class="line">log_file = /var/log/barbican/api.log</div></pre></td></tr></table></figure>
+
+
+<p>3.检查barbican服务是否启动，可以先通过以下命令查看是否者报错：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">openstack secret list</div><div class="line">+--------------------------------------------------------------------------+-------------+---------------------------+--------+-----------------------------+-----------+------------+-------------+------+------------+</div><div class="line">| Secret href                                                              | Name        | Created                   | Status | Content types               | Algorithm | Bit length | Secret <span class="built_in">type</span> | Mode | Expiration |</div><div class="line">+--------------------------------------------------------------------------+-------------+---------------------------+--------+-----------------------------+-----------+------------+-------------+------+------------+</div><div class="line">| http://<span class="number">192.168</span>.<span class="number">99.2</span>:<span class="number">9311</span>/v1/secrets/<span class="number">8</span>a1b6444-<span class="number">216</span>e-<span class="number">44</span>a7<span class="operator">-a</span>049-<span class="number">8</span>b15d83dcdc1 | mysecret    | <span class="number">2018</span>-<span class="number">03</span>-<span class="number">25</span>T17:<span class="number">40</span>:<span class="number">58</span>+<span class="number">00</span>:<span class="number">00</span> | ACTIVE | {u<span class="string">'default'</span>: u<span class="string">'text/plain'</span>} | aes       |        <span class="number">256</span> | opaque      | cbc  | None</div></pre></td></tr></table></figure>
+
+
+<p>若报错，可以再查看9311端口是否监听，以及查看日志/var/log/barbican/api.log和/var/log/httpd/：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">netstat -lnp | grep <span class="number">9311</span></div><div class="line">tcp        <span class="number">0</span>      <span class="number">0</span> <span class="number">0.0</span>.<span class="number">0.0</span>:<span class="number">9311</span>            <span class="number">0.0</span>.<span class="number">0.0</span>:*               LISTEN      <span class="number">15773</span>/httpd</div></pre></td></tr></table></figure>
+
+
+<p>4.允许外部访问9311端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">iptables -I INPUT -p tcp --dport <span class="number">9311</span> -j ACCEPT</div></pre></td></tr></table></figure>
+
+
+<h3 id="lbv2启用ssl卸载服务"><strong>lbv2启用ssl卸载服务</strong></h3>
+<p>ssl卸载服务（TERMINATED_HTTPS）：lbv2的loadbalancer可以对外提供https服务，对于到来的流量会将ssl卸载，并提供给内部的http服务器。<br>具体的步骤可以参考：<a href="https://wiki.openstack.org/wiki/Network/LBaaS/docs/how-to-create-tls-loadbalancer" target="_blank" rel="external">tls-balancer-install</a>     </p>
+<p>上面的步骤对于现在的版本，有些过时了，所以有以下几处注意的：<br>1.首先，barbican客户端属于将要废弃的，所以使用openstack客户端命令，例如创建secret（其它步骤类似）:     </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">openstack secret store --payload-content-type=<span class="string">'text/plain'</span> --name=<span class="string">'certificate'</span> --payload=<span class="string">"<span class="variable">$(cat server.crt)</span>"</span></div></pre></td></tr></table></figure>
+
+
+<p>2.修改/etc/neutron/neutron_lbaas.conf不能按照官方的配置<code>auth_uri</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">auth_url = <span class="number">192.168</span>.<span class="number">99.2</span>:<span class="number">5000</span>/v2.<span class="number">0</span></div><div class="line">auth_version = <span class="number">3</span></div></pre></td></tr></table></figure>
+
+
+<p>3.创建安全组规则的命令，也废弃了，我采用的neutron客户端（default是对象组名，这里简略，应采用对象组id）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">neutron neutron security-group-rule-create --direction ingress --protocol tcp --port-range-min <span class="number">22</span> --port-range-max <span class="number">22</span> default</div><div class="line">neutron neutron security-group-rule-create --direction egress --protocol tcp --port-range-min <span class="number">22</span> --port-range-max <span class="number">22</span> default</div><div class="line">neutron security-group-rule-create --direction ingress --protocol icmp default</div></pre></td></tr></table></figure>
+
+
+<p>除此之外，还有好些命令都已过时，使用的时候，最好先了解命令参数的意思，然后正确使用。</p>
+<h3 id="总结"><strong>总结</strong></h3>
+<p>以上是lbv2启用ssl卸载服务的步骤，并没有详细叙述安装的细节，因为官方安装步骤都有，重要的是指出安装的几处坑，避免下次安装的时候再次踩坑。当然，不得不提的是Octavia项目将会取代lbv2，也就是说如果换成Octavia，前面所提到的安装配置，就要以Octavia相关的为准。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h3 id="安装lbv2"><strong>安装lbv2</strong></h3>
+<p>首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：<br>1.控制节点：yum install -y  openstack-neutron-lbaas<br>2.]]>
+    </summary>
+    
+      <category term="neutron" scheme="http://liushy.com/tags/neutron/"/>
+    
+      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
+    
+  </entry>
+  
+  <entry>
     <title><![CDATA[neutron代码解析之l3-agent的启动]]></title>
     <link href="http://liushy.com/2018/03/11/neutron-l3-agent/"/>
     <id>http://liushy.com/2018/03/11/neutron-l3-agent/</id>
     <published>2018-03-10T16:00:00.000Z</published>
-    <updated>2018-03-11T09:47:03.000Z</updated>
+    <updated>2018-03-11T14:48:25.348Z</updated>
     <content type="html"><![CDATA[<p>每个 L3 Agent 运行在一个 <em>network namespace</em> 中，以 qrouter-<router-uuid>命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces = True开启namespace。本文只做单纯的分析代码，研究了neutron的l3-agent代码（m版本），代码路径为<em>/neutron/agent/l3/agent.py</em>。主要的类是：     </router-uuid></p>
 <ul>
 <li>class L3PluginApi(object): l3-agent的rpc接口，用于回复和查询l3-plugin的。    </li>
@@ -1247,36 +1324,6 @@
       <category term="Packet_in" scheme="http://liushy.com/tags/Packet-in/"/>
     
       <category term="recevie" scheme="http://liushy.com/tags/recevie/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[基于floodlight&sflow的队列调整]]></title>
-    <link href="http://liushy.com/2015/02/02/sflow-queue/"/>
-    <id>http://liushy.com/2015/02/02/sflow-queue/</id>
-    <published>2015-02-01T16:00:00.000Z</published>
-    <updated>2017-03-13T12:18:43.000Z</updated>
-    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
-<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddos防御</a> 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但<a href="https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-does-open-vswitch-support-openflow-meters" target="_blank" rel="external">OVS FAQ</a>有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。   </p>
-<h2 id="实验设计">实验设计</h2>
-<p>1.拓扑结构沿用上次实验的：switch+3hosts+floodlight+sflow如图：<br>　　<img src="/img/ddos-topo.png" alt="queue-topo"><br>2.设计思想：switch上有三个端口分别连接有host1,host2,host3。在端口3上设置3条队列，分别带宽设置为：<br>— —id=@q0 create queue other-config:min-rate=1000000000 other-config:max-rate=1000000000<br>— —id=@q1 create queue other-config:max-rate=20000000 other-config:min-rate=20000000<br>— —id=@q2 create queue other-config:max-rate=2000000 other-config:min-rate=2000000<br>让host1和host2同时向host3发包通过流量监控，获取端口1和端口2的速率分别为R1和R2，然后进行判断：<br>　　若R1&gt;R2:端口1到端口3的队列—&gt;q0    端口2到端口3的队列—&gt;q2<br>　　若R2&gt;R1:端口1到端口3的队列—&gt;q2    端口2到端口3的队列—&gt;q0<br>　　若R1=R2:端口1到端口3的队列—&gt;q1    端口2到端口3的队列—&gt;q1    </p>
-<h2 id="结果分析">结果分析</h2>
-<p>首先让host1和host2分别向host3泛洪：<br>　　h1&gt; ping -f h3<br>　　h2&gt; ping -f h3<br>执行队列调整应用后终端显示:<br>　　<img src="/img/console-view.png" alt="console"><br>可以看出，由于端口1(注意：eth0~eth2依次对应端口1~3)的速率比端口2的速率快，应用立即通知控制器下发流表给端口1和端口2设定不同的出口队列，再来看看控制器的流表：<br>　　<img src="/img/queue-flows.png" alt="queue-flow"><br>从流表可以看到，控制器已经下发了队列调整流表项。端口1的速率变化：<br>　　<img src="/img/s1-eth0-rate.png" alt="eth0-rate"><br>端口2的速率变化：<br>　　<img src="/img/s1-eth1-rate.png" alt="eth1-rate"><br>从图中我们可以看到，最初阶段，端口1和端口2的速率均在2M左右；从时间17:13:18开始，也就是实施队列调整应用后，端口1的速率上升到了大于2M阶段，而端口2的速率下降到了500k以下。</p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<h2 id="前言">前言</h2>
-<p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，<a href="http://liushy.com/2015/01/27/sflow-ddos/" target="_blank" rel="external">基于sflow的ddo]]>
-    </summary>
-    
-      <category term="sflow" scheme="http://liushy.com/tags/sflow/"/>
-    
-      <category term="floodlight" scheme="http://liushy.com/tags/floodlight/"/>
-    
-      <category term="queue" scheme="http://liushy.com/tags/queue/"/>
-    
-      <category term="qos" scheme="http://liushy.com/tags/qos/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     

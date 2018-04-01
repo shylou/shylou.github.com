@@ -2,8 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://liushy.com/2018/04/01/neutron-lbv2-setup/</loc>
+    <lastmod>2018-04-01T06:29:00.000Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://liushy.com/2018/03/11/neutron-l3-agent/</loc>
-    <lastmod>2018-03-11T09:47:03.000Z</lastmod>
+    <lastmod>2018-03-11T14:48:25.348Z</lastmod>
   </url>
   
   <url>
