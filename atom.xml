@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2018-04-01T07:00:27.307Z</updated>
+  <updated>2018-04-01T07:02:45.749Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -1254,10 +1254,10 @@
   
   <entry>
     <title><![CDATA[随便聊聊]]></title>
-    <link href="http://liushy.com/2015/11/20/talk--life/"/>
-    <id>http://liushy.com/2015/11/20/talk--life/</id>
-    <published>2015-11-19T16:00:00.000Z</published>
-    <updated>2017-03-12T13:32:44.000Z</updated>
+    <link href="http://liushy.com/2015/11/12/talk--life/"/>
+    <id>http://liushy.com/2015/11/12/talk--life/</id>
+    <published>2015-11-11T16:00:00.000Z</published>
+    <updated>2018-04-01T07:02:31.480Z</updated>
     <content type="html"><![CDATA[<h2 id="唠唠">唠唠</h2>
 <p>快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，以至于忘了搭理自己这个博客了。现在忙的事情都先告一段落了，还好，今天得空了，想了想，还是得对自己这几个月梳理梳理，由于本文与技术无关，所以新建了一个专题 [<em>Life</em>] 打算以后写不出技术文章的时候，就在这里说说自己的生活感悟。</p>
 <h2 id="聊聊">聊聊</h2>
