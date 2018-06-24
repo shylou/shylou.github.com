@@ -7,14 +7,15 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>来日方长 | liushy</title>
+    <title>Barbican笔记 | liushy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Liushy">
     
-    <meta name="description" content="心态变化
-春节过后，就立马投入到年前留下的的工作中去，非要谈个人在项目中的重要性话，其实也就是一个填坑的。你不干，就不行，干了也就那样，哈，其实也正常。然后就是三月份了，我记得这个月搞了一个月的KW，也是服了，搞得整个人的状态都是颓的。实话说，不是很喜欢做这种东西。        
-从那时候开始，整">
+    <meta name="description" content="杂记
+记录一下最近研究barbican组件的个人理解。   
+barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行格式化，比如x509。
+123456{&#39;text/plain&#39;: &#39;text/plain&#39;,&#39;">
     
     
     
@@ -87,53 +88,65 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2017/12/26/goon-2017/" title="来日方长" itemprop="url">来日方长</a>
+      <a href="/2018/06/23/barbican-note/" title="Barbican笔记" itemprop="url">Barbican笔记</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://liushy.com" title="Liushy">Liushy</a>
     </p>
   <p class="article-time">
-    <time datetime="2017-12-25T16:00:00.000Z" itemprop="datePublished">Dec 26 2017</time>
-    Updated:<time datetime="2017-12-30T15:31:26.000Z" itemprop="dateModified">Dec 30 2017</time>
+    <time datetime="2018-06-22T16:00:00.000Z" itemprop="datePublished">Jun 23 2018</time>
+    Updated:<time datetime="2018-06-24T08:55:31.682Z" itemprop="dateModified">Jun 24 2018</time>
     
   </p>
 </header>
 	<div class="article-content">
 		
 		
-		<h3 id="心态变化">心态变化</h3>
-<p>春节过后，就立马投入到年前留下的的工作中去，非要谈个人在项目中的重要性话，其实也就是一个填坑的。你不干，就不行，干了也就那样，哈，其实也正常。然后就是三月份了，我记得这个月搞了一个月的KW，也是服了，搞得整个人的状态都是颓的。实话说，不是很喜欢做这种东西。        </p>
-<p>从那时候开始，整日都有一种莫名的沮丧感，这种感觉隐隐约约，一直到我提离职，主要原因，就是感觉离自己预期的工作状态偏离越来越远。工作之余就抽时间继续学习自己感兴趣的技术。周末宅在家里看博客，自己搭环境搞。断断续续地，累积了不少知识点。也会和老同学朋友聊聊目前的工作状况，发现其实一年多的时间，很多变化的发生，很多机会的产生，已经同我当初毕业时很不一样了，对比自身当前的状态，想离开的心情也就越来越强烈。 </p>
-<p><img src="/img/zte.jpeg" alt="zte">                 </p>
-<h3 id="乌镇">乌镇</h3>
-<p>我会尽量把自己的整个状态调整为积极的，该放松还得放松。四月份的时候，去了一趟乌镇。乌镇也是我来南京前定了必去的一地儿。去乌镇的同时，顺道逛了一下杭州的西湖，说真的，东边城市的人文和素质真的很不错，街道整洁度可见一斑，车让行人也是国内做得最早且有效施行的。经济基础决定上层建筑，成渝这些年发展迅猛，希望其它方面也会随之提高。    </p>
-<p>西湖白堤，天气好景色也不错哈～<br><img src="/img/xihu.jpeg" alt="xihu"><br>乌镇，江南水乡，以前都是荧屏上看到。是真的漂亮哈，虽然好多收费的。这是白天乌镇的民居<br><img src="/img/wuzhen1.jpeg" alt="wuzhen"><br>傍晚和晚上的乌镇水乡<br><img src="/img/wuzhen2.jpeg" alt="wuzhen"><br><img src="/img/wuzhen3.jpeg" alt="wuzhen"><br>没什么好描述的，漂亮就行了，黄磊拍似水年华的那个地方。里面的酒店贵得很，淡季的价格也是居高不下，半天时间差不多就能逛完了，住景区附近的民居相对实惠点。      </p>
-<h3 id="回四川">回四川</h3>
-<p>回成都，想了很长的时间。原因可以参考我上面提到的自己心态的变化，还有，成都也涌现了不少机会。五月底到六月的时候，有一个调回成都研究所的机会，我努力了，不过最终没成行。大概八月份的时候，我就提出离职了，一个月的过渡时间，九月底回家。回来面试的目标公司，以及对应岗位，我是做好了准备的，对于自己的职业规划，我也有所打算。国庆节后就开始投简历了，陆陆续续面试了好几家，只有一家面试的时候，和面试官聊得很烂以外，其它的都很顺利，最终都收到了offer。在这里我必须感谢面试的这几家公司的hr哈，招聘求职是一个双选的过程，很庆幸遇到的hr会替我分析和考虑，真的感谢！当然，还有关心我的亲人朋友同学们，谢各位了诶！</p>
-<h3 id="最后">最后</h3>
-<p>我以为今年的年终，我会有很多要讲的，可把提纲捋出来，却发现没太多可说的，寥寥几行也就敲完了。有些事在当时觉得难受的，回过头来再看不过也是人之常情；人也一样，每个人都有难处，没有谁是真的狠角色，杀人犯也有小学同学呢。活着，难免的会遇到一些困难，解决了就行了，我会尽可能地把最坏的情况考虑到，然后再想怎么去处理。今年就这样吧，简单写成这样咯。明年的事情会多了，工作上得学习新东西，熟悉业务等等，工作以外还有一大堆事。哈～</p>
-<p>不过都没啥，还年轻。刚过十八，来日方长</p>
+		<h2 id="杂记">杂记</h2>
+<p>记录一下最近研究barbican组件的个人理解。   </p>
+<p>barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行格式化，比如x509。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">{<span class="string">'text/plain'</span>: <span class="string">'text/plain'</span>,</div><div class="line"><span class="string">'text/plain;charset=utf-8'</span>: <span class="string">'text/plain'</span>,</div><div class="line"><span class="string">'text/plain; charset=utf-8'</span>: <span class="string">'text/plain'</span>,</div><div class="line"><span class="string">'application/octet-stream'</span>: <span class="string">'application/octet-stream'</span>,</div><div class="line"><span class="string">'application/pkcs8'</span>: <span class="string">'application/pkcs8'</span>,</div><div class="line"><span class="string">'application/aes'</span>: <span class="string">'application/aes'</span>}</div></pre></td></tr></table></figure>
+
+<p>tips：ocatavia可以对pkcs12证书进行格式化（当然也是封装的接口），一般情况下，获取的证书默认进行pkcs12格式化的，同时也兼容了barbican原生的证书格式化。包括监听器绑定证书的方式也同lbv2不一样，并没有采用容器的方式（实际pkcs12也可以看着是容器）。</p>
+<p>barbican后端支持多种存储，所以官网提供了多个插件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">[secretstore]</div><div class="line"><span class="comment"># Set to True when multiple plugin backends support is needed</span></div><div class="line">enable_multiple_secret_stores = True</div><div class="line">stores_lookup_suffix = software, kmip, pkcs11, dogtag </div><div class="line">[secretstore:software]</div><div class="line">secret_store_plugin = store_crypto</div><div class="line">crypto_plugin = simple_crypto</div><div class="line">[secretstore:kmip]</div><div class="line">secret_store_plugin = kmip_plugin</div><div class="line">global_default = True </div><div class="line">[secretstore:dogtag]</div><div class="line">secret_store_plugin = dogtag_plugin </div><div class="line">[secretstore:pkcs11]</div><div class="line">secret_store_plugin = store_crypto</div><div class="line">crypto_plugin = p11_crypto</div></pre></td></tr></table></figure>
+
+<p>目前barbican自身代码，限定了pkcs8,pkcs11,x509等格式的支持程度。<br>lbv2支持的私钥是pkcs8(??????)证书是x509，octvia在代码里增加了pkcs12的代码文件，并新增/certificate/manager/barbican.py可实现barbican对pkcs12的支持，所以私钥和证书都可以支持pkcs12<br><a href="https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers" target="_blank" rel="external">https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers</a><br><a href="https://docs.openstack.org/releasenotes/octavia/queens.html" target="_blank" rel="external">https://docs.openstack.org/releasenotes/octavia/queens.html</a></p>
+<blockquote>
+<p>Users can now use a reference to a single PKCS12 bundle as their default_tls_container_ref instead of a Barbican container with individual secret objects. PKCS12 supports bundling a private key, certificate, and intermediates. Private keys can no longer be passphrase protected when using PKCS12 bundles. No configuration change is necessary to enable this feature. Users may simply begin using this. Any use of the old style containers will be detected and automatically fall back to using the old Barbican driver.<br>Certificate bundles can now be stored in any backend Castellan supports, and can be retrieved via a Castellan driver, even if Barbican is not deployed.     </p>
+</blockquote>
+<p>创建证书容器的body如下：   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">{          </div><div class="line">    <span class="string">"type"</span>: <span class="string">"certificate"</span>,</div><div class="line">    <span class="string">"status"</span>: <span class="string">"ACTIVE"</span>,</div><div class="line">    <span class="string">"name"</span>: <span class="string">"Example.com Certificates"</span>,</div><div class="line">    <span class="string">"consumers"</span>: [],</div><div class="line">    <span class="string">"container_ref"</span>: <span class="string">"https://{barbican_host}/v1/containers/{uuid}"</span>,</div><div class="line">    <span class="string">"secret_refs"</span>: [</div><div class="line">        {</div><div class="line">            <span class="string">"name"</span>: <span class="string">"certificate"</span>,</div><div class="line">            <span class="string">"secret_ref"</span>: <span class="string">"https://{barbican_host}/v1/secrets/{uuid}"</span></div><div class="line">        },</div><div class="line">        {</div><div class="line">            <span class="string">"name"</span>: <span class="string">"private_key"</span>,</div><div class="line">            <span class="string">"secret_ref"</span>: <span class="string">"https://{barbican_host}/v1/secrets/{uuid}"</span></div><div class="line">        },</div><div class="line">        {</div><div class="line">            <span class="string">"name"</span>: <span class="string">"private_key_passphrase"</span>,</div><div class="line">            <span class="string">"secret_ref"</span>: <span class="string">"https://{barbican_host}/v1/secrets/{uuid}"</span></div><div class="line">        },</div><div class="line">        {</div><div class="line">            <span class="string">"name"</span>: <span class="string">"intermediates"</span>,</div><div class="line">            <span class="string">"secret_ref"</span>: <span class="string">"https://{barbican_host}/v1/secrets/{uuid}"</span></div><div class="line">        }</div><div class="line"></div><div class="line">    ],</div><div class="line">    <span class="string">"created"</span>: <span class="string">"2015-03-30T21:10:45.417835"</span>,</div><div class="line">    <span class="string">"updated"</span>: <span class="string">"2015-03-30T21:10:45.417835"</span></div><div class="line">}</div></pre></td></tr></table></figure>
+
+
+
+<p>证书容器是用来存储证书相关的密钥，需要指定以下几种type，其中certificate是必须指定，其余的均是可选的。     </p>
+<blockquote>
+<p>A certificate container is used for storing the following secrets that are relevant to certificates:<br>certificate<br>private_key (optional)<br>private_key_passphrase (optional)<br>intermediates (optional)<br>The payload for the secret referenced as the “certificate” is expected to be a PEM formatted x509 certificate.<br>The payload for the secret referenced as the “intermediates” is expected to be a PEM formatted PKCS7 certificate chain.</p>
+</blockquote>
+<h2 id="参考">参考</h2>
+<p><a href="http://www.iceyao.com.cn/2017/11/19/Neutron-lbaas%E4%BB%A3%E7%90%86https%E5%AE%9E%E8%B7%B5/" target="_blank" rel="external">http://www.iceyao.com.cn/2017/11/19/Neutron-lbaas%E4%BB%A3%E7%90%86https%E5%AE%9E%E8%B7%B5/</a><br><a href="https://docs.openstack.org/barbican/latest/install/barbican-backend.html" target="_blank" rel="external">https://docs.openstack.org/barbican/latest/install/barbican-backend.html</a><br><a href="https://docs.openstack.org/barbican/latest/configuration/plugin_backends.html" target="_blank" rel="external">https://docs.openstack.org/barbican/latest/configuration/plugin_backends.html</a><br><a href="https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers" target="_blank" rel="external">https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers</a><br><a href="https://docs.openstack.org/releasenotes/octavia/queens.html" target="_blank" rel="external">https://docs.openstack.org/releasenotes/octavia/queens.html</a><br><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/生活，旅游/">生活，旅游</a>
+  <span></span> <a href="/tags/barbican/">barbican</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/Life/">Life</a>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://liushy.com/2017/12/26/goon-2017/" data-title="来日方长 | liushy" data-tsina="null" class="share clearfix">
+  <div data-url="http://liushy.com/2018/06/23/barbican-note/" data-title="Barbican笔记 | liushy" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -142,19 +155,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2018/03/11/neutron-l3-agent/" title="neutron代码解析之l3-agent的启动">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  neutron代码解析之l3-agent的启动</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2017/09/30/docker+swarm/"  title="Docker编排工具之Swarm">
+<a href="/2018/04/01/neutron-lbv2-setup/"  title="lbv2启用loadbalancer ssl卸载服务">
  <strong>NEXT:</strong><br/> 
- <span>Docker编排工具之Swarm
+ <span>lbv2启用loadbalancer ssl卸载服务
 </span>
 </a>
 </div>
@@ -180,7 +185,7 @@ Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true)
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#心态变化"><span class="toc-number">1.</span> <span class="toc-text">心态变化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#乌镇"><span class="toc-number">2.</span> <span class="toc-text">乌镇</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#回四川"><span class="toc-number">3.</span> <span class="toc-text">回四川</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#最后"><span class="toc-number">4.</span> <span class="toc-text">最后</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#杂记"><span class="toc-number">1.</span> <span class="toc-text">杂记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">2.</span> <span class="toc-text">参考</span></a></li></ol>
   </div>
 
 <div id="asidepart">
