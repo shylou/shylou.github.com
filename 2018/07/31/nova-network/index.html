@@ -1,0 +1,528 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>nova与neutron交互的细节分析 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="前言
+通过查询资料，我们应该大体都了解nova创建虚机的一般流程：首先是通过horizon下发指令到nova-API，然后是keystone认证，接着nova-conductor查询数据库，nova-scheduler进行物理主机选举，从glance下载镜像，通过neutron创建网络资源，最后no">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Code">Code</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2018/07/31/nova-network/" title="nova与neutron交互的细节分析" itemprop="url">nova与neutron交互的细节分析</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2018-07-30T16:00:00.000Z" itemprop="datePublished">Jul 31 2018</time>
+    Updated:<time datetime="2018-08-04T15:08:30.477Z" itemprop="dateModified">Aug 4 2018</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h2 id="前言"><strong>前言</strong></h2>
+<p>通过查询资料，我们应该大体都了解nova创建虚机的一般流程：首先是通过horizon下发指令到nova-API，然后是keystone认证，接着nova-conductor查询数据库，nova-scheduler进行物理主机选举，从glance下载镜像，通过neutron创建网络资源，最后nova-compute创建虚机。本文旨在记录一下，在代码层面，nova与neutron的交互过程中比较重要的细节。      </p>
+<h2 id="nova处理流程"><strong>nova处理流程</strong></h2>
+<p>nova-conductor通过rpc的方式通知nova-compute创建虚机。nova-compute创建虚机的入口是build_and_run_instance，在文件/nova/compute/manager.py中：</p>
+<figure class="highlight pyhon"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">build_and_run_instance</span><span class="params">(self, context, instance, image, request_spec,</span></span></div><div class="line">                 filter_properties, admin_password=None, injected_files=None, requested_networks=None,</div><div class="line">                 security_groups=None, block_device_mapping=None, node=None, limits=None):</div><div class="line">       </div><div class="line">    <span class="decorator">@utils.synchronized(instance.uuid)</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_locked_do_build_and_run_instance</span><span class="params">(*args, **kwargs)</span>:</span></div><div class="line">        ......</div><div class="line">        <span class="keyword">with</span> self._build_semaphore:</div><div class="line">            <span class="keyword">try</span>:</div><div class="line">                result = self._do_build_and_run_instance(*args, **kwargs)</div><div class="line">            <span class="keyword">except</span> Exception:</div></pre></td></tr></table></figure>
+
+
+<p>在这里，具体执行创建虚机流程的方法是_do_build_and_run_instance。进入这个方法，再进一步分析：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_do_build_and_run_instance</span><span class="params">(self, context, instance, image,</span></span></div><div class="line">        request_spec, filter_properties, admin_password, injected_files,</div><div class="line">        requested_networks, security_groups, block_device_mapping, node=None, limits=None):</div><div class="line">    ......</div><div class="line">        </div><div class="line">    <span class="keyword">try</span>:</div><div class="line">        <span class="keyword">with</span> timeutils.StopWatch() <span class="keyword">as</span> timer:</div><div class="line">            self._build_and_run_instance(context, instance, image,</div><div class="line">                    decoded_files, admin_password, requested_networks,</div><div class="line">                    security_groups, block_device_mapping, node, limits, filter_properties)</div><div class="line">    ......</div></pre></td></tr></table></figure>
+
+
+<p>在这个方法里，主要关注_build_and_run_instance的调用，进入该方法的主体：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_build_and_run_instance</span><span class="params">(self, context, instance, image, injected_files,</span></span></div><div class="line">        admin_password, requested_networks, security_groups,</div><div class="line">        block_device_mapping, node, limits, filter_properties):</div><div class="line">    ......</div><div class="line"></div><div class="line">    <span class="keyword">try</span>:</div><div class="line">    ......</div><div class="line">            <span class="keyword">with</span> self._build_resources(context, instance,requested_networks, security_groups, image_meta,</div><div class="line">                    block_device_mapping) <span class="keyword">as</span> resources:</div><div class="line">                ......</div><div class="line">                instance.save(expected_task_state=task_states.BLOCK_DEVICE_MAPPING)</div><div class="line">                block_device_info = resources[<span class="string">'block_device_info'</span>]</div><div class="line">                network_info = resources[<span class="string">'network_info'</span>]</div><div class="line">                LOG.debug(<span class="string">'Start spawning the instance on the hypervisor.'</span>,</div><div class="line">                          instance=instance)</div><div class="line">                <span class="keyword">with</span> timeutils.StopWatch() <span class="keyword">as</span> timer:</div><div class="line">                    self.driver.spawn(context, instance, image_meta, injected_files, admin_password,</div><div class="line">                                      network_info=network_info, block_device_info=block_device_info)</div><div class="line">    ......</div></pre></td></tr></table></figure>
+
+
+<p>实现的时候，_build_resources主要是创建各种资源，其中就包括虚机的网络资源。self.driver.spawn就是调用具体的hypervisor的driver进行虚机创建的操作，比如libvirt，它的实现就是根据资源信息生成虚机的xml文件，然后通过xml配置启动虚机。</p>
+<h2 id="nova与neutron的交互"><strong>nova与neutron的交互</strong></h2>
+<p>nova与neutron的交互主要就是nova通知neutron服务器创建网络资源，并获取成功创建的资源信息。<br>首先进入_build_resources方法里：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_build_resources</span><span class="params">(self, context, instance, requested_networks,</span></span></div><div class="line">    security_groups, image_meta, block_device_mapping):</div><div class="line">    resources = {}</div><div class="line">    network_info = <span class="keyword">None</span></div><div class="line">    <span class="keyword">try</span>:</div><div class="line">        LOG.debug(<span class="string">'Start building networks asynchronously for instance.'</span>,instance=instance)</div><div class="line">        network_info = self._build_networks_for_instance(context, instance,</div><div class="line">                requested_networks, security_groups)</div><div class="line">        resources[<span class="string">'network_info'</span>] = network_info</div></pre></td></tr></table></figure>
+
+
+<p>更深入查看方法的调用，_build_networks_for_instance方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_build_networks_for_instance</span><span class="params">(self, context, instance,requested_networks, security_groups)</span>:</span></div><div class="line">    ......</div><div class="line">    network_info = self._allocate_network(context, instance,</div><div class="line">            requested_networks, macs, security_groups, dhcp_options)</div></pre></td></tr></table></figure>
+
+
+<p>_allocate_network方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_allocate_network</span><span class="params">(self, context, instance, requested_networks, macs, security_groups, dhcp_options)</span>:</span></div><div class="line">  </div><div class="line">    <span class="keyword">return</span> network_model.NetworkInfoAsyncWrapper(</div><div class="line">            self._allocate_network_async, context, instance,</div><div class="line">            requested_networks, macs, security_groups, is_vpn, dhcp_options)</div></pre></td></tr></table></figure>
+
+
+<p>_allocate_network_async方法：   </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_allocate_network_async</span><span class="params">(self, context, instance, requested_networks,</span></span></div><div class="line">                            macs, security_groups, is_vpn, dhcp_options):</div><div class="line">    ......</div><div class="line"> </div><div class="line">    bind_host_id = self.driver.network_binding_host_id(context, instance)</div><div class="line">    <span class="keyword">for</span> attempt <span class="keyword">in</span> range(<span class="number">1</span>, attempts + <span class="number">1</span>):</div><div class="line">        <span class="keyword">try</span>:</div><div class="line">            nwinfo = self.network_api.allocate_for_instance(</div><div class="line">                    context, instance, vpn=is_vpn, requested_networks=requested_networks,</div><div class="line">                    macs=macs, security_groups=security_groups,</div><div class="line">                    dhcp_options=dhcp_options, bind_host_id=bind_host_id)</div></pre></td></tr></table></figure>
+
+
+<p>在这个方法里，首先会通过self.driver.network_binding_host_id获取到虚机所在主机的host_id。然后进行虚机的网络资源的创建。也就是方法allocate_for_instance：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">allocate_for_instance</span><span class="params">(self, context, instance, vpn,requested_networks, macs=None,</span></span></div><div class="line">                          security_groups=None,dhcp_options=None, bind_host_id=None):</div><div class="line">    ......</div><div class="line">    <span class="comment"># We do not want to create a new neutron session for each call</span></div><div class="line">    neutron = get_client(context)</div><div class="line">    .....  </div><div class="line">    <span class="comment"># Create any ports that might be required,</span></div><div class="line">    <span class="comment"># after validating requested security groups</span></div><div class="line">    security_groups = self._clean_security_groups(security_groups)</div><div class="line">    security_group_ids = self._process_security_groups(instance, neutron, security_groups)</div><div class="line">         </div><div class="line">    requests_and_created_ports = self._create_ports_for_instance(</div><div class="line">        context, instance, ordered_networks, nets, neutron, security_group_ids)</div><div class="line">       </div><div class="line">    <span class="comment"># Update existing and newly created ports</span></div><div class="line">    available_macs = _filter_hypervisor_macs(instance, ports, macs) </div><div class="line">    admin_client = get_client(context, admin=<span class="keyword">True</span>)</div><div class="line">          </div><div class="line">    ordered_nets, ordered_ports, preexisting_port_ids, \</div><div class="line">        created_port_ids = self._update_ports_for_instance(</div><div class="line">            context, instance, neutron, admin_client, requests_and_created_ports, nets,</div><div class="line">            bind_host_id, dhcp_options, available_macs)</div><div class="line">          </div><div class="line">    nw_info = self.get_instance_nw_info(context, instance, networks=ordered_nets, port_ids=ordered_ports,</div><div class="line">        admin_client=admin_client,preexisting_port_ids=preexisting_port_ids, update_cells=<span class="keyword">True</span>)</div><div class="line">                </div><div class="line">    <span class="keyword">return</span> network_model.NetworkInfo([vif <span class="keyword">for</span> vif <span class="keyword">in</span> nw_info</div><div class="line">                                      <span class="keyword">if</span> vif[<span class="string">'id'</span>] <span class="keyword">in</span> created_port_ids + preexisting_port_ids])</div></pre></td></tr></table></figure>
+
+
+<p>从方法的实现上可以看到，首先会创建虚机的安全组和端口，注意这时候的端口，是最小配置的端口，还没有进行bind和qos策略这些extensions配置的，端口的bind状态是UNBOUND状态。创建成功后会调用_update_ports_for_instance方法将端口的bind_host_id传入进行端口bind_port操作。以上的操作都会调用neutron的api。重点关注以下几个方法的实现：</p>
+<ul>
+<li>_process_security_groups    </li>
+<li>_create_ports_for_instance 调用neutron的create_port</li>
+<li>_update_ports_for_instance 调用neutron的update_port</li>
+</ul>
+<p>这里neutron创建端口的操作主要包括IP地址分配以及安全组的配置；接下来将单独分析一下neutron的端口绑定bind_port。  </p>
+<p>上面两部分的调用栈可以简单总结如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">build_and_run_instance</div><div class="line">---&gt;_locked_<span class="keyword">do</span>_build_and_run_instance</div><div class="line">|   ---&gt;_<span class="keyword">do</span>_build_and_run_instance</div><div class="line">|   |   ---&gt;_build_and_run_instance</div><div class="line">|   |   |   ---&gt;_build_resources</div><div class="line">|   |   |   |   ---&gt;_build_networks_<span class="keyword">for</span>_instance</div><div class="line">|   |   |   |   |   ---&gt;_allocate_network</div><div class="line">|   |   |   |   |   |   ---&gt;_allocate_network_async</div><div class="line">|   |   |   |   |   |   |   ---&gt;allocate_<span class="keyword">for</span>_instance</div><div class="line">|   |   |   |   |   |   |   |   ---&gt;_process_security_groups</div><div class="line">|   |   |   |   |   |   |   |   ---&gt;_create_ports_<span class="keyword">for</span>_instance</div><div class="line">|   |   |   |   |   |   |   |   |   ---&gt;_create_port_minimal</div><div class="line">|   |   |   |   |   |   |   |   ---&gt;_update_ports_<span class="keyword">for</span>_instance</div><div class="line">|   |   |   |   |   |   |   |   |   ---&gt;_populate_neutron_extension_values</div><div class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;QOS_QUEUE,BINDING_HOST_ID,DNS_INTEGRATION</div><div class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;_populate_pci_mac_address</div><div class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;_populate_mac_address</div><div class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;extra_dhcp_opts</div><div class="line">|   |   |   |   |   |   |   |   |</div><div class="line">|   |   |   |   |   |   |   |   | </div><div class="line">|   |   |   ---&gt;self.driver.spawn</div></pre></td></tr></table></figure>
+
+<h2 id="neutron端口绑定"><strong>neutron端口绑定</strong></h2>
+<p>neutron的端口绑定bind_port的代码，关注一下neutron的bind_port方法，在文件neutron/plugins/ml2/manager.py中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">bind_port</span><span class="params">(self, context)</span>:</span></div><div class="line">    binding = context._binding</div><div class="line">    LOG.debug(<span class="string">"Attempting to bind port %(port)s on host %(host)s "</span></div><div class="line">              <span class="string">"for vnic_type %(vnic_type)s with profile %(profile)s"</span>,</div><div class="line">              {<span class="string">'port'</span>: context.current[<span class="string">'id'</span>],<span class="string">'host'</span>: context.host,</div><div class="line">               <span class="string">'vnic_type'</span>: binding.vnic_type,<span class="string">'profile'</span>: binding.profile})</div><div class="line">    context._clear_binding_levels()</div><div class="line">    <span class="keyword">if</span> <span class="keyword">not</span> self._bind_port_level(context, <span class="number">0</span>,context.network.network_segments):</div><div class="line">        binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED</div></pre></td></tr></table></figure>
+
+
+<p>方法首先会获取端口即将binding的信息，清空端口的层次化绑定信息，然后调用_bind_port_level方法进行分层绑定。这里有个关注的点就是，目前的_bind_port_level方法是兼容了单层绑定和多层次化绑定的。目前对于层次化绑定可以参考<a href="http://specs.openstack.org/openstack/neutron-specs/specs/kilo/ml2-hierarchical-port-binding.html" target="_blank" rel="external">这个BP</a>     </p>
+<p>接下来分析_bind_port_level：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_bind_port_level</span><span class="params">(self, context, level, segments_to_bind)</span>:</span></div><div class="line">    ......</div><div class="line">    <span class="keyword">for</span> driver <span class="keyword">in</span> self.ordered_mech_drivers:</div><div class="line">        <span class="keyword">if</span> <span class="keyword">not</span> self._check_driver_to_bind(driver, segments_to_bind,</div><div class="line">                                          context._binding_levels):</div><div class="line">            <span class="keyword">continue</span></div><div class="line">        <span class="keyword">try</span>:</div><div class="line">            context._prepare_to_bind(segments_to_bind)</div><div class="line">            driver.obj.bind_port(context)</div><div class="line">            segment = context._new_bound_segment</div><div class="line">            <span class="keyword">if</span> segment:</div><div class="line">                context._push_binding_level(</div><div class="line">                    models.PortBindingLevel(port_id=port_id,host=context.host,</div><div class="line">                                            level=level,driver=driver.name,segment_id=segment))</div><div class="line">                next_segments = context._next_segments_to_bind</div><div class="line">                <span class="keyword">if</span> next_segments:</div><div class="line">                    <span class="comment"># Continue binding another level.</span></div><div class="line">                    <span class="keyword">if</span> self._bind_port_level(context, level + <span class="number">1</span>,next_segments):</div><div class="line">                        <span class="keyword">return</span> <span class="keyword">True</span></div><div class="line">                    <span class="keyword">else</span>:</div><div class="line">                        LOG.warning(_LW(<span class="string">"Failed to bind port %(port)s on "</span></div><div class="line">                                        <span class="string">"host %(host)s at level %(lvl)s"</span>),</div><div class="line">                                    {<span class="string">'port'</span>: context.current[<span class="string">'id'</span>],<span class="string">'host'</span>: context.host,<span class="string">'lvl'</span>: level + <span class="number">1</span>})</div><div class="line">                        context._pop_binding_level()</div><div class="line">                <span class="keyword">else</span>:</div><div class="line">                    <span class="comment"># Binding complete.</span></div><div class="line">                    ......</div><div class="line">                    <span class="keyword">return</span> <span class="keyword">True</span></div></pre></td></tr></table></figure>
+
+
+<p>首先会遍历每个ml2 driver（例如openvswitch，networking-huawei等），调用_check_driver_to_bind，遍历每个context._binding_levels中的level，如果该level.segment_id在segments_to_bind里面以及level.driver与当前driver匹配的话，将会退出该driver的绑定流程，进行下一个driver的绑定。简单总结一下：就是在同一个driver上不能绑定相同的segment_id。    </p>
+<p>当然，如果是层次化绑定的话，需要higher level的driver将分配的segment_id通过continue_binding()传递给bottom level的driver。各种driver进行端口绑定的过程就不详细分析了，主要就是获取host中运行的alive状态的agent，如果agent的信息符合绑定的需求（如检验network_type），就会将该agent信息写入端口绑定信息里（vif_type：ovs，vif_details）。nova创建虚机，需要获取vif_type：ovs，vif_detail信息。    </p>
+<p>题外话：调研了一些大厂SDN处理vxlan网络的端口绑定，如华为思科，他们的实现方法都是通过层次化端口绑定来做的。做法都差不多，进行端口绑定的时候，如果判断端口所属网络类型是vxlan的，就会进行层次化绑定，控制器的driver绑定vxlan，底层driver绑定动态vlan的方式处理。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/nova，neutron/">nova，neutron</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Linux/">Linux</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2018/07/31/nova-network/" data-title="nova与neutron交互的细节分析 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2018/06/23/barbican-note/"  title="Barbican笔记">
+ <strong>NEXT:</strong><br/> 
+ <span>Barbican笔记
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+<script src="https://img1.cache.netease.com/f2e/tie/yun/sdk/loader.js"></script>
+<script>
+var cloudTieConfig = {
+  url: document.location.href, 
+  sourceId: "",
+  productKey: "1dd951f1d9a84cdf8279f98fb392485e",
+  target: "cloud-tie-wrapper"
+};
+var yunManualLoad = true;
+Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true);
+</script>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#nova处理流程"><span class="toc-number">2.</span> <span class="toc-text">nova处理流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#nova与neutron的交互"><span class="toc-number">3.</span> <span class="toc-text">nova与neutron的交互</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#neutron端口绑定"><span class="toc-number">4.</span> <span class="toc-text">neutron端口绑定</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/barbican/" title="barbican">barbican<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kvm/" title="kvm">kvm<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2018 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

@@ -14,8 +14,8 @@
     
     <meta name="description" content="杂记
 记录一下最近研究barbican组件的个人理解。   
-barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行格式化，比如x509。
-123456{&#39;text/plain&#39;: &#39;text/plain&#39;,&#39;">
+barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行PEM格式化。
+123456{&#39;text/plain&#39;: &#39;text/plain&#39;,&#39;text">
     
     
     
@@ -96,7 +96,7 @@ barbican主要是密钥管理的。存储（store secret）的时候有各种文
     </p>
   <p class="article-time">
     <time datetime="2018-06-22T16:00:00.000Z" itemprop="datePublished">Jun 23 2018</time>
-    Updated:<time datetime="2018-06-24T08:55:31.682Z" itemprop="dateModified">Jun 24 2018</time>
+    Updated:<time datetime="2018-08-04T12:43:57.556Z" itemprop="dateModified">Aug 4 2018</time>
     
   </p>
 </header>
@@ -105,10 +105,10 @@ barbican主要是密钥管理的。存储（store secret）的时候有各种文
 		
 		<h2 id="杂记">杂记</h2>
 <p>记录一下最近研究barbican组件的个人理解。   </p>
-<p>barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行格式化，比如x509。</p>
+<p>barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行PEM格式化。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">{<span class="string">'text/plain'</span>: <span class="string">'text/plain'</span>,</div><div class="line"><span class="string">'text/plain;charset=utf-8'</span>: <span class="string">'text/plain'</span>,</div><div class="line"><span class="string">'text/plain; charset=utf-8'</span>: <span class="string">'text/plain'</span>,</div><div class="line"><span class="string">'application/octet-stream'</span>: <span class="string">'application/octet-stream'</span>,</div><div class="line"><span class="string">'application/pkcs8'</span>: <span class="string">'application/pkcs8'</span>,</div><div class="line"><span class="string">'application/aes'</span>: <span class="string">'application/aes'</span>}</div></pre></td></tr></table></figure>
 
-<p>tips：ocatavia可以对pkcs12证书进行格式化（当然也是封装的接口），一般情况下，获取的证书默认进行pkcs12格式化的，同时也兼容了barbican原生的证书格式化。包括监听器绑定证书的方式也同lbv2不一样，并没有采用容器的方式（实际pkcs12也可以看着是容器）。</p>
+<p>tips：ocatavia可以对证书pkcs12格式化（当然也是封装的接口），一般情况下，获取的证书默认进行pkcs12格式化的，同时也兼容了barbican原生的证书格式化。包括监听器绑定证书的方式也同lbv2不一样，并没有采用容器的方式（实际pkcs12也可以看着是容器）。</p>
 <p>barbican后端支持多种存储，所以官网提供了多个插件：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">[secretstore]</div><div class="line"><span class="comment"># Set to True when multiple plugin backends support is needed</span></div><div class="line">enable_multiple_secret_stores = True</div><div class="line">stores_lookup_suffix = software, kmip, pkcs11, dogtag </div><div class="line">[secretstore:software]</div><div class="line">secret_store_plugin = store_crypto</div><div class="line">crypto_plugin = simple_crypto</div><div class="line">[secretstore:kmip]</div><div class="line">secret_store_plugin = kmip_plugin</div><div class="line">global_default = True </div><div class="line">[secretstore:dogtag]</div><div class="line">secret_store_plugin = dogtag_plugin </div><div class="line">[secretstore:pkcs11]</div><div class="line">secret_store_plugin = store_crypto</div><div class="line">crypto_plugin = p11_crypto</div></pre></td></tr></table></figure>
 
@@ -155,6 +155,14 @@ barbican主要是密钥管理的。存储（store secret）的时候有各种文
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2018/07/31/nova-network/" title="nova与neutron交互的细节分析">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  nova与neutron交互的细节分析</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2018/04/01/neutron-lbv2-setup/"  title="lbv2启用loadbalancer ssl卸载服务">
