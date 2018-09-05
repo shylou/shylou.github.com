@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2018-09-05T09:25:54.634Z</updated>
+  <updated>2018-09-05T09:29:23.248Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -19,9 +19,9 @@
     <link href="http://liushy.com/2018/09/05/openstack-apic/"/>
     <id>http://liushy.com/2018/09/05/openstack-apic/</id>
     <published>2018-09-04T16:00:00.000Z</published>
-    <updated>2018-09-05T09:13:11.997Z</updated>
+    <updated>2018-09-05T09:29:12.231Z</updated>
     <content type="html"><![CDATA[<h3 id="前言">前言</h3>
-<p>最近在忙的一件事情，就是openstack对接思科的apic控制器。踩了些坑，但还好都解决了。目前apic的neutron插件已经从<a href="https://github.com/openstack/networking-cisco" target="_blank" rel="external">networking-cisco</a>，思科官方提供的安装办法是<a href="https://github.com/noironetworks/opflex-documentation/wiki/Neutron-install-3.1" target="_blank" rel="external">neutron-install</a>。大致总结了一下安装的步骤。    </p>
+<p>最近在忙的一件事情，就是openstack对接思科的apic控制器。踩了些坑，但还好都解决了。目前apic的neutron插件已经从<a href="https://github.com/openstack/networking-cisco" target="_blank" rel="external">networking-cisco</a>移除，思科官方提供的安装办法是<a href="https://github.com/noironetworks/opflex-documentation/wiki/Neutron-install-3.1" target="_blank" rel="external">neutron-install</a>。大致总结了一下安装的步骤。    </p>
 <h3 id="安装步骤">安装步骤</h3>
 <p>1.依序安装下列rpm包：     </p>
 <p>rpm -ivh python-click-6.3-1.el7.noarch.rpm<br>rpm -ivh python2-tabulate-0.7.5-4.fc25.noarch.rpm<br>rpm -ivh python-websocket-client-0.34.0-3.el7.noarch.rp<br>rpm -ivh acitoolkit-0.3.2-12.el7.noarch.rpm<br>rpm -ivh aci-integration-module-0.11.1~dev1-231.el7.noarch.rpm<br>rpm -ivh apicapi-1.6.0-198.el7.noarch.rpm<br>rpm -ivh python2-meld3-1.0.2-4.el7.noarch.rpm<br>rpm -ivh supervisor-3.3.1-2.el7.noarch.rpm<br>rpm -ivh neutron-opflex-agent-7.2.0-29.el7.noarch.rpm<br>rpm -ivh openstack-neutron-gbp-7.1.0-61.el7.noarch.rpm<br>rpm -ivh python-gbpclient-0.15.0-61.el7.noarch.rpm    </p>
