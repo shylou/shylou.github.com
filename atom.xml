@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2018-08-04T15:09:26.264Z</updated>
+  <updated>2018-09-05T09:25:54.634Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,59 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[neutron对接思科apic插件]]></title>
+    <link href="http://liushy.com/2018/09/05/openstack-apic/"/>
+    <id>http://liushy.com/2018/09/05/openstack-apic/</id>
+    <published>2018-09-04T16:00:00.000Z</published>
+    <updated>2018-09-05T09:13:11.997Z</updated>
+    <content type="html"><![CDATA[<h3 id="前言">前言</h3>
+<p>最近在忙的一件事情，就是openstack对接思科的apic控制器。踩了些坑，但还好都解决了。目前apic的neutron插件已经从<a href="https://github.com/openstack/networking-cisco" target="_blank" rel="external">networking-cisco</a>，思科官方提供的安装办法是<a href="https://github.com/noironetworks/opflex-documentation/wiki/Neutron-install-3.1" target="_blank" rel="external">neutron-install</a>。大致总结了一下安装的步骤。    </p>
+<h3 id="安装步骤">安装步骤</h3>
+<p>1.依序安装下列rpm包：     </p>
+<p>rpm -ivh python-click-6.3-1.el7.noarch.rpm<br>rpm -ivh python2-tabulate-0.7.5-4.fc25.noarch.rpm<br>rpm -ivh python-websocket-client-0.34.0-3.el7.noarch.rp<br>rpm -ivh acitoolkit-0.3.2-12.el7.noarch.rpm<br>rpm -ivh aci-integration-module-0.11.1~dev1-231.el7.noarch.rpm<br>rpm -ivh apicapi-1.6.0-198.el7.noarch.rpm<br>rpm -ivh python2-meld3-1.0.2-4.el7.noarch.rpm<br>rpm -ivh supervisor-3.3.1-2.el7.noarch.rpm<br>rpm -ivh neutron-opflex-agent-7.2.0-29.el7.noarch.rpm<br>rpm -ivh openstack-neutron-gbp-7.1.0-61.el7.noarch.rpm<br>rpm -ivh python-gbpclient-0.15.0-61.el7.noarch.rpm    </p>
+<p>2.解压semantic_version的tar包，然后进入解压后的目录，执行python setup.py install    </p>
+<p>3.修改以下配置文件：<br>修改/etc/aim/aim.conf:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">[DEFAULT]</div><div class="line">debug=True</div><div class="line">rpc_backend=rabbit</div><div class="line">control_exchange=neutron</div><div class="line">default_log_levels=neutron.context=ERROR</div><div class="line">       </div><div class="line">[oslo_messaging_rabbit]</div><div class="line">rabbit_host=rabbitmq-service</div><div class="line">rabbit_port=<span class="number">5672</span></div><div class="line">rabbit_use_ssl=False</div><div class="line">rabbit_userid=openstack</div><div class="line">rabbit_password=password</div><div class="line">rabbit_ha_queues=False</div><div class="line">        </div><div class="line">[database]</div><div class="line">connection = mysql://neutronuser:password@mysql-service/neutron</div><div class="line">       </div><div class="line">[aim]</div><div class="line">agent_down_time = <span class="number">75</span></div><div class="line">poll_config = False</div><div class="line">aim_system_id = cloud</div><div class="line">max_operation_retry=<span class="number">5</span></div><div class="line">         </div><div class="line">[apic]</div><div class="line">apic_hosts=<span class="number">111.111</span>.<span class="number">111.11</span></div><div class="line">apic_username=admin</div><div class="line">apic_password=password</div><div class="line">apic_use_ssl=True</div></pre></td></tr></table></figure>
+
+
+
+<p>修改/etc/aim/aimctl.conf:    </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[DEFAULT]</div><div class="line">apic_system_id=cloud</div><div class="line">[apic]</div><div class="line">[apic_vmdom:cloud]</div></pre></td></tr></table></figure>
+
+
+
+<p>目录/etc/neutron/conf.d/neutron-server下创建ml2_conf_cisco_apic.conf:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">[apic_aim_auth]</div><div class="line">auth_plugin=v3password</div><div class="line">auth_url=http://keystone-service:<span class="number">35357</span>/v3/</div><div class="line">username=neutron</div><div class="line">password=password</div><div class="line">user_domain_name=default</div><div class="line">project_domain_name=default</div><div class="line">project_name=service</div><div class="line">      </div><div class="line">[ml2_apic_aim]</div><div class="line">enable_optimized_metadata=True</div><div class="line">      </div><div class="line">[group_policy]</div><div class="line">policy_drivers=aim_mapping</div><div class="line">extension_drivers=aim_extension,proxy_group</div><div class="line">     </div><div class="line">[group_policy_implicit_policy]</div><div class="line">defalut_ip_pool=<span class="number">192.168</span>.<span class="number">0.0</span>/<span class="number">16</span></div></pre></td></tr></table></figure>
+
+
+
+<p>修改/etc/neutron/neutron.conf下列配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[DEFAULT]</div><div class="line">core_plugin = ml2plus</div><div class="line">service_plugins = apic_aim_l3</div></pre></td></tr></table></figure>
+
+
+
+<p>修改/etc/neutron/plugin.ini下列配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[DEFAULT]</div><div class="line">apic_system_id = cloud</div><div class="line">mechanism_drivers = apic_aim</div><div class="line">extension_drivers = apic_aim</div></pre></td></tr></table></figure>
+
+
+
+<p>4.执行aim数据库初始化:<br>aimctl db-migration upgrade head<br>aimctl config update<br>aimctl infra create<br>aimctl manager load-domains —enforce    </p>
+<p>5.运行aim服务:<br>systemctl start aim-aid<br>systemctl start aim-event-service-polling<br>systemctl start aim-event-service-rpc<br>systemctl enable aim-aid<br>systemctl enable aim-event-service-polling<br>systemctl enable aim-event-service-rpc<br>重启neutron-server：<br>systemctl restart neutron-server    </p>
+<h3 id="附录：">附录：</h3>
+<p>gbp-db-manage：gbp数据库命令<br>修改neutron的cllation：alter database neutron collate utf8_general_ci;<br>查询数据库结构：select * from information_schema.schemata where schema_name=’neutron’\G;     </p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h3 id="前言">前言</h3>
+<p>最近在忙的一件事情，就是openstack对接思科的apic控制器。踩了些坑，但还好都解决了。目前apic的neutron插件已经从<a href="https://github.com/openstack/networking-ci]]>
+    </summary>
+    
+      <category term="nova，neutron" scheme="http://liushy.com/tags/nova%EF%BC%8Cneutron/"/>
+    
+      <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[nova与neutron交互的细节分析]]></title>
@@ -1303,74 +1356,6 @@
       <category term="内存" scheme="http://liushy.com/tags/%E5%86%85%E5%AD%98/"/>
     
       <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[OVS配置命令]]></title>
-    <link href="http://liushy.com/2016/11/26/OVS-CLI/"/>
-    <id>http://liushy.com/2016/11/26/OVS-CLI/</id>
-    <published>2016-11-25T16:00:00.000Z</published>
-    <updated>2017-03-12T13:37:47.000Z</updated>
-    <content type="html"><![CDATA[<p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)<br>以下是本人使用和收集的OVS相关配置命令：       </p>
-<p>建立 VXLAN Network ID (VNI) 和指定的 OpenFlow port number, eg: VNI=5566, OF_PORT=9   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=x.x.x.x option:key=<span class="number">5566</span> ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
-
-
-
-<p>VNI flow by flow</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=<span class="number">140.113</span>.<span class="number">215.200</span> option:key=flow ofport_request=<span class="number">9</span></div></pre></td></tr></table></figure>
-
-
-
-<p>设置 VXLAN tunnel id   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ovs-ofctl add-flow ovs-br <span class="keyword">in</span>_port=<span class="number">1</span>,actions=<span class="keyword">set</span>_field:<span class="number">5566</span>-&gt;tun_id,output:<span class="number">2</span></div><div class="line">ovs-ofctl add-flow s1 <span class="keyword">in</span>_port=<span class="number">2</span>,tun_id=<span class="number">5566</span>,actions=output:<span class="number">1</span></div></pre></td></tr></table></figure>
-
-
-
-<p>查询out-of-band $ in-band   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl get controller ovs-br connection-mode</div></pre></td></tr></table></figure>
-
-
-
-<p>Out-of-band   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=out-of-band</div></pre></td></tr></table></figure>
-
-
-
-<p>In-band (default)   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> controller ovs-br connection-mode=<span class="keyword">in</span>-band</div></pre></td></tr></table></figure>
-
-
-<p>移除 hidden flow   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> bridge br0 other-config:disable-in-band=<span class="literal">true</span></div></pre></td></tr></table></figure>
-
-
-<p>设置 GRE tunnel   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs−vsctl add−port ovs-br ovs-gre -- <span class="keyword">set</span> interface ovs-gre <span class="built_in">type</span>=gre options:remote_ip=<span class="number">1.2</span>.<span class="number">3.4</span></div></pre></td></tr></table></figure>
-
-
-<p>设置 Vlan trunk   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl add-port ovs-br eth0 trunk=<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span></div></pre></td></tr></table></figure>
-
-
-<p>设置已 add 的 port 为 access port, vlan id 9</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ovs-vsctl <span class="keyword">set</span> port eth0 tag=<span class="number">9</span></div></pre></td></tr></table></figure>
-
-
-<p>网络工程是一门大学问，虽然本科四年里偶有涉及，硕士阶段专攻了一年多的路由交换原理，到目前开始从事网络安全开发工作，我也不敢说自己精通网络，深知自身仍然还有很多要学的地方，而对于网络知识的学习，我觉得最好的方式莫过于搞一套网络设备来慢慢折腾，模拟一个个应用场景，敲一下各种配置命令，能够一步步照着做了，想弄明白网络就不是难事，总的来说，急不得，在了解理论的基础上，动手实践理解会更深刻，还有一点就是多做记录，正所谓好记性不如烂笔头，我推荐做一个自己的博客或者使用笔记软件，记录自己平时的实践和理论学习。<br>参考网站：<br><a href="http://blog.csdn.net/beginning1126/article/details/41172365" title=" http://blog.csdn.net/beginning1126/article/details/41172365" target="_blank" rel="external"> http://blog.csdn.net/beginning1126/article/details/41172365</a><br><a href="http://blog.csdn.net/tantexian/article/details/46707175" title="http://blog.csdn.net/tantexian/article/details/46707175" target="_blank" rel="external">http://blog.csdn.net/tantexian/article/details/46707175</a></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，b]]>
-    </summary>
-    
-      <category term="OVS" scheme="http://liushy.com/tags/OVS/"/>
-    
-      <category term="VXLAN" scheme="http://liushy.com/tags/VXLAN/"/>
-    
-      <category term="GRE" scheme="http://liushy.com/tags/GRE/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     
   </entry>
   
