@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2018-09-05T09:29:23.248Z</updated>
+  <updated>2018-12-01T14:02:08.102Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,50 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[lbaas分析笔记]]></title>
+    <link href="http://liushy.com/2018/11/30/lbaas-note/"/>
+    <id>http://liushy.com/2018/11/30/lbaas-note/</id>
+    <published>2018-11-29T16:00:00.000Z</published>
+    <updated>2018-12-01T14:01:51.327Z</updated>
+    <content type="html"><![CDATA[<h3 id="前言">前言</h3>
+<p>今年的云网方案，涉及很多lb的需求，大多数是客户亟需的而社区目前不支持的。针对类似需求，我们首要考虑能否通过其它方式去满足而不改动社区原有实现，其次才是考虑如何扩展并兼容社区实现。当然有的方案也会考虑能否向社区提交，话说回来了，搞开源本来就要结合实际需求来做，过于私有化的方案也就违背了开源的初心。说回lbaas，目前社区已经将其独立出neutron，成立新的项目<a href="https://docs.openstack.org/octavia/latest/" target="_blank" rel="external">octavia</a>。即便如此，当前很多云厂商，依然还是沿用的lbaas v1或v2。很多lb厂商如f5，a10还是以lbaas的插件为主，所以本文简要分析lbaas相关知识点。   </p>
+<h3 id="lbaas_plugin">lbaas plugin</h3>
+<p>lbaas的功能入口是它的restAPI。厂商们针对api开发相应的lbaas plugin，并且要对应到设备上的具体功能。简单阐述以下lbaas的几个组件的关系：<br><img src="/img/lbaas.png" alt="lbaas-model"><br>api和lbaas plugin服务是随neutron-server一起跑在控制节点上；agent是跑在网络节点上的。neutron-server接收到restapi的请求后，会触发lb的插件处理body，插件会选取lb的agent，将相应的请求通过rpc发送给agent，agent处理消息时会调用设备的driver。而device driver就是具体与设备打交道的组件。插件部分没什么好说的，接触的几个厂商都是沿用的lb社区的插件。配置在/etc/neutron/neutron.conf:    </p>
+<blockquote>
+<p>service_plugins = [already defined plugins],neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2    </p>
+</blockquote>
+<p>当然还需要配置相应的service_provider（neutron里对理解provider这个概念很重要）。比如f5的配置：</p>
+<blockquote>
+<p>service_provider = LOADBALANCERV2:F5Networks:neutron_lbaas.drivers.f5.driver_v2.F5LBaaSV2Driver:default</p>
+</blockquote>
+<p>我们看到，这里的provider路径指向的是<code>F5LBaaSV2Driver</code>。这个<code>driver</code>可以理解是调用f5-agent服务的插件驱动service driver，注意区别前文提到的<code>device driver</code>。我们也可以看lb的代码里，插件在创建资源的时候，是调的<code>self._call_driver_operation</code>这个方法，从方法名看出，调的是driver，也就是刚刚讲的这个driver。    </p>
+<h3 id="lbaas_agent">lbaas agent</h3>
+<p>这部分分析agent的处理流程。在此之前还是先分析一下前文提到的service_provider。参照f5的社区代码，他们的service driver在处理创建lb的开始阶段，会通过<code>_schedule_agent_create_service</code>选取一个agent，因此是支持多agent的（有个可用域的概念）。除此之外，还做了一个特殊处理，那就是将vip的端口类型改为了裸金属<code>baremetal</code>。对于这样的处理，第三方的ml2处理port需要特别注意，建议增加判断<code>device_owner</code>为f5的特殊流程。    </p>
+<p>lbaas agent的处理主要就是调用device driver进行资源的增删改，以及同步资源的状态status。配置device driver的地方在/etc/neutron/lbaas_agent.ini:   </p>
+<blockquote>
+<p>interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver   </p>
+</blockquote>
+<p>类似f5的配置在/etc/neutron/services/f5/f5-openstack-agent.ini：</p>
+<blockquote>
+<p>f5_bigip_lbaas_device_driver = f5_openstack_agent.lbaasv2.drivers.bigip.icontrol_driver.iControlDriver   </p>
+</blockquote>
+<p>可以看得出来，社区的方案里，agent与plugin的处理是异步进行的。driver的处理流程就不分析了，各家厂商的处理都不同。</p>
+<h3 id="lbaas方案">lbaas方案</h3>
+<p>这里就不说设备的组网方案了，单臂双臂等等。针对lb的纳管方案，目前就是两种，分别是云平台纳管和sdn控制器纳管。云平台纳管的情况，lb的插件和agent的部署就直接对应为设备的，类似f5，那么这种情况下，lb做不到的引流等相关操作的话，就需要其它方案补齐，比如额外的网络规划；sdn纳管lb设备的情况，插件与agent都对应sdn的，这种情况下，云上就不关心具体的引流情况了，这时候sdn就需要做到自动化部署lb资源。而实际部署的时候，真正复杂的地方在于，往往会涉及到sdn与云和lb插件三者的交互。所以，每部分摊开来都看似容易，但是融合在一起形成方案的时候，一定要考虑到各种细节。    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h3 id="前言">前言</h3>
+<p>今年的云网方案，涉及很多lb的需求，大多数是客户亟需的而社区目前不支持的。针对类似需求，我们首要考虑能否通过其它方式去满足而不改动社区原有实现，其次才是考虑如何扩展并兼容社区实现。当然有的方案也会考虑能否向社区提交，话说回来了，搞开源]]>
+    </summary>
+    
+      <category term="lbaas，neutron" scheme="http://liushy.com/tags/lbaas%EF%BC%8Cneutron/"/>
+    
+      <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[neutron对接思科apic插件]]></title>
@@ -1284,76 +1328,6 @@
       <category term="docker" scheme="http://liushy.com/tags/docker/"/>
     
       <category term="Hadoop" scheme="http://liushy.com/tags/Hadoop/"/>
-    
-      <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[Linux内存占用]]></title>
-    <link href="http://liushy.com/2016/11/27/Linux-mem/"/>
-    <id>http://liushy.com/2016/11/27/Linux-mem/</id>
-    <published>2016-11-26T16:00:00.000Z</published>
-    <updated>2017-03-12T13:38:28.000Z</updated>
-    <content type="html"><![CDATA[<p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用：   </p>
-<h3 id="top">top</h3>
-<p>top命令是Linux下常用的性能分析工具，能够实时显示系统中进程的资源占用状况，类似于Windows的任务管理器可以直接使用top命令后，查看%MEM的内容。可以指定进程或者用户查看，如查看oracle用户的进程内存使用情况的话可以使用如下的命令：   </p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ top -u oracle</div></pre></td></tr></table></figure>
-
-<p>显示内容解释：</p>
-<blockquote>
-<p>PID：进程的ID<br>USER：进程所有者<br>PR：进程的优先级别，越小越优先被执行<br>NInice：值<br>VIRT：进程占用的虚拟内存<br>RES：进程占用的物理内存<br>SHR：进程使用的共享内存<br>S：进程的状态。S表示休眠，R表示正在运行，Z表示僵死状态，N表示该进程优先值为负数<br>%CPU：进程占用CPU的使用率<br>%MEM：进程使用的物理内存和总内存的百分比<br>TIME+：该进程启动后占用的总的CPU时间，即占用CPU使用时间的累加值。<br>COMMAND：进程启动命令名称   </p>
-</blockquote>
-<p>常用的命令：</p>
-<blockquote>
-<p>P：按%CPU使用率排行<br>T：按MITE+排行<br>M：按%MEM排行   </p>
-</blockquote>
-<h3 id="pmap">pmap</h3>
-<p>可以根据进程查看进程相关信息占用的内存情况，(进程号可以通过ps查看)如下所示：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ pmap <span class="operator">-d</span> <span class="number">14596</span></div></pre></td></tr></table></figure>
-
-
-<h3 id="ps">ps</h3>
-<p>ps 的参数众多, 在此仅列出几个常用的参数：   </p>
-<blockquote>
-<p>-A 列出所有的行程<br>-w 显示加宽可以显示较多的资讯<br>-au 显示较详细的资讯<br>-aux 显示所有包含其他使用者的行程   </p>
-</blockquote>
-<p>au(x) 输出格式 :<br>USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND   </p>
-<blockquote>
-<p>USER: 行程拥有者<br>PID: pid<br>%CPU: 占用的 CPU 使用率<br>%MEM: 占用的记忆体使用率<br>VSZ: 占用的虚拟记忆体大小<br>RSS: 占用的记忆体大小<br>TTY: 终端的次要装置号码 (minor device number of tty)<br>STAT: 该行程的状态:<br>D: 不可中断的静止<br>R: 正在执行中<br>S: 静止状态<br>T: 暂停执行<br>Z: 不存在但暂时无法消除<br>W: 没有足够的记忆体分页可分配<br>&lt;: 高优先序的行程<br>N: 低优先序的行程<br>L: 有记忆体分页分配并锁在记忆体内<br>START: 行程开始时间<br>TIME: 执行的时间<br>COMMAND:所执行的指令   </p>
-</blockquote>
-<h3 id="du">du</h3>
-<p>du命令主要是用来查看硬盘使用情况的：  </p>
-<blockquote>
-<p>  du -sh : 查看当前目录总共占的容量。而不单独列出各子项占用的容量<br>du -lh —max-depth=1 : 查看当前目录下一级子文件和子目录占用的磁盘容量。   </p>
-</blockquote>
-<h3 id="free">free</h3>
-<p>free是最常用的查看内存占用的命令，有以下参数：   </p>
-<blockquote>
-<p>-b：以Byte为单位显示内存使用情况；<br> -k：以KB为单位显示内存使用情况；<br>-m：以MB为单位显示内存使用情况；<br>-o：不显示缓冲区调节列；<br>-s&lt;间隔秒数&gt;：持续观察内存使用状况；<br>-t：显示内存总和列；<br>-V：显示版本信息。<br>举例说明：  </p>
-</blockquote>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">free -m </div><div class="line">            total  used  free shared  buffers cached </div><div class="line">Mem:        <span class="number">2016</span>   <span class="number">1973</span>  <span class="number">42</span>     <span class="number">0</span>     <span class="number">163</span>    <span class="number">1497</span> </div><div class="line">-/+ buffers/cache: <span class="number">312</span>   <span class="number">1703</span> </div><div class="line">Swap:       <span class="number">4094</span>    <span class="number">0</span>    <span class="number">4094</span></div></pre></td></tr></table></figure>
-
-
-<p>输出的第一行：   </p>
-<blockquote>
-<p>total：内存总数；<br>used：已经使用的内存数；<br>free：空闲的内存数；<br>shared：当前已经废弃不用；<br>buffers Buffer：缓存内存数；<br>cached Page：缓存内存数。   </p>
-</blockquote>
-<p>第二行（-/+ buffers/cache）：   </p>
-<blockquote>
-<p>(-buffers/cache) used内存数：第一行Mem行中的 used – buffers – cached<br>(+buffers/cache) free内存数: 第一行Mem行中的 free + buffers + cached   </p>
-</blockquote>
-<p>第三行是交换区的使用情况，那么什么时候会用到交换区的内存呢，即当可用内存少于额定值的时候，就会进行交换。可以通过<code>cat /proc/meminfo</code>来查看内存额定值：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">hadoop@hadoop:~$ cat /proc/meminfo </div><div class="line">MemTotal:        <span class="number">1017576</span> kB</div><div class="line">MemFree:          <span class="number">206012</span> kB</div><div class="line">MemAvailable:     <span class="number">479832</span> kB</div><div class="line">Buffers:           <span class="number">47344</span> kB</div><div class="line">Cached:           <span class="number">333836</span> kB</div><div class="line">SwapCached:            <span class="number">0</span> kB</div><div class="line">Active:           <span class="number">455128</span> kB</div><div class="line">Inactive:         <span class="number">271084</span> kB</div><div class="line">Active(anon):     <span class="number">345856</span> kB</div><div class="line">Inactive(anon):     <span class="number">4140</span> kB</div><div class="line">Active(file):     <span class="number">109272</span> kB</div><div class="line">Inactive(file):   <span class="number">266944</span> kB</div><div class="line">Unevictable:          <span class="number">32</span> kB</div><div class="line">Mlocked:              <span class="number">32</span> kB</div><div class="line">SwapTotal:       <span class="number">1047548</span> kB</div><div class="line">SwapFree:        <span class="number">1047548</span> kB</div><div class="line">Dirty:               <span class="number">588</span> kB</div><div class="line">Writeback:             <span class="number">0</span> kB</div><div class="line">AnonPages:        <span class="number">345060</span> kB</div><div class="line">Mapped:           <span class="number">174264</span> kB</div><div class="line">Shmem:              <span class="number">4968</span> kB</div><div class="line">Slab:              <span class="number">38328</span> kB</div><div class="line">SReclaimable:      <span class="number">20452</span> kB</div><div class="line">SUnreclaim:        <span class="number">17876</span> kB</div><div class="line">KernelStack:        <span class="number">5312</span> kB</div><div class="line">PageTables:        <span class="number">23708</span> kB</div><div class="line">NFS_Unstable:          <span class="number">0</span> kB</div><div class="line">Bounce:                <span class="number">0</span> kB</div><div class="line">WritebackTmp:          <span class="number">0</span> kB</div><div class="line">CommitLimit:     <span class="number">1556336</span> kB</div><div class="line">Committed_AS:    <span class="number">2404256</span> kB</div><div class="line">VmallocTotal:   <span class="number">34359738367</span> kB</div><div class="line">VmallocUsed:       <span class="number">23324</span> kB</div><div class="line">VmallocChunk:   <span class="number">34359709832</span> kB</div><div class="line">HardwareCorrupted:     <span class="number">0</span> kB</div><div class="line">AnonHugePages:     <span class="number">65536</span> kB</div><div class="line">HugePages_Total:       <span class="number">0</span></div><div class="line">HugePages_Free:        <span class="number">0</span></div><div class="line">HugePages_Rsvd:        <span class="number">0</span></div><div class="line">HugePages_Surp:        <span class="number">0</span></div><div class="line">Hugepagesize:       <span class="number">2048</span> kB</div></pre></td></tr></table></figure>
-
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用：   </p>
-<h3 id="top">top</h3>
-<p>top命令是Linux下常用的性能分析工具，能够实时显示系统中进程的资源占用状况，类似于Windows的任务管理器可以直接使用top命令后，查看]]>
-    </summary>
-    
-      <category term="内存" scheme="http://liushy.com/tags/%E5%86%85%E5%AD%98/"/>
     
       <category term="Linux" scheme="http://liushy.com/categories/Linux/"/>
     
