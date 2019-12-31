@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2019-05-14T12:47:23.338Z</updated>
+  <updated>2019-12-31T14:43:28.630Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,31 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[惨如老狗]]></title>
+    <link href="http://liushy.com/2019/12/28/goon-2019/"/>
+    <id>http://liushy.com/2019/12/28/goon-2019/</id>
+    <published>2019-12-27T16:00:00.000Z</published>
+    <updated>2019-12-31T14:42:28.737Z</updated>
+    <content type="html"><![CDATA[<h3 id="工作总结">工作总结</h3>
+<p>年初投入工作的时间比较多，所以博客就歇了很长一段时间，人也懒索性后面就一直没有更新了。<br>工作上一直以来就人力不足，一个人至少同时兼顾两个人的活，在领导看来绩效不好看，于我们而言成天当背锅侠却没好名声。<br>除了完成需求，有时候还要分析特性，解决线上问题（需求归特性团队，网上问题直接挂个人）。<br>不靠谱的安排很多，我们到底是运维，设计，还是开发？   </p>
+<p>今年投入新需求的分析，不一一详述了。产品迭代投入得比较多的就是裸金属：<br>研究了裸金属，虚机和容器网络互通，持续跟踪kuryr项目。<br>研究了lbaas创建慢的问题，社区已部分优化，主要是lbaas数据库查询去掉不必要的lazy。<br>裸金属ha方案，主要是解决dhcp跑在两个机房的问题。<br>裸金属容器化解决裸金属高可用，采用agent方式部署用户镜像效率比iscsi更高。<br>优化了数据库查询，主要是查询model指定字段，性能要比Sqlalchemy组装对象更好。  </p>
+<p>去年的一个项目持续搞到今年，无论是研发还是一线都是叫苦不迭。用个成语形容叫杀鸡取卵。</p>
+<h3 id="生活杂记">生活杂记</h3>
+<p>一九年没怎么出去玩，周末去了成都周边，青城山和毕棚沟，祖国大好河山风光无限啊。<br>房子涨的好快，摇号资格简直魔幻，终于有资格买房了。<br>有新的机会邀约，崩溃的那一刻，闪人不伺候了。<br>老汀脱单了，林君生娃了，老张即将完婚，老刘还在玩泥巴。<br>家里老人又老了一些了。   </p>
+<p>今年的总结不想写，为了维持一年一更以及避免以后忘记就只能水一篇了。<br>二零一九惨如老狗，主要是工作，其它的倒是人之常情。<br>还是开心一点，新年快乐，朋友们<br>peace&amp;future</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h3 id="工作总结">工作总结</h3>
+<p>年初投入工作的时间比较多，所以博客就歇了很长一段时间，人也懒索性后面就一直没有更新了。<br>工作上一直以来就人力不足，一个人至少同时兼顾两个人的活，在领导看来绩效不好看，于我们而言成天当背锅侠却没好名声。<br>除了完成需求]]>
+    </summary>
+    
+      <category term="生活，旅游" scheme="http://liushy.com/tags/%E7%94%9F%E6%B4%BB%EF%BC%8C%E6%97%85%E6%B8%B8/"/>
+    
+      <category term="Life" scheme="http://liushy.com/categories/Life/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[kuryr研究笔记]]></title>
@@ -1111,40 +1136,6 @@
       <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
     
       <category term="TopologyManager" scheme="http://liushy.com/tags/TopologyManager/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[解析Floodlight之LinkDiscoveryManager模块]]></title>
-    <link href="http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/"/>
-    <id>http://liushy.com/2017/02/12/floodlight-linkdiscovermanager/</id>
-    <published>2017-02-12T02:00:01.000Z</published>
-    <updated>2017-03-19T02:43:00.000Z</updated>
-    <content type="html"><![CDATA[<h2 id="前言">前言</h2>
-<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业对Floodlight的态度，而对于更关注SDN架构本身的高校研究者来说，Floodlight相比Opendaylight和Onos更加轻量易读，不需折腾太繁琐的环境和依赖，更有助于对算法的研究。最近几个月，总有小伙伴询问Floodlight的相关问题。说实话，好久没碰了，能记得的内容我会很快解答，有些忘了的还得花时间翻翻代码。去年的毕业论文，我写了对Floodlight 架构的理解。所以我打算将部分内容整理一下（主要是模块的工作流程），写出来以供参考或者备忘。本文即是Floodlight中链路发现模块的解析，如有不正之处，一定提出哈。  </p>
-<h2 id="LinkDiscoverManager">LinkDiscoverManager</h2>
-<p>Floodlight中链路发现功能的实现类是LinkDiscoveryManager模块。该模块的主要工作是：向交换机下发LLDP包和BDDP包以及处理交换机上传的LLDP包和BDDP包，以此来记录全网的链路信息，即每条链路的源/目的交换机MAC地址、源/目的端口号等。   </p>
-<p>其中，LLDP（Link Layer Discovery Protocol，链路发现协议）包，是一种二层数据包，该数据包标识了交换机的信息，邻居节点间相互广播LLDP来获取对方的存在，并将设备信息保存；BDDP包是BigSwitch公司定义的一种类似LLDP的数据包，BDDP包可以通过不受控制器管理的设备，用以发现一些不是直连的节点组合。比如两交换机中间有设备不受本控制器管理，由于LLDP是由控制器主动下发给交换机，所以这种情况下LLDP包是无法通过中间设备到达两交换机的，而这时控制器通过下发BDDP包通过中间设备来发现两交换机的连接关系。所以LLDP包和BDDP包的区别是前者可以发现直连的设备后者发现间接连接的设备。   </p>
-<h2 id="解析LinkDiscoverManager多线程">解析LinkDiscoverManager多线程</h2>
-<p>LinkDiscovermanager模块初始化后会启动三个线程，如图所示：<br><img src="/img/linkdiscovermanager.jpg" alt="linkdiscover"><br>图中所示的链路发现模块启动后的处理流程，涉及到三个线程和一个主要方法：</p>
-<ul>
-<li>线程<code>discoveryTask</code>主要实现发送LLDP包的任务，每隔1秒运行方法<code>discoverLinks()</code>，<code>discoverLinks()</code>方法中指定了一个计时方法<code>timeoutLinks()</code>，首先会处理掉那些过时了的链路links，其次，每间隔15秒要求全部交换机在所有端口发送LLDP包即运行方法<code>discoverOnAllPorts()</code>；</li>
-<li>线程<code>bddpTask</code>主要实现发送BDDP包的任务，遍历所有已经发送 LLDP 包的端口, 如果该端口还没有建立过连接, 就发送 BDDP 包；</li>
-<li>线程<code>updatesThread</code>主要负责更新消息回调，如果有链路或者端口发生变化，则处理这些更新并发布链路更新消息；</li>
-<li>方法<code>handlePacketIn（）</code>主要处理交换机上传的Packet-in消息,解析LLDP包。</li>
-</ul>
-<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<h2 id="前言">前言</h2>
-<p>Floodlight作为一款比较成熟的SDN控制器，前期是备受瞩目的，可由于版本更新太慢，且在2014-2015年间又蹿红了新的竞争者如Opendaylight,Onos等控制器，使得Floodlight风光大不如前，不过这主要是企业]]>
-    </summary>
-    
-      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
-    
-      <category term="LinkDiscoveryManager" scheme="http://liushy.com/tags/LinkDiscoveryManager/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     
