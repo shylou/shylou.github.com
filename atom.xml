@@ -4,7 +4,7 @@
   <subtitle><![CDATA[I'm waiting for you]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://liushy.com/"/>
-  <updated>2019-12-31T14:43:28.630Z</updated>
+  <updated>2020-12-31T15:02:09.564Z</updated>
   <id>http://liushy.com/</id>
   
   <author>
@@ -13,6 +13,33 @@
   </author>
   
   <generator uri="http://zespia.tw/hexo/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[大江小鱼]]></title>
+    <link href="http://liushy.com/2020/12/26/goon-2020/"/>
+    <id>http://liushy.com/2020/12/26/goon-2020/</id>
+    <published>2020-12-25T16:00:00.000Z</published>
+    <updated>2020-12-31T15:01:38.372Z</updated>
+    <content type="html"><![CDATA[<h3 id="工作总结">工作总结</h3>
+<p>今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。<br>年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。<br>三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感觉差距不明显。<br>上半年还做了将nova-docker纳入到virt里，作为一个driver在跑，也就是咱们iaas支持了创建容器的功能，此外还完成了容器网卡的ovs mirror功能。<br>下半年最重要的任务就是支撑pc实验室项目，大批量地创建虚机和容器，涉及到数据库查询，服务多副本，ovs agent安全组处理能力等多个优化点。<br>研究了一下metal3项目，这个是云原生用于部署k8s服务器的项目，项目中的baremetal-operator其底层调的仍然是ironic。<br>研究了一下ovn项目，实现对接纯软交换的sdn方案，没有了rpc调用。需要了解ovn的南北向数据库，ovsdb等相关知识点。    </p>
+<p>今年延续了去年的低气压，整个人状态低迷。组内人力不足，除了做需求讨论方案还要处理网上问题，所以工作内容处于积压状态，造成了整个人比较压抑。神经都脆弱了不少，有时半夜醒来，整个人清醒的不得了，睡不着就会想工作上的事情，有时候甚至会挨到天亮。整个人气色很差，今年体检结果出来后，明显看到肝上的毛病很突出。脾气暴躁，很多同事估计也感受到了，有时候遇到很傻叉的方案讨论，脾气上来了就会碍着怼人，遇到扯皮的邮件，也会数落问题细节即使领导也在邮件列表里。但是到没有出现工作上的失误，手头的事情最终都能按时解决掉，不过却伤害到了自己伤肝伤神。</p>
+<p>最终呢，在年底的时候离开了，没有太大的感触，很多项目还是付出了不少心血，格式化的那一刻一阵酸爽。<br>解脱！？     </p>
+<h3 id="生活杂记">生活杂记</h3>
+<p>成都房价又涨了一点，摇号几次都是陪玩，不过我也变得佛系了，看运气吧首付应该能够得上。      </p>
+<p>今年没有出去玩耍，各种原因搁置了，旅游计划要排到21年了哈。交工卡前那段时间，由于我还有年假没用，于是休假了两周，每天上午逛菜市场做饭，晚上看点东西十点多就睡了，过的惬意而自在，真正体会到了不当打工人的闲适。     </p>
+<p>家里长辈又老了一岁，父母催我另一半的问题也越来迫切了，是啊我即将三十了。有一件令全家人揪心的事情是，外婆突然生病，家里人在医院照顾了将近两个月。目前外婆的病情况好转但不能完全恢复，回家里修养，请了一名家政帮着妈一起照顾加煮饭，希望外婆能健康开心吧。            </p>
+<p>今年整体看起来都很丧，最直观的感受是身边的朋友怨气大于开心，好像大家都因为某些事丧到不行。其实大可不必，就像那大江里的小鱼儿，逆流顺流又如何呢，长江黄河依然奔腾不息。世界看上去并没有变好的迹象，既然如此就随它吧，活着吧，看看它究竟会变成个啥样，总得有点盼头不是。<br>开心点吧朋友们，最后还是那句新年快乐<br>happy&amp;future</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h3 id="工作总结">工作总结</h3>
+<p>今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。<br>年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。<br>三月份左右试着将token存放memcached]]>
+    </summary>
+    
+      <category term="生活，旅游" scheme="http://liushy.com/tags/%E7%94%9F%E6%B4%BB%EF%BC%8C%E6%97%85%E6%B8%B8/"/>
+    
+      <category term="Life" scheme="http://liushy.com/categories/Life/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[惨如老狗]]></title>
@@ -1110,32 +1137,6 @@
       <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
     
       <category term="TopologyInstance" scheme="http://liushy.com/tags/TopologyInstance/"/>
-    
-      <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[解析Floodlight之TopologyManager模块]]></title>
-    <link href="http://liushy.com/2017/02/12/floodlight-topomanager/"/>
-    <id>http://liushy.com/2017/02/12/floodlight-topomanager/</id>
-    <published>2017-02-12T02:00:10.000Z</published>
-    <updated>2017-03-19T02:44:31.000Z</updated>
-    <content type="html"><![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>compute()</code>重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程<code>UpdateTopologyWorker</code>：<br><img src="/img/topoman.jpg" alt="topoman"><br><code>UpdateTopologyWorker</code>线程中只运行了一个方法<code>updateTopology()</code>，该方法大致的流程：</p>
-<ul>
-<li>Step1：首先调用<code>applyUpdates()</code>方法获取拓扑更新，如果链路有更新如新增链路就执行<code>addOrUpdateLink()</code>，如果链路down掉了，就执行删除<code>removeLink()</code>；</li>
-<li>Step2：然后调用<code>createNewInstance()</code>方法创建一个TopologyInstance实例，并运行方法<code>compute()</code>计算路径；</li>
-<li>Step3：<code>lastUpdateTime</code>用于记录上一次更新的时间，<code>informListeners()</code>向所有需要监听拓扑信息的模块传递拓扑更新信息</li>
-</ul>
-<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>comput]]>
-    </summary>
-    
-      <category term="Floodlight" scheme="http://liushy.com/tags/Floodlight/"/>
-    
-      <category term="TopologyManager" scheme="http://liushy.com/tags/TopologyManager/"/>
     
       <category term="SDN" scheme="http://liushy.com/categories/SDN/"/>
     

@@ -1,0 +1,476 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>大江小鱼 | liushy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Liushy">
+    
+    <meta name="description" content="工作总结
+今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感">
+    
+    
+    
+    
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='ec0d3993bb651b75ceca76b19dda8ffb';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="liushy">liushy</a></h1>
+				<a class="blog-motto">I&#39;m waiting for you</a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+						<li><a href="/categories/SDN">SDN</a></li>
+					
+						<li><a href="/categories/Linux">Linux</a></li>
+					
+						<li><a href="/categories/Code">Code</a></li>
+					
+						<li><a href="/categories/Life">生活</a></li>
+					
+						<li><a href="/about">关于</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://liushy.com target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= ec0d3993bb651b75ceca76b19dda8ffb ><input type="text" name="q" size="30" placeholder="Search"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2020/12/26/goon-2020/" title="大江小鱼" itemprop="url">大江小鱼</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://liushy.com" title="Liushy">Liushy</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2020-12-25T16:00:00.000Z" itemprop="datePublished">Dec 26 2020</time>
+    Updated:<time datetime="2020-12-31T15:01:38.372Z" itemprop="dateModified">Dec 31 2020</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<h3 id="工作总结">工作总结</h3>
+<p>今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。<br>年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。<br>三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感觉差距不明显。<br>上半年还做了将nova-docker纳入到virt里，作为一个driver在跑，也就是咱们iaas支持了创建容器的功能，此外还完成了容器网卡的ovs mirror功能。<br>下半年最重要的任务就是支撑pc实验室项目，大批量地创建虚机和容器，涉及到数据库查询，服务多副本，ovs agent安全组处理能力等多个优化点。<br>研究了一下metal3项目，这个是云原生用于部署k8s服务器的项目，项目中的baremetal-operator其底层调的仍然是ironic。<br>研究了一下ovn项目，实现对接纯软交换的sdn方案，没有了rpc调用。需要了解ovn的南北向数据库，ovsdb等相关知识点。    </p>
+<p>今年延续了去年的低气压，整个人状态低迷。组内人力不足，除了做需求讨论方案还要处理网上问题，所以工作内容处于积压状态，造成了整个人比较压抑。神经都脆弱了不少，有时半夜醒来，整个人清醒的不得了，睡不着就会想工作上的事情，有时候甚至会挨到天亮。整个人气色很差，今年体检结果出来后，明显看到肝上的毛病很突出。脾气暴躁，很多同事估计也感受到了，有时候遇到很傻叉的方案讨论，脾气上来了就会碍着怼人，遇到扯皮的邮件，也会数落问题细节即使领导也在邮件列表里。但是到没有出现工作上的失误，手头的事情最终都能按时解决掉，不过却伤害到了自己伤肝伤神。</p>
+<p>最终呢，在年底的时候离开了，没有太大的感触，很多项目还是付出了不少心血，格式化的那一刻一阵酸爽。<br>解脱！？     </p>
+<h3 id="生活杂记">生活杂记</h3>
+<p>成都房价又涨了一点，摇号几次都是陪玩，不过我也变得佛系了，看运气吧首付应该能够得上。      </p>
+<p>今年没有出去玩耍，各种原因搁置了，旅游计划要排到21年了哈。交工卡前那段时间，由于我还有年假没用，于是休假了两周，每天上午逛菜市场做饭，晚上看点东西十点多就睡了，过的惬意而自在，真正体会到了不当打工人的闲适。     </p>
+<p>家里长辈又老了一岁，父母催我另一半的问题也越来迫切了，是啊我即将三十了。有一件令全家人揪心的事情是，外婆突然生病，家里人在医院照顾了将近两个月。目前外婆的病情况好转但不能完全恢复，回家里修养，请了一名家政帮着妈一起照顾加煮饭，希望外婆能健康开心吧。            </p>
+<p>今年整体看起来都很丧，最直观的感受是身边的朋友怨气大于开心，好像大家都因为某些事丧到不行。其实大可不必，就像那大江里的小鱼儿，逆流顺流又如何呢，长江黄河依然奔腾不息。世界看上去并没有变好的迹象，既然如此就随它吧，活着吧，看看它究竟会变成个啥样，总得有点盼头不是。<br>开心点吧朋友们，最后还是那句新年快乐<br>happy&amp;future</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/生活，旅游/">生活，旅游</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Life/">Life</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://liushy.com/2020/12/26/goon-2020/" data-title="大江小鱼 | liushy" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2019/12/28/goon-2019/"  title="惨如老狗">
+ <strong>NEXT:</strong><br/> 
+ <span>惨如老狗
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+<script src="https://img1.cache.netease.com/f2e/tie/yun/sdk/loader.js"></script>
+<script>
+var cloudTieConfig = {
+  url: document.location.href, 
+  sourceId: "",
+  productKey: "1dd951f1d9a84cdf8279f98fb392485e",
+  target: "cloud-tie-wrapper"
+};
+var yunManualLoad = true;
+Tie.loader("aHR0cHM6Ly9hcGkuZ2VudGllLjE2My5jb20vcGMvbGl2ZXNjcmlwdC5odG1s", true);
+</script>
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#工作总结"><span class="toc-number">1.</span> <span class="toc-text">工作总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#生活杂记"><span class="toc-number">2.</span> <span class="toc-text">生活杂记</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		<a href="http://weibo.com/shylou" target="_blank" title="weibo"></a>
+		
+		
+		
+		<a href="https://github.com/shylou" target="_blank" title="github"></a>
+		
+		
+		
+		
+	</div>
+</div>
+
+  <iframe width="100%" height="100" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=0&speed=0&skin=1&isTitle=1&noborder=0&isWeibo=0&isFans=0&uid=1715914644&verifier=d3f4cb8b&dpc=1"></iframe>
+
+  
+<div class="tagslist">
+	<p class="asidetitle">常用标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/Floodlight/" title="Floodlight">Floodlight<sup>5</sup></a></li>
+		
+			<li><a href="/tags/Forwarding/" title="Forwarding">Forwarding<sup>1</sup></a></li>
+		
+			<li><a href="/tags/GRE/" title="GRE">GRE<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Hadoop/" title="Hadoop">Hadoop<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LinkDiscoveryManager/" title="LinkDiscoveryManager">LinkDiscoveryManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OVS/" title="OVS">OVS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/OpenWrt/" title="OpenWrt">OpenWrt<sup>1</sup></a></li>
+		
+			<li><a href="/tags/Packet-in/" title="Packet_in">Packet_in<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyInstance/" title="TopologyInstance">TopologyInstance<sup>1</sup></a></li>
+		
+			<li><a href="/tags/TopologyManager/" title="TopologyManager">TopologyManager<sup>1</sup></a></li>
+		
+			<li><a href="/tags/VXLAN/" title="VXLAN">VXLAN<sup>1</sup></a></li>
+		
+			<li><a href="/tags/android/" title="android">android<sup>1</sup></a></li>
+		
+			<li><a href="/tags/barbican/" title="barbican">barbican<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ddos/" title="ddos">ddos<sup>1</sup></a></li>
+		
+			<li><a href="/tags/docker/" title="docker">docker<sup>2</sup></a></li>
+		
+			<li><a href="/tags/eclipse/" title="eclipse">eclipse<sup>1</sup></a></li>
+		
+			<li><a href="/tags/floodlight/" title="floodlight">floodlight<sup>3</sup></a></li>
+		
+			<li><a href="/tags/iptables/" title="iptables">iptables<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kuryr，neutron/" title="kuryr，neutron">kuryr，neutron<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2020 
+		
+		<a href="http://liushy.com" target="_blank" title="Liushy">Liushy</a>
+		
+            Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+	$('#toc.toc-aside').css('display', 'block').addClass('fadeIn'); //新加，显示目录
+    m.addClass('moveMain');
+  });
+ 
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  
+  //---
+	
+		  getSize();
+		  if (myWidth >= 1024) {
+			c.click();
+		  }
+	
+//---
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?ec0d3993bb651b75ceca76b19dda8ffb";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
