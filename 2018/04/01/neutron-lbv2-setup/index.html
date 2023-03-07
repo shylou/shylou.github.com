@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>lbv2启用loadbalancer ssl卸载服务 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="安装lbv2首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：1.控制节点：yum install -y openstack-neutron-lbaas2.修改配置文件(采用octavia参考config-lbaas)：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lbv2启用loadbalancer ssl卸载服务">
+<meta property="og:url" content="https://liushy.com/2018/04/01/neutron-lbv2-setup/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="安装lbv2首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：1.控制节点：yum install -y openstack-neutron-lbaas2.修改配置文件(采用octavia参考config-lbaas)：">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-03-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:31:35.128Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-neutron-lbv2-setup" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/04/01/neutron-lbv2-setup/" class="article-date">
+  <time class="dt-published" datetime="2018-03-31T16:00:00.000Z" itemprop="datePublished">2018-04-01</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      lbv2启用loadbalancer ssl卸载服务
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="安装lbv2">安装lbv2</span></h2><p>首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：<br>1.控制节点：yum install -y openstack-neutron-lbaas<br>2.修改配置文件(采用octavia参考<a target="_blank" rel="noopener" href="https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html">config-lbaas</a>)：     <span id="more"></span><br>neutron.conf:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[defualt]</span><br><span class="line">service_plugins = [existing service plugins],neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2</span><br><span class="line">[service_providers]</span><br><span class="line">service_provider = LOADBALANCERV2:Haproxy:neutron_lbaas.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default</span><br></pre></td></tr></table></figure>
+<p>lbaas_agent.ini:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver</span><br></pre></td></tr></table></figure>
+<p>3.更新数据库：<code>neutron-db-manage —subproject neutron-lbaas upgrade head</code><br>4.启动agent：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl <span class="built_in">enable</span> neutron-lbaasv2-agent</span><br><span class="line">systemctl start neutron-lbaasv2-agent</span><br><span class="line">systemctl restart neutron-server</span><br></pre></td></tr></table></figure>
+<p>5.安装dashboard：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://git.openstack.org/openstack/neutron-lbaas-dashboard -b stable/pike</span><br><span class="line"><span class="built_in">cd</span>  neutron-lbaas-dashboard     </span><br><span class="line">python setup.py install  </span><br><span class="line">cp neutron_lbaas_dashboard/enabled/_1481_project_ng_loadbalancersv2_panel.py     /usr/share/openstack-dashboard/openstack_dashboard/<span class="built_in">local</span>/enabled/      </span><br><span class="line">./manage.py collectstatic</span><br><span class="line">./manage.py compress       </span><br><span class="line">OPENSTACK_NEUTRON_NETWORK = &#123;</span><br><span class="line"><span class="string">&#x27;enable_lb&#x27;</span>: True,</span><br><span class="line">...</span><br><span class="line">&#125;</span><br><span class="line">systemctl restart httpd</span><br></pre></td></tr></table></figure>
+
+<h2><span id="安装barbican">安装barbican</span></h2><p>barbican是openstack单独的一个组件，主要用于密钥管理（key manage）。目前有很多组件使用了barbican的密钥管理。对于lbaas来讲，可以使用barbican为loadbalancer提供ssl的密钥管理。</p>
+<p>接下来记录下barbican的安装流程:具体的步骤可以参考：<a target="_blank" rel="noopener" href="https://docs.openstack.org/barbican/queens/install/install-rdo.html">barbican-install</a></p>
+<p>但上面的这个步骤，有几处注意一下：<br>1.编辑/etc/httpd/conf.d/wsgi-barbican.conf 文件时，我使用VirtualHost 0.0.0.0:9311替换了VirtualHost [::1]:9311并且在/etc/httpd/conf/ports文件里添加了Listen 0.0.0.0:9311才使得httpd加载barbican服务。还有如下修改：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">vim /etc/httpd/conf.d/wsgi-barbican.conf</span><br><span class="line">&lt;VirtualHost 0.0.0.0:9311&gt;</span><br><span class="line">    ServerName 192.168.99.2</span><br><span class="line">    ErrorLog <span class="string">&quot;/var/log/httpd/barbican_wsgi_main_error_ssl.log&quot;</span></span><br><span class="line">    LogLevel debug</span><br><span class="line">    ServerSignature Off</span><br><span class="line">    CustomLog <span class="string">&quot;/var/log/httpd/barbican_wsgi_main_access_ssl.log&quot;</span> combined</span><br><span class="line">    &lt;Directory <span class="string">&quot;/usr/lib/python2.7/site-packages/barbican&quot;</span>&gt;</span><br><span class="line">      Options Indexes FollowSymLinks MultiViews</span><br><span class="line">      AllowOverride None</span><br><span class="line">      Allow from all</span><br><span class="line">      Require all granted</span><br><span class="line">    &lt;/Directory&gt;</span><br><span class="line">    WSGIApplicationGroup %&#123;GLOBAL&#125;</span><br><span class="line">    WSGIDaemonProcess barbican-api display-name=barbican-api group=barbican processes=2 threads=8 user=barbican</span><br><span class="line">    WSGIProcessGroup barbican-api</span><br><span class="line">    WSGIScriptAlias / <span class="string">&quot;/usr/lib/python2.7/site-packages/barbican/api/app.wsgi&quot;</span></span><br><span class="line">    WSGIPassAuthorization On</span><br><span class="line">&lt;/VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+<p>2.编辑/etc/barbican/barbican.conf，修改和增加如下配置：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[DEFAULT]</span><br><span class="line">transport_url = rabbit://guest:guest@controller</span><br><span class="line">host_href = http://xxx.xxx.xxx.xxx:9311</span><br><span class="line">log_file = /var/<span class="built_in">log</span>/barbican/api.log</span><br></pre></td></tr></table></figure>
+<p>3.检查barbican服务是否启动，可以先通过以下命令查看是否者报错：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">openstack secret list</span><br><span class="line">+--------------------------------------------------------------------------+-------------+---------------------------+--------+-----------------------------+-----------+------------+-------------+------+------------+</span><br><span class="line">| Secret href                                                              | Name        | Created                   | Status | Content types               | Algorithm | Bit length | Secret <span class="built_in">type</span> | Mode | Expiration |</span><br><span class="line">+--------------------------------------------------------------------------+-------------+---------------------------+--------+-----------------------------+-----------+------------+-------------+------+------------+</span><br><span class="line">| http://192.168.99.2:9311/v1/secrets/8a1b6444-216e-44a7-a049-8b15d83dcdc1 | mysecret    | 2018-03-25T17:40:58+00:00 | ACTIVE | &#123;u<span class="string">&#x27;default&#x27;</span>: u<span class="string">&#x27;text/plain&#x27;</span>&#125; | aes       |        256 | opaque      | cbc  | None</span><br></pre></td></tr></table></figure>
+<p>若报错，可以再查看9311端口是否监听，以及查看日志/var/log/barbican/api.log和/var/log/httpd/：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">netstat -lnp | grep 9311</span><br><span class="line">tcp        0      0 0.0.0.0:9311            0.0.0.0:*               LISTEN      15773/httpd</span><br></pre></td></tr></table></figure>
+<p>4.允许外部访问9311端口：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">iptables -I INPUT -p tcp --dport 9311 -j ACCEPT</span><br></pre></td></tr></table></figure>
+
+<h2><span id="lbv2启用ssl卸载服务">lbv2启用ssl卸载服务</span></h2><p>ssl卸载服务（TERMINATED_HTTPS）：lbv2的loadbalancer可以对外提供https服务，对于到来的流量会将ssl卸载，并提供给内部的http服务器。具体的步骤可以参考：<a target="_blank" rel="noopener" href="https://wiki.openstack.org/wiki/Network/LBaaS/docs/how-to-create-tls-loadbalancer">tls-balancer-install</a></p>
+<p>上面的步骤对于现在的版本，有些过时了，所以有以下几处注意的：<br>1.首先，barbican客户端属于将要废弃的，所以使用openstack客户端命令，例如创建secret（其它步骤类似）:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">openstack secret store --payload-content-type=<span class="string">&#x27;text/plain&#x27;</span> --name=<span class="string">&#x27;certificate&#x27;</span> --payload=<span class="string">&quot;<span class="subst">$(cat server.crt)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+<p>2.修改/etc/neutron/neutron_lbaas.conf不能按照官方的配置auth_uri:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">auth_url = 192.168.99.2:5000/v2.0</span><br><span class="line">auth_version = 3</span><br></pre></td></tr></table></figure>
+<p>3.创建安全组规则的命令，也废弃了，我采用的neutron客户端（default是对象组名，这里简略，应采用对象组id）：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">neutron neutron security-group-rule-create --direction ingress --protocol tcp --port-range-min 22 --port-range-max 22 default</span><br><span class="line">neutron neutron security-group-rule-create --direction egress --protocol tcp --port-range-min 22 --port-range-max </span><br><span class="line">22 default</span><br><span class="line">neutron security-group-rule-create --direction ingress --protocol icmp default</span><br></pre></td></tr></table></figure>
+<p>除此之外，还有好些命令都已过时，使用的时候，最好先了解命令参数的意思，然后正确使用。    </p>
+<h2><span id="总结">总结</span></h2><p>以上是lbv2启用ssl卸载服务的步骤，并没有详细叙述安装的细节，因为官方安装步骤都有，重要的是指出安装的几处坑，避免下次安装的时候再次踩坑。当然，不得不提的是Octavia项目将会取代lbv2，也就是说如果换成Octavia，前面所提到的安装配置，就要以Octavia相关的为准。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/04/01/neutron-lbv2-setup/" data-id="clexlgj2f00178myy46fe1x12" data-title="lbv2启用loadbalancer ssl卸载服务" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/06/23/barbican-note/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Barbican笔记
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/03/11/neutron-l3-agent/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">neutron代码解析之l3-agent的启动</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

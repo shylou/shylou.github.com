@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ovn安全组总结 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="ovn基础概念 tunnel_key logical port pipeline ovs conntrack   ovn插件实现安全组 规则direction 规则优先级 allowed_address_pairs remote_group_id neutron_pg_drop   逻辑流表实现安全组 ovs流表实现安全组    本文将针对ovn实现安全组进行技术总结，分为ovn插件安全组实">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ovn安全组总结">
+<meta property="og:url" content="https://liushy.com/2022/03/26/ovn-sec/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="ovn基础概念 tunnel_key logical port pipeline ovs conntrack   ovn插件实现安全组 规则direction 规则优先级 allowed_address_pairs remote_group_id neutron_pg_drop   逻辑流表实现安全组 ovs流表实现安全组    本文将针对ovn实现安全组进行技术总结，分为ovn插件安全组实">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/ovn-sec-arc.png">
+<meta property="og:image" content="https://liushy.com/imgs/ovn-sec-table.png">
+<meta property="og:image" content="https://liushy.com/imgs/ovn-sec-trk.png">
+<meta property="og:image" content="https://liushy.com/imgs/ovn-sec-trk2.png">
+<meta property="article:published_time" content="2022-03-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-06-26T13:15:21.416Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/ovn-sec-arc.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovn-sec" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/03/26/ovn-sec/" class="article-date">
+  <time class="dt-published" datetime="2022-03-25T16:00:00.000Z" itemprop="datePublished">2022-03-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ovn安全组总结
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <!-- toc -->
+
+<ul>
+<li><a href="#ovn%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5">ovn基础概念</a><ul>
+<li><a href="#tunnel_key">tunnel_key</a></li>
+<li><a href="#logical-port">logical port</a></li>
+<li><a href="#pipeline">pipeline</a></li>
+<li><a href="#ovs-conntrack">ovs conntrack</a></li>
+</ul>
+</li>
+<li><a href="#ovn%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0%E5%AE%89%E5%85%A8%E7%BB%84">ovn插件实现安全组</a><ul>
+<li><a href="#%E8%A7%84%E5%88%99direction">规则direction</a></li>
+<li><a href="#%E8%A7%84%E5%88%99%E4%BC%98%E5%85%88%E7%BA%A7">规则优先级</a></li>
+<li><a href="#allowed_address_pairs">allowed_address_pairs</a></li>
+<li><a href="#remote_group_id">remote_group_id</a></li>
+<li><a href="#neutron_pg_drop">neutron_pg_drop</a></li>
+</ul>
+</li>
+<li><a href="#%E9%80%BB%E8%BE%91%E6%B5%81%E8%A1%A8%E5%AE%9E%E7%8E%B0%E5%AE%89%E5%85%A8%E7%BB%84">逻辑流表实现安全组</a></li>
+<li><a href="#ovs%E6%B5%81%E8%A1%A8%E5%AE%9E%E7%8E%B0%E5%AE%89%E5%85%A8%E7%BB%84">ovs流表实现安全组</a></li>
+</ul>
+<!-- tocstop -->
+
+<p>本文将针对ovn实现安全组进行技术总结，分为ovn插件安全组实现，ovn逻辑流表，openflow流表三部分进行介绍，其中还会补充介绍ovn相关的一些协议和技术。     </p>
+<h2><span id="ovn基础概念">ovn基础概念</span></h2><p>开头部分介绍几个ovn(ovs)的基础概念。<br><img src="/imgs/ovn-sec-arc.png" alt="ovn-arch"><span id="more"></span>    </p>
+<h3><span id="tunnel_key">tunnel_key</span></h3><p>ovn会在创建ovn datapath的时候，为它们分配一个唯一的tunnel _key，并同步到南向流表（详见ovn代码<code>build_datapath</code>函数），如下datapath逻辑路由器和逻辑网络，可以看到share_router的key是3，share_net的key是1：   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-ovsdb-sb-0 /]<span class="comment"># ovn-sbctl list Datapath_Binding</span></span><br><span class="line">_uuid               : 51e7ecae-4935-4fba-a68e-b385297f8c74</span><br><span class="line">external_ids        : &#123;logical-router=<span class="string">&quot;0c532506-992e-4430-aea2-c60ee0ffa364&quot;</span>, name=neutron-3f26be47-1e01-44b5-b74f-b025f82bb0b6, name2=share_router&#125;</span><br><span class="line">tunnel_key          : 3</span><br><span class="line"></span><br><span class="line">_uuid               : 19902b04-1fe5-411d-9516-749fa1500376</span><br><span class="line">external_ids        : &#123;logical-switch=<span class="string">&quot;301f9dc3-66c1-4667-9ddb-63bc8e2f2d6f&quot;</span>, name=neutron-1489889a-d027-462d-8d17-014852f27b5a, name2=share_net&#125;</span><br><span class="line">tunnel_key          : 1</span><br></pre></td></tr></table></figure>
+<p>创建ovn port时，为port分配其所在datapath下唯一的tunnel_key，并同步到南向流表（详见ovn代码build_ports函数），如下port在南向的数据，三张网卡属于同一个switch，其中两个是子网接口:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-ovsdb-sb-0 /]<span class="comment"># ovn-sbctl list Port_Binding </span></span><br><span class="line">_uuid               : d48080ec-8563-43f7-ba5d-8e5ff87045ec</span><br><span class="line">datapath            : 19902b04-1fe5-411d-9516-749fa1500376</span><br><span class="line">external_ids        : &#123;<span class="string">&quot;neutron:cidrs&quot;</span>=<span class="string">&quot;192.168.111.1/24&quot;</span>, <span class="string">&quot;neutron:device_id&quot;</span>=<span class="string">&quot;3f26be47-1e01-44b5-b74f-b025f82bb0b6&quot;</span>, <span class="string">&quot;neutron:device_owner&quot;</span>=<span class="string">&quot;network:router_interface&quot;</span>, <span class="string">&quot;neutron:network_name&quot;</span>=neutron-1489889a-d027-462d-8d17-014852f27b5a, <span class="string">&quot;neutron:port_name&quot;</span>=<span class="string">&quot;&quot;</span>, <span class="string">&quot;neutron:project_id&quot;</span>=<span class="string">&quot;1e3a5bacc11a46acb1a1803ddaf7bcc1&quot;</span>, <span class="string">&quot;neutron:revision_number&quot;</span>=<span class="string">&quot;3&quot;</span>, <span class="string">&quot;neutron:security_group_ids&quot;</span>=<span class="string">&quot;&quot;</span>&#125;</span><br><span class="line">logical_port        : <span class="string">&quot;a7e8a001-4c92-4eb9-95ac-7696993ae9b2&quot;</span></span><br><span class="line">mac                 : [router]</span><br><span class="line">options             : &#123;peer=lrp-a7e8a001-4c92-4eb9-95ac-7696993ae9b2&#125;</span><br><span class="line">tunnel_key          : 1</span><br><span class="line"><span class="built_in">type</span>                : patch</span><br><span class="line"></span><br><span class="line">_uuid               : 05870332-50f9-4122-a123-21b1c465272b</span><br><span class="line">datapath            : 19902b04-1fe5-411d-9516-749fa1500376</span><br><span class="line">external_ids        : &#123;<span class="string">&quot;neutron:cidrs&quot;</span>=<span class="string">&quot;192.168.222.1/24&quot;</span>, <span class="string">&quot;neutron:device_id&quot;</span>=<span class="string">&quot;3f26be47-1e01-44b5-b74f-b025f82bb0b6&quot;</span>, <span class="string">&quot;neutron:device_owner&quot;</span>=<span class="string">&quot;network:router_interface&quot;</span>, <span class="string">&quot;neutron:network_name&quot;</span>=neutron-1489889a-d027-462d-8d17-014852f27b5a, <span class="string">&quot;neutron:port_name&quot;</span>=<span class="string">&quot;&quot;</span>, <span class="string">&quot;neutron:project_id&quot;</span>=<span class="string">&quot;1e3a5bacc11a46acb1a1803ddaf7bcc1&quot;</span>, <span class="string">&quot;neutron:revision_number&quot;</span>=<span class="string">&quot;3&quot;</span>, <span class="string">&quot;neutron:security_group_ids&quot;</span>=<span class="string">&quot;&quot;</span>&#125;</span><br><span class="line">logical_port        : <span class="string">&quot;cabdccc3-8a9c-428f-a678-5fed80d72d17&quot;</span></span><br><span class="line">mac                 : [router]</span><br><span class="line">options             : &#123;peer=lrp-cabdccc3-8a9c-428f-a678-5fed80d72d17&#125;</span><br><span class="line">tunnel_key          : 5</span><br><span class="line"><span class="built_in">type</span>                : patch</span><br><span class="line"></span><br><span class="line">_uuid               : 93eb8dd5-0071-4ee9-8c31-371a95f2db57</span><br><span class="line">chassis             : 8209d6dc-0809-416b-a1a9-0f4f5a0e617f</span><br><span class="line">datapath            : 19902b04-1fe5-411d-9516-749fa1500376</span><br><span class="line">external_ids        : &#123;name=instance-DNWPye_share_net_5a03dfba, <span class="string">&quot;neutron:cidrs&quot;</span>=<span class="string">&quot;192.168.111.175/24&quot;</span>, <span class="string">&quot;neutron:device_id&quot;</span>=<span class="string">&quot;ab98829d-26c0-439a-b930-dd24ccad78d7&quot;</span>, <span class="string">&quot;neutron:device_owner&quot;</span>=<span class="string">&quot;compute:default-az&quot;</span>, <span class="string">&quot;neutron:network_name&quot;</span>=neutron-1489889a-d027-462d-8d17-014852f27b5a, <span class="string">&quot;neutron:port_fip&quot;</span>=<span class="string">&quot;172.16.10.101&quot;</span>, <span class="string">&quot;neutron:port_name&quot;</span>=instance-DNWPye_share_net_5a03dfba, <span class="string">&quot;neutron:project_id&quot;</span>=<span class="string">&quot;1e3a5bacc11a46acb1a1803ddaf7bcc1&quot;</span>, <span class="string">&quot;neutron:revision_number&quot;</span>=<span class="string">&quot;5&quot;</span>, <span class="string">&quot;neutron:security_group_ids&quot;</span>=<span class="string">&quot;fac16449-d03f-4880-b361-383b3c893ee0&quot;</span>&#125;</span><br><span class="line">logical_port        : <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span></span><br><span class="line">mac                 : [<span class="string">&quot;fa:16:3e:e8:dd:6b 192.168.111.175&quot;</span>]</span><br><span class="line">options             : &#123;requested-chassis=node-1.domain.tld&#125;</span><br><span class="line">tunnel_key          : 2</span><br><span class="line"><span class="built_in">type</span>                : <span class="string">&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+<p>以上资源归纳如下：<br><img src="/imgs/ovn-sec-table.png"><br>tunnel_key在ovn流表中起到了标识流的来源和去向的作用，怎么理解呢，ovn使用了如下三个寄存器：</p>
+<ul>
+<li>reg14：logical input port field，标识入口tunnel_key</li>
+<li>reg15：logical output port field，标识出口tunnel_key</li>
+<li>metadata：logical datapath field，标识所属的datapath的tunnel_key    </li>
+</ul>
+<p>ovn-controller在转换成openflow流表时，通过metadata+reg14标识流的来源，通过metadata+reg15标识流的去向。<br>举个例子：上面提到的网卡<code>b5ca6f69-eb6d-4496-8df0-e558e1552167</code>的tunnel_key是2，所属datapath的tunnel_key是1，上联的是<code>tapb5ca6f69</code>。</p>
+<p>在openflow table0中标记了入口reg14=0x2，metadata=0x1：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">cookie=0x0, duration=967010.862s, table=0, n_packets=93, n_bytes=16890, priority=100,</span><br><span class="line"> in_port=<span class="string">&quot;tapb5ca6f69-eb&quot;</span> actions=load:0xc-&gt;NXM_NX_REG13[],load:0x5-&gt;NXM_NX_REG11[],</span><br><span class="line"> load:0x6-&gt;NXM_NX_REG12[],load:0x1-&gt;OXM_OF_METADATA[],</span><br><span class="line"> load:0x2-&gt;NXM_NX_REG14[],resubmit(,8)  </span><br></pre></td></tr></table></figure>
+<p>在table25标记了出口reg15=0x2：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">cookie=0x0, duration=1057442.127s, table=65, n_packets=118, n_bytes=19390, priority=100,</span><br><span class="line"> reg15=0x2,metadata=0x1 actions=output:<span class="string">&quot;tapb5ca6f69-eb&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="logical-port">logical port</span></h3><p>上面提到的logical port，这种port主要是通过neutron create_port方式创建后的端口。<br>除此之外还有以下类型的端口，需要注意：</p>
+<ul>
+<li>localport端口：逻辑交换机和VIF之间的本地连接点。比如说使用Localport端口将metedata提供给驻留在每个hypervisor上的虚拟机。</li>
+<li>localnet端口：逻辑交换机和物理网络之间的连接点。即连接br-xx和br-int的patch端口，比如创建vlan network后，会生成命名为provnet-xxx的逻辑port（geneve网络没有），在ovs上会看到br-int与br-xx建立了patch。该patch就用于与物理网络通信。</li>
+<li>patch端口：表示逻辑交换机和逻辑路由器之间的连接点，比如创建子网接口后，会自动生成逻辑path端口用于子网和路由器，目前看来逻辑patch不会在ovs上生成。</li>
+</ul>
+<h3><span id="pipeline">pipeline</span></h3><p>ovn通过流水线pipleline的方式处理逻辑流表，分为ingress和egress两个阶段：</p>
+<ul>
+<li>ingress的逻辑流表从table0开始（对应ovs流表从table8开始），安全组部分从table0~table6会涉及</li>
+<li>egress的逻辑流表从table0开始（对应ovs流表从table40开始），安全组部分从table0~table4会涉及</li>
+</ul>
+<p>逻辑flow标记了所处的stage（ovn源码PIPELINE_STAGES），通过stage名称可以帮助了解flow的作用，类似这种：<br>  <code>table=0 (ls_in_port_sec_l2  )</code></p>
+<h3><span id="ovs-conntrack">ovs conntrack</span></h3><p><img src="/imgs/ovn-sec-trk.png" alt="ovs-conntrack"><br>ovs的conntrack功能增加了ct流表的概念，将需要跟踪状态的报文提交进ct里去，标记连接状态，供后续报文查询连接状态使用。<br><img src="/imgs/ovn-sec-trk2.png" alt="conntrack-fileds"><br>每个以”+“为前缀的标志，表示必须设置，或者以”-“为前缀的标志表示不能设置。这里面的zone用来隔离不同的跟踪会话，避免与其他会话冲突，ovn同步给ovs时使用reg13标记zone：</p>
+<ul>
+<li>reg13：Logical conntrack zone for lports<br>不过报文不走ct会对性能有很大提升，所以对性能有要求的场景建议使用无状态的acl。</li>
+</ul>
+<h2><span id="ovn插件实现安全组">ovn插件实现安全组</span></h2><p>最新neutron已经将networking-ovn插件合并，纳入为一种ml2 driver，并实现了安全组功能。安全组的实现里引入了ovn的port group的功能。</p>
+<p>ovn ml2 driver会在创建安全组的过程中，先创建好port group，然后配置acl规则到该port group，新增或删除port的时候，都会调用port group命令调整内部列表。所以port就不会直接与安全组打交道，而只是在port group内进行增删。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">创建安全组：</span><br><span class="line">_create_security_group</span><br><span class="line">--&gt;create_security_group</span><br><span class="line"> --&gt;txn.add(self._nb_idl.pg_add(                         添加命名qg-安全组id的port group</span><br><span class="line">                name=name, acls=[], external_ids=ext_ids))</span><br><span class="line"> --&gt;add_acls_for_sg_port_group                            给port group配置acl规则</span><br><span class="line"> ------------------------------------------------------------------------------------------</span><br><span class="line"> 创建port配置安全组：</span><br><span class="line"> 注意会先过滤掉device_owner为<span class="string">&quot;network:&quot;</span>的port，然后将符合条件的port添加进port group里</span><br><span class="line">                 txn.add(self._nb_idl.pg_add_ports(</span><br><span class="line">                    utils.ovn_port_group_name(sg), port_cmd))</span><br></pre></td></tr></table></figure>
+<p>接下来，介绍几个处理细节。</p>
+<h3><span id="规则direction">规则direction</span></h3><p>社区的安全组规则对应到ovn的acl时，实际的acl是作用到虚机上联的br-int上，所以作用的方向需要注意，常见的ovn acl命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">from-lport  1002 (inport == @pg_99ead3ac_2539_49d2_b8fa_f46116a22955 &amp;&amp; ip4) allow-related</span><br><span class="line">to-lport  1002 (outport == @pg_99ead3ac_2539_49d2_b8fa_f46116a22955 &amp;&amp; ip4 &amp;&amp; ip4.src == <span class="variable">$pg_99ead3ac_2539_49d2_b8fa_f46116a22955_ip4</span>) allow-related</span><br></pre></td></tr></table></figure>
+<p>虚机端口出来的流量即egress，对应logic port就是入方向，到acl上是from-lport并指定logic port为inport；<br>进入虚机端口的流量即ingress，对应logic port就是出方向，到acl上是to-lport并指定logic port为outport。</p>
+<h3><span id="规则优先级">规则优先级</span></h3><p>安全组规则在配置给ovn时，指定了一个较高的优先级，目前插件侧设置为：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ACL_PRIORITY_ALLOW = 1002</span><br><span class="line">ACL_PRIORITY_DROP = 1001</span><br></pre></td></tr></table></figure>
+<p>这里有个需要注意的地方，查看acl规则对应logic流表，会发现优先级变成了2002和2001:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=4 (ls_out_acl), priority=2002 , match=(!ct.new &amp;&amp; ct.est &amp;&amp; !ct.rpl &amp;&amp; ct_label.blocked == 0 &amp;&amp; (outport == @pg_f3a6bf24_858f_482f_81e8_eb450c527605 &amp;&amp; ip4 &amp;&amp; ip4.src == <span class="variable">$pg_f3a6bf24_858f_482f_81e8_eb450c527605_ip4</span>)), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>原因是ovn进行了修改增加了1000，避免与其它硬编码的flow优先级冲突：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/* Due to various hard-coded priorities need to implement ACLs, the</span><br><span class="line"> * northbound database supports a smaller range of ACL priorities than</span><br><span class="line"> * are available to logical flows.  This value is added to an ACL</span><br><span class="line"> * priority to determine the ACL<span class="string">&#x27;s logical flow priority. */</span></span><br><span class="line"><span class="string">#define OVN_ACL_PRI_OFFSET 1000</span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="allowed_address_pairs">allowed_address_pairs</span></h3><p>插件调用ovn_client处理create_port时，会先获取port的addresses列表，包括allowed_address_pairs。<br>在调用ovn-client进行port创建/更新时，会将address配置进logic port里去。所以在ovn实现安全防护的时候，它只会允许addresses列表里的ip/mac通过。<br>举个例子，给port配置了allowed_address_pairs地址为10.0.0.3:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@busybox-openstack-74787f576-pkffm /]<span class="comment"># neutron port-show instance-DNWPye_share_net_5a03dfba -c allowed_address_pairs -c fixed_ips</span></span><br><span class="line">+-----------------------+----------------------------------------------------------------------------------------+</span><br><span class="line">| Field                 | Value                                                                                  |</span><br><span class="line">+-----------------------+----------------------------------------------------------------------------------------+</span><br><span class="line">| allowed_address_pairs | &#123;<span class="string">&quot;ip_address&quot;</span>: <span class="string">&quot;10.0.0.3&quot;</span>, <span class="string">&quot;mac_address&quot;</span>: <span class="string">&quot;fa:16:3e:e8:dd:6b&quot;</span>&#125;                         |</span><br><span class="line">| fixed_ips             | &#123;<span class="string">&quot;subnet_id&quot;</span>: <span class="string">&quot;d39ae184-1c71-4aff-a4ba-9efad08e32ce&quot;</span>, <span class="string">&quot;ip_address&quot;</span>: <span class="string">&quot;192.168.111.175&quot;</span>&#125; |</span><br><span class="line">+-----------------------+----------------------------------------------------------------------------------------+</span><br></pre></td></tr></table></figure>
+<p>然后查看logic 流表，生成了允许10.0.0.3和192.168.111.175通过的规则，其余ip将被丢弃：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ingress:</span><br><span class="line">table=1 (ls_in_port_sec_ip  ), priority=90   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == fa:16:3e:e8:dd:6b &amp;&amp; ip4.src == &#123;192.168.111.175, 10.0.0.3&#125;), action=(next;)</span><br><span class="line">table=1 (ls_in_port_sec_ip  ), priority=80   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == fa:16:3e:e8:dd:6b &amp;&amp; ip), action=(drop;)</span><br><span class="line">egress:</span><br><span class="line">table=8 (ls_out_port_sec_ip ), priority=90   , match=(outport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.dst == fa:16:3e:e8:dd:6b &amp;&amp; ip4.dst == &#123;255.255.255.255, 224.0.0.0/4, 192.168.111.175, 10.0.0.3&#125;), action=(next;)</span><br><span class="line">table=8 (ls_out_port_sec_ip ), priority=80   , match=(outport == <span class="string">&quot;c4c13c68-b786-4859-aded-131a4ac44897&quot;</span> &amp;&amp; eth.dst == fa:16:3e:95:34:c5 &amp;&amp; ip), action=(drop;)</span><br></pre></td></tr></table></figure>
+
+<h3><span id="remote_group_id">remote_group_id</span></h3><p>插件配置远端安全组时，通过获取远端安全组的port group，然后将远端安全组的ip集合作为匹配规则中源ip和目的ip，类似这样‘‘pg_f3a6bf24_858f_482f_81e8_eb450c527605_ip4’’：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">match=(!ct.new &amp;&amp; ct.est &amp;&amp; !ct.rpl &amp;&amp; ct_label.blocked == 0 &amp;&amp; (outport == @pg_f3a6bf24_858f_482f_81e8_eb450c527605 &amp;&amp; ip4 &amp;&amp; ip4.src == <span class="variable">$pg_f3a6bf24_858f_482f_81e8_eb450c527605_ip4</span>)))</span><br></pre></td></tr></table></figure>
+<p>远端安全组的ip集合命名如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">def ovn_pg_addrset_name(sg_id, ip_version):</span><br><span class="line">    <span class="comment"># The name of the address set for the given security group id modelled as a</span></span><br><span class="line">    <span class="comment"># Port Group and ip version. The format is:</span></span><br><span class="line">    <span class="comment">#   pg-&lt;security group uuid&gt;-&lt;ip version&gt;</span></span><br><span class="line">    <span class="comment"># with all &#x27;-&#x27; replaced with &#x27;_&#x27;. This replacement is necessary</span></span><br><span class="line">    <span class="comment"># because OVN doesn&#x27;t support &#x27;-&#x27; in an address set name.</span></span><br><span class="line">    <span class="built_in">return</span> (<span class="string">&#x27;pg-%s-%s&#x27;</span> % (sg_id, ip_version)).replace(<span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;_&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3><span id="neutron_pg_drop">neutron_pg_drop</span></h3><p>插件启动之初，也就是进程pre_fork阶段，会首先创建一个名为<code>neutron_pg_dro</code>p的port group，配置的acl动作是drop。加入该port group需要满足以下条件：</p>
+<ul>
+<li>非trusted port，即device_owner不为空，且值不是以<code>network:</code>开头的</li>
+<li>port _security为enable</li>
+</ul>
+<p>总结来说，虚机的port是会被纳入到<code>neutron_pg_drop</code>中的，当访问虚机相关的流量没有匹配到安全组规则时，将会匹配<code>neutron_pg_drop</code>对应的规则，即报文丢弃。不过该设计会导致单个pg_drop性能问题，我们对其进行了修改，不使用唯一port-group去存，而是以network为单位创建pg_drop。</p>
+<h2><span id="逻辑流表实现安全组">逻辑流表实现安全组</span></h2><p>以网卡<code>b5ca6f69-eb6d-4496-8df0-e558e1552167</code>为例子，<code>reg14=0x2</code>，<code>metadata=0x1</code>，分析ingress逻辑流表。<br>table0（ls_in_port_sec_l2），ovs参照table8：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_lswitch_lflows_admission_control:</span><br><span class="line">  源地址多播/组播丢弃：</span><br><span class="line">  table=0 (ls_in_port_sec_l2  ), priority=100  , match=(eth.src[40]), action=(drop;)   </span><br><span class="line">  vlan透传报文丢弃（未启用vlan pass的话）：</span><br><span class="line">  table=0 (ls_in_port_sec_l2  ), priority=100  , match=(vlan.present), action=(drop;)  </span><br><span class="line">build_port_security_l2:</span><br><span class="line">  允许网卡eth.src报文通过：</span><br><span class="line">  table=0 (ls_in_port_sec_l2  ), priority=50   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == &#123;fa:16:3e:e8:dd:6b&#125;), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>table1（ls_in_port_sec_ip），ovs参照table9：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_port_security_ip(port_security,allowed-address-pairs):</span><br><span class="line">  允许dhcp报文和allowed-address-pairs，其余ip报文丢弃：</span><br><span class="line">  table=1 (ls_in_port_sec_ip  ), priority=90   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == fa:16:3e:e8:dd:6b &amp;&amp; ip4.src == 0.0.0.0 &amp;&amp; ip4.dst == 255.255.255.255 &amp;&amp; udp.src == 68 &amp;&amp; udp.dst == 67), action=(next;)</span><br><span class="line">  table=1 (ls_in_port_sec_ip  ), priority=90   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == fa:16:3e:e8:dd:6b &amp;&amp; ip4.src == &#123;192.168.111.175, 10.0.0.3&#125;), action=(next;)</span><br><span class="line">  table=1 (ls_in_port_sec_ip  ), priority=80   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == fa:16:3e:e8:dd:6b &amp;&amp; ip), action=(drop;)</span><br><span class="line">build_lswitch_input_port_sec_od:</span><br><span class="line">  table=1 (ls_in_port_sec_ip  ), priority=0    , match=(1), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>table2（ls_in_port_sec_nd），ovs参照table10：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_port_security_nd:</span><br><span class="line">  虚机发出的arp报文必须和allowed-address-pairs匹配，否则丢弃，防止arp欺骗：</span><br><span class="line">  table=2 (ls_in_port_sec_nd  ), priority=90   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; eth.src == fa:16:3e:e8:dd:6b &amp;&amp; arp.sha == fa:16:3e:e8:dd:6b &amp;&amp; arp.spa == &#123;192.168.111.175,10.0.0.3&#125;), action=(next;)</span><br><span class="line">  table=2 (ls_in_port_sec_nd  ), priority=80   , match=(inport == <span class="string">&quot;b5ca6f69-eb6d-4496-8df0-e558e1552167&quot;</span> &amp;&amp; (arp || nd)), action=(drop;)</span><br><span class="line">build_lswitch_input_port_sec_od:</span><br><span class="line">  table=2 (ls_in_port_sec_nd  ), priority=0    , match=(1), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>table3（ls_in_pre_acl），ovs参照table11：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_pre_acls:</span><br><span class="line">  子网接口将跳过状态acl，它们作为ingress的reg14分别为0x5和0x1：</span><br><span class="line">  table=3 (ls_in_pre_acl      ), priority=110  , match=(ip &amp;&amp; inport == <span class="string">&quot;a7e8a001-4c92-4eb9-95ac-7696993ae9b2&quot;</span>), action=(next;)     </span><br><span class="line">  table=3 (ls_in_pre_acl      ), priority=110  , match=(ip &amp;&amp; inport == <span class="string">&quot;cabdccc3-8a9c-428f-a678-5fed80d72d17&quot;</span>), action=(next;) </span><br><span class="line">  ipv6邻居协议，路由协议报文，icmp4/6不可达报文，tcp rst报文将跳过状态acl：</span><br><span class="line">  table=3 (ls_in_pre_acl      ), priority=110  , match=(nd || nd_rs || nd_ra || icmp4.type == 3 || icmp6.type == 1 || (tcp &amp;&amp; tcp.flags == 4)), action=(next;)</span><br><span class="line">  状态acl预处理，reg0[0]赋值1（REGBIT_CONNTRACK_DEFRAG标记ip分片重组）：</span><br><span class="line">  table=3 (ls_in_pre_acl      ), priority=100  , match=(ip), action=(reg0[0] = 1; next;)</span><br><span class="line">  table=3 (ls_in_pre_acl      ), priority=0    , match=(1), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>table4（ls_in_pre_lb），ovs参照table12：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_pre_lb:</span><br><span class="line">  table=4 (ls_in_pre_lb       ), priority=110  , match=(nd || nd_rs || nd_ra), action=(next;)</span><br><span class="line">  table=4 (ls_in_pre_lb       ), priority=0    , match=(1), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>table5（ls_in_pre_stateful），ovs参照table13：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_pre_stateful:</span><br><span class="line">  标记过reg0[0]的报文纳入状态跟踪：</span><br><span class="line">  table=5 (ls_in_pre_stateful ), priority=100  , match=(reg0[0] == 1), action=(ct_next;)</span><br><span class="line">  table=5 (ls_in_pre_stateful ), priority=0    , match=(1), action=(next;)</span><br></pre></td></tr></table></figure>
+<p>table6（ls_in_acl），ovs参照table14:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_acls:</span><br><span class="line">  创建最高优先级的acl，允许与已存在的状态跟踪相关的报文通过：</span><br><span class="line">  table=6 (ls_in_acl          ), priority=65535, match=(!ct.est &amp;&amp; ct.rel &amp;&amp; !ct.new &amp;&amp; !ct.inv &amp;&amp; ct_label.blocked == 0), action=(next;)</span><br><span class="line">  创建最高优先级的acl，允许已建立状态跟踪的回复报文通过：</span><br><span class="line">  table=6 (ls_in_acl          ), priority=65535, match=(ct.est &amp;&amp; !ct.rel &amp;&amp; !ct.new &amp;&amp; !ct.inv &amp;&amp; ct.rpl &amp;&amp; ct_label.blocked == 0), action=(next;)</span><br><span class="line">  创建最高优先级的acl，丢弃无效状态的报文：</span><br><span class="line">  table=6 (ls_in_acl          ), priority=65535, match=(ct.inv || (ct.est &amp;&amp; ct.rpl &amp;&amp; ct_label.blocked == 1)), action=(drop;)</span><br><span class="line">  table=6 (ls_in_acl          ), priority=65535, match=(nd), action=(next;)</span><br><span class="line">  </span><br><span class="line">  创建安全组规则的acl，允许inport为安全组port group的报文通过:</span><br><span class="line">  table=6 (ls_in_acl          ), priority=2002 , match=(!ct.new &amp;&amp; ct.est &amp;&amp; !ct.rpl &amp;&amp; ct_label.blocked == 0 &amp;&amp; (inport == @pg_fac16449_d03f_4880_b361_383b3c893ee0 &amp;&amp; ip4)), action=(next;)</span><br><span class="line">  table=6 (ls_in_acl          ), priority=2002 , match=(!ct.new &amp;&amp; ct.est &amp;&amp; !ct.rpl &amp;&amp; ct_label.blocked == 0 &amp;&amp; (inport == @pg_fac16449_d03f_4880_b361_383b3c893ee0 &amp;&amp; ip6)), action=(next;)</span><br><span class="line">  table=6 (ls_in_acl          ), priority=2002 , match=(((ct.new &amp;&amp; !ct.est) || (!ct.new &amp;&amp; ct.est &amp;&amp; !ct.rpl &amp;&amp; ct_label.blocked == 1)) &amp;&amp; (inport == @pg_fac16449_d03f_4880_b361_383b3c893ee0 &amp;&amp; ip4)), action=(reg0[1] = 1; next;)</span><br><span class="line">  table=6 (ls_in_acl          ), priority=2002 , match=(((ct.new &amp;&amp; !ct.est) || (!ct.new &amp;&amp; ct.est &amp;&amp; !ct.rpl &amp;&amp; ct_label.blocked == 1)) &amp;&amp; (inport == @pg_fac16449_d03f_4880_b361_383b3c893ee0 &amp;&amp; ip6)), action=(reg0[1] = 1; next;)</span><br><span class="line">  创建安全组规则的acl，丢弃inport来自neutron_pg_drop的报文:</span><br><span class="line">  table=6 (ls_in_acl          ), priority=2001 , match=((!ct.est || (ct.est &amp;&amp; ct_label.blocked == 1)) &amp;&amp; (inport == @neutron_pg_drop &amp;&amp; ip)), action=(/* drop */)</span><br><span class="line">  table=6 (ls_in_acl          ), priority=2001 , match=(ct.est &amp;&amp; ct_label.blocked == 0 &amp;&amp; (inport == @neutron_pg_drop &amp;&amp; ip)), action=(ct_commit(ct_label=1/1); /* drop */)</span><br><span class="line">  </span><br><span class="line">  table=6 (ls_in_acl          ), priority=1    , match=(ip &amp;&amp; (!ct.est || (ct.est &amp;&amp; ct_label.blocked == 1))), action=(reg0[1] = 1; next;)</span><br><span class="line">  table=6 (ls_in_acl          ), priority=0    , match=(1), action=(next;)</span><br></pre></td></tr></table></figure>
+
+<h2><span id="ovs流表实现安全组">ovs流表实现安全组</span></h2><p>上文提到的逻辑流表，对照openflow流表如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table8:</span><br><span class="line">源地址多播/组播丢弃：</span><br><span class="line">cookie=0x6f1dbc42, duration=966129.895s, table=8, n_packets=0, n_bytes=0, idle_age=65534, hard_age=65534, priority=100,metadata=0x1,dl_src=01:00:00:00:00:00/01:00:00:00:00:00 actions=drop</span><br><span class="line">vlan透传报文丢弃（未启用vlan pass的话）：</span><br><span class="line">cookie=0x35965f1e, duration=966203.206s, table=8, n_packets=0, n_bytes=0, idle_age=65534, hard_age=65534, priority=100,metadata=0x1,vlan_tci=0x1000/0x1000 actions=drop (https://blog.csdn.net/u012124304/article/details/103211105)</span><br><span class="line">允许该网卡的eth.src报文通过：</span><br><span class="line">cookie=0xd2362303, duration=966463.937s, table=8, n_packets=93, n_bytes=16890, idle_age=4216, hard_age=65534, priority=50,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b actions=resubmit(,9)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">table9:</span><br><span class="line">允许该网的卡dhcp报文和allowed-address-pairs，其余ip报文丢弃：</span><br><span class="line">cookie=0x6953fb29, duration=968411.177s, table=9, n_packets=0, n_bytes=0, priority=90,udp,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b,nw_src=0.0.0.0,nw_dst=255.255.255.255,tp_src=68,tp_dst=67 actions=resubmit(,10)</span><br><span class="line">cookie=0x120781d1, duration=968411.185s, table=9, n_packets=49, n_bytes=15332, priority=90,ip,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b,nw_src=192.168.111.175 actions=resubmit(,10)</span><br><span class="line">cookie=0x2ff58c89, duration=49.356s,     table=9, n_packets=0, n_bytes=0,      priority=90,ip,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b,nw_src=10.0.0.3 actions=resubmit(,10)                    </span><br><span class="line">cookie=0x1fab468e, duration=968411.188s, table=9, n_packets=0, n_bytes=0, priority=80,ip,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b actions=drop</span><br><span class="line">cookie=0xfbeb7eae, duration=968411.192s, table=9, n_packets=192, n_bytes=68946, priority=0,metadata=0x1 actions=resubmit(,10)              </span><br><span class="line"></span><br><span class="line">table10:</span><br><span class="line">虚机发出的arp报文必须和allowed-address-pairs匹配，否则丢弃，防止arp欺骗：</span><br><span class="line">cookie=0xbf374718, duration=968411.182s, table=10, n_packets=46, n_bytes=1932, priority=90,arp,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b,arp_spa=192.168.111.175,arp_sha=fa:16:3e:e8:dd:6b actions=resubmit(,11)</span><br><span class="line">cookie=0xed2936cb, duration=23433.135s, table=10, n_packets=0, n_bytes=0, priority=90,arp,reg14=0x2,metadata=0x1,dl_src=fa:16:3e:e8:dd:6b,arp_spa=10.0.0.3,arp_sha=fa:16:3e:e8:dd:6b actions=resubmit(,11)</span><br><span class="line">cookie=0xe858f8f3, duration=968411.185s, table=10, n_packets=0, n_bytes=0, priority=80,arp,reg14=0x2,metadata=0x1 actions=drop</span><br><span class="line">cookie=0x53f76439, duration=968411.188s, table=10, n_packets=195, n_bytes=82346, priority=0,metadata=0x1 actions=resubmit(,11)</span><br><span class="line"></span><br><span class="line">table11:</span><br><span class="line">两个子网接口ingress时reg14=0x1和reg14=0x5，ovn将跳过对其进行状态acl：</span><br><span class="line">cookie=0x14018c1f, duration=1057442.112s, table=11, n_packets=167, n_bytes=95460, priority=110,ip,reg14=0x1,metadata=0x1 actions=resubmit(,12)</span><br><span class="line">cookie=0x3380f1d7, duration=948268.302s, table=11, n_packets=351, n_bytes=162148, priority=110,ip,reg14=0x5,metadata=0x1 actions=resubmit(,12)</span><br><span class="line">ipv6邻居协议，路由协议报文，icmp4/6不可达报文，tcp rst报文将跳过状态acl：</span><br><span class="line">cookie=0xab9fff1, duration=968411.193s, table=11, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=135,icmp_code=0 actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.188s, table=11, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=134,icmp_code=0 actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.185s, table=11, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=133,icmp_code=0 actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.183s, table=11, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=136,icmp_code=0 actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.191s, table=11, n_packets=0, n_bytes=0, priority=110,tcp6,metadata=0x1,tcp_flags=rst actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.188s, table=11, n_packets=0, n_bytes=0, priority=110,tcp,metadata=0x1,tcp_flags=rst actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.190s, table=11, n_packets=2, n_bytes=226, priority=110,icmp,metadata=0x1,icmp_type=3 actions=resubmit(,12)</span><br><span class="line">cookie=0xab9fff1, duration=968411.181s, table=11, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,icmp_type=1 actions=resubmit(,12)</span><br><span class="line">状态acl预处理，reg0[0]赋值1（REGBIT_CONNTRACK_DEFRAG标记ip分片重组）：</span><br><span class="line">cookie=0x7d898487, duration=968411.187s, table=11, n_packets=49, n_bytes=15332, priority=100,ip,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[96],resubmit(,12)</span><br><span class="line">cookie=0x7d898487, duration=968411.182s, table=11, n_packets=0, n_bytes=0, priority=100,ipv6,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[96],resubmit(,12)</span><br><span class="line">cookie=0x293449e5, duration=968411.193s, table=11, n_packets=46, n_bytes=1932, priority=0,metadata=0x1 actions=resubmit(,12)</span><br><span class="line"></span><br><span class="line">table12:</span><br><span class="line">cookie=0xa4a37e36, duration=1034058.339s, table=12, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=133,icmp_code=0 actions=resubmit(,13)</span><br><span class="line">cookie=0xa4a37e36, duration=1034058.336s, table=12, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=134,icmp_code=0 actions=resubmit(,13)</span><br><span class="line">cookie=0xa4a37e36, duration=1034058.336s, table=12, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=135,icmp_code=0 actions=resubmit(,13)</span><br><span class="line">cookie=0xa4a37e36, duration=1034058.328s, table=12, n_packets=0, n_bytes=0, priority=110,icmp6,metadata=0x1,nw_ttl=255,icmp_type=136,icmp_code=0 actions=resubmit(,13)</span><br><span class="line">cookie=0x8c6fe364, duration=1034058.337s, table=12, n_packets=247, n_bytes=85400, priority=0,metadata=0x1 actions=resubmit(,13)</span><br><span class="line"></span><br><span class="line">table13:</span><br><span class="line">标记过reg0[0]的报文纳入状态跟踪，reg13标记zone：</span><br><span class="line">cookie=0x24a1efe4, duration=1034058.328s, table=13, n_packets=52, n_bytes=16328, priority=100,ip,reg0=0x1/0x1,metadata=0x1 actions=ct(table=14,zone=NXM_NX_REG13[0..15])</span><br><span class="line">cookie=0x2201969c, duration=1034058.334s, table=13, n_packets=195, n_bytes=69072, priority=0,metadata=0x1 actions=resubmit(,14)</span><br><span class="line"></span><br><span class="line">table14:</span><br><span class="line">创建最高优先级的acl，允许与已存在的状态跟踪相关的报文通过：</span><br><span class="line">cookie=0xf82466f5, duration=1057442.124s, table=14, n_packets=0, n_bytes=0, priority=65535,ct_state=-new-est+rel-inv+trk,ct_label=0/0x1,metadata=0x1 actions=resubmit(,15)</span><br><span class="line">创建最高优先级的acl，允许已建立状态跟踪的回复报文通过：</span><br><span class="line">cookie=0xea74928f, duration=1057442.122s, table=14, n_packets=4, n_bytes=392, priority=65535,ct_state=-new+est-rel+rpl-inv+trk,ct_label=0/0x1,metadata=0x1 actions=resubmit(,15)</span><br><span class="line">创建最高优先级的acl，丢弃无效状态的报文：</span><br><span class="line">cookie=0xf5b4b6e8, duration=1057442.124s, table=14, n_packets=0, n_bytes=0, priority=65535,ct_state=+inv+trk,metadata=0x1 actions=drop</span><br><span class="line">cookie=0xf5b4b6e8, duration=1057442.108s, table=14, n_packets=0, n_bytes=0, priority=65535,ct_state=+est+rpl+trk,ct_label=0x1/0x1,metadata=0x1 actions=drop</span><br><span class="line">cookie=0xd4194ce2, duration=1057442.119s, table=14, n_packets=0, n_bytes=0, priority=65535,icmp6,metadata=0x1,nw_ttl=255,icmp_type=136,icmp_code=0 actions=resubmit(,15)</span><br><span class="line">cookie=0xd4194ce2, duration=1057442.112s, table=14, n_packets=0, n_bytes=0, priority=65535,icmp6,metadata=0x1,nw_ttl=255,icmp_type=135,icmp_code=0 actions=resubmit(,15)</span><br><span class="line">创建安全组规则的acl，允许来自该网卡匹配规则的报文通过:</span><br><span class="line">cookie=0x30990bd9, duration=1057442.121s, table=14, n_packets=0, n_bytes=0, priority=2002,ct_state=+new-est+trk,ipv6,reg14=0x2,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[97],resubmit(,15)</span><br><span class="line">cookie=0xd96dfb12, duration=1057442.119s, table=14, n_packets=49, n_bytes=16268, priority=2002,ct_state=+new-est+trk,ip,reg14=0x2,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[97],resubmit(,15)</span><br><span class="line">cookie=0xd96dfb12, duration=1057442.119s, table=14, n_packets=0, n_bytes=0, priority=2002,ct_state=-new+est-rpl+trk,ct_label=0x1/0x1,ip,reg14=0x2,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[97],resubmit(,15)</span><br><span class="line">cookie=0x31749d4e, duration=1057442.112s, table=14, n_packets=0, n_bytes=0, priority=2002,ct_state=-new+est-rpl+trk,ct_label=0/0x1,ip,reg14=0x2,metadata=0x1 actions=resubmit(,15)</span><br><span class="line">cookie=0x30990bd9, duration=1057442.112s, table=14, n_packets=0, n_bytes=0, priority=2002,ct_state=-new+est-rpl+trk,ct_label=0x1/0x1,ipv6,reg14=0x2,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[97],resubmit(,15)</span><br><span class="line">cookie=0x296730c6, duration=1057442.107s, table=14, n_packets=0, n_bytes=0, priority=2002,ct_state=-new+est-rpl+trk,ct_label=0/0x1,ipv6,reg14=0x2,metadata=0x1 actions=resubmit(,15)</span><br><span class="line">创建默认丢弃的流表（对应逻辑流表中inport为neutron_pg_drop的流表）:</span><br><span class="line">cookie=0x3d47ccf1, duration=1057442.116s, table=14, n_packets=0, n_bytes=0, priority=2001,ct_state=+est+trk,ct_label=0x1/0x1,ipv6,reg14=0x2,metadata=0x1 actions=drop</span><br><span class="line">cookie=0x3d47ccf1, duration=1057442.108s, table=14, n_packets=0, n_bytes=0, priority=2001,ct_state=+est+trk,ct_label=0x1/0x1,ip,reg14=0x2,metadata=0x1 actions=drop</span><br><span class="line">cookie=0x3d47ccf1, duration=1057442.118s, table=14, n_packets=0, n_bytes=0, priority=2001,ct_state=-est+trk,ip,reg14=0x2,metadata=0x1 actions=drop</span><br><span class="line">cookie=0x3d47ccf1, duration=1057442.108s, table=14, n_packets=0, n_bytes=0, priority=2001,ct_state=-est+trk,ipv6,reg14=0x2,metadata=0x1 actions=drop</span><br><span class="line"></span><br><span class="line">cookie=0x1454342d, duration=1057442.124s, table=14, n_packets=0, n_bytes=0, priority=1,ct_state=+est+trk,ct_label=0x1/0x1,ipv6,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[97],resubmit(,15)</span><br><span class="line">cookie=0x1454342d, duration=1057442.121s, table=14, n_packets=0, n_bytes=0, priority=1,ct_state=+est+trk,ct_label=0x1/0x1,ip,metadata=0x1 actions=load:0x1-&gt;NXM_NX_XXREG0[97],resubmit(,15)</span><br><span class="line"></span><br><span class="line">cookie=0x16579627, duration=1057442.121s, table=14, n_packets=575, n_bytes=260428, priority=0,metadata=0x1 actions=resubmit(,15)</span><br></pre></td></tr></table></figure>
+
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2022/03/26/ovn-sec/" data-id="clexlgj2o001m8myy2y4sdu7j" data-title="ovn安全组总结" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/06/24/ovn-mc/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ovn multicast实现分析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/12/31/goon-2021/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">且行且看</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

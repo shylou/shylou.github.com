@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Barbican笔记 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="杂记记录一下最近研究barbican组件的个人理解。 barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行PEM格式化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Barbican笔记">
+<meta property="og:url" content="https://liushy.com/2018/06/23/barbican-note/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="杂记记录一下最近研究barbican组件的个人理解。 barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行PEM格式化。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-06-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:33:19.064Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-barbican-note" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/06/23/barbican-note/" class="article-date">
+  <time class="dt-published" datetime="2018-06-22T16:00:00.000Z" itemprop="datePublished">2018-06-23</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Barbican笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="杂记">杂记</span></h2><p>记录一下最近研究barbican组件的个人理解。</p>
+<p>barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行PEM格式化。<span id="more"></span></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">&#123;<span class="string">&#x27;text/plain&#x27;</span>: <span class="string">&#x27;text/plain&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;text/plain;charset=utf-8&#x27;</span>: <span class="string">&#x27;text/plain&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;text/plain; charset=utf-8&#x27;</span>: <span class="string">&#x27;text/plain&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;application/octet-stream&#x27;</span>: <span class="string">&#x27;application/octet-stream&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;application/pkcs8&#x27;</span>: <span class="string">&#x27;application/pkcs8&#x27;</span>,</span><br><span class="line"><span class="string">&#x27;application/aes&#x27;</span>: <span class="string">&#x27;application/aes&#x27;</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>tips：ocatavia可以对证书pkcs12格式化（当然也是封装的接口），一般情况下，获取的证书默认进行pkcs12格式化的，同时也兼容了barbican原生的证书格式化。包括监听器绑定证书的方式也同lbv2不一样，并没有采用容器的方式（实际pkcs12也可以看着是容器）。     </p>
+<p>barbican后端支持多种存储，所以官网提供了多个插件：   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[secretstore]</span><br><span class="line">enable_multiple_secret_stores = True</span><br><span class="line">stores_lookup_suffix = software, kmip, pkcs11, dogtag </span><br><span class="line">[secretstore:software]</span><br><span class="line">secret_store_plugin = store_crypto</span><br><span class="line">crypto_plugin = simple_crypto</span><br><span class="line">[secretstore:kmip]</span><br><span class="line">secret_store_plugin = kmip_plugin</span><br><span class="line">global_default = True </span><br><span class="line">[secretstore:dogtag]</span><br><span class="line">secret_store_plugin = dogtag_plugin </span><br><span class="line">[secretstore:pkcs11]</span><br><span class="line">secret_store_plugin = store_crypto</span><br><span class="line">crypto_plugin = p11_crypto</span><br></pre></td></tr></table></figure>
+<p>目前barbican自身代码，限定了pkcs8,pkcs11,x509等格式的支持程度。<br>lbv2支持的私钥是pkcs8(??????)证书是x509，octvia在代码里增加了pkcs12的代码文件，并新增/certificate/manager/barbican.py可实现barbican对pkcs12的支持，所以私钥和证书都可以支持pkcs12<br><a target="_blank" rel="noopener" href="https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers">https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers</a><br><a target="_blank" rel="noopener" href="https://docs.openstack.org/releasenotes/octavia/queens.html">https://docs.openstack.org/releasenotes/octavia/queens.html</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Users can now use a reference to a single PKCS12 bundle as their default_tls_container_ref instead of a Barbican container with individual secret objects. PKCS12 supports bundling a private key, certificate, and intermediates. Private keys can no longer be passphrase protected when using PKCS12 bundles. No configuration change is necessary to enable this feature. Users may simply begin using this. Any use of the old style containers will be detected and automatically fall back to using the old Barbican driver.</span><br><span class="line">Certificate bundles can now be stored in any backend Castellan supports, and can be retrieved via a Castellan driver, even if Barbican is not deployed.</span><br></pre></td></tr></table></figure>
+
+<p>创建证书容器的body如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">&#123;          </span><br><span class="line">    <span class="string">&quot;type&quot;</span>: <span class="string">&quot;certificate&quot;</span>,</span><br><span class="line">    <span class="string">&quot;status&quot;</span>: <span class="string">&quot;ACTIVE&quot;</span>,</span><br><span class="line">    <span class="string">&quot;name&quot;</span>: <span class="string">&quot;Example.com Certificates&quot;</span>,</span><br><span class="line">    <span class="string">&quot;consumers&quot;</span>: [],</span><br><span class="line">    <span class="string">&quot;container_ref&quot;</span>: <span class="string">&quot;https://&#123;barbican_host&#125;/v1/containers/&#123;uuid&#125;&quot;</span>,</span><br><span class="line">    <span class="string">&quot;secret_refs&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;name&quot;</span>: <span class="string">&quot;certificate&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_ref&quot;</span>: <span class="string">&quot;https://&#123;barbican_host&#125;/v1/secrets/&#123;uuid&#125;&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;name&quot;</span>: <span class="string">&quot;private_key&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_ref&quot;</span>: <span class="string">&quot;https://&#123;barbican_host&#125;/v1/secrets/&#123;uuid&#125;&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;name&quot;</span>: <span class="string">&quot;private_key_passphrase&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_ref&quot;</span>: <span class="string">&quot;https://&#123;barbican_host&#125;/v1/secrets/&#123;uuid&#125;&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;name&quot;</span>: <span class="string">&quot;intermediates&quot;</span>,</span><br><span class="line">            <span class="string">&quot;secret_ref&quot;</span>: <span class="string">&quot;https://&#123;barbican_host&#125;/v1/secrets/&#123;uuid&#125;&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="string">&quot;created&quot;</span>: <span class="string">&quot;2015-03-30T21:10:45.417835&quot;</span>,</span><br><span class="line">    <span class="string">&quot;updated&quot;</span>: <span class="string">&quot;2015-03-30T21:10:45.417835&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>证书容器是用来存储证书相关的密钥，需要指定以下几种type，其中certificate是必须指定，其余的均是可选的。</p>
+<pre><code>A certificate container is used for storing the following secrets that are relevant to certificates:
+certificate
+private_key (optional)
+private_key_passphrase (optional)
+intermediates (optional)
+The payload for the secret referenced as the “certificate” is expected to be a PEM formatted x509 certificate.
+The payload for the secret referenced as the “intermediates” is expected to be a PEM formatted PKCS7 certificate chain.
+</code></pre>
+<h2><span id="参考">参考</span></h2><p><a target="_blank" rel="noopener" href="http://www.iceyao.com.cn/2017/11/19/Neutron-lbaas%E4%BB%A3%E7%90%86https%E5%AE%9E%E8%B7%B5/">http://www.iceyao.com.cn/2017/11/19/Neutron-lbaas%E4%BB%A3%E7%90%86https%E5%AE%9E%E8%B7%B5/</a><br><a target="_blank" rel="noopener" href="https://docs.openstack.org/barbican/latest/install/barbican-backend.html">https://docs.openstack.org/barbican/latest/install/barbican-backend.html</a><br><a target="_blank" rel="noopener" href="https://docs.openstack.org/barbican/latest/configuration/plugin_backends.html">https://docs.openstack.org/barbican/latest/configuration/plugin_backends.html</a><br><a target="_blank" rel="noopener" href="https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers">https://developer.openstack.org/api-guide/key-manager/containers.html#certificate-containers</a><br><a target="_blank" rel="noopener" href="https://docs.openstack.org/releasenotes/octavia/queens.html">https://docs.openstack.org/releasenotes/octavia/queens.html</a><br><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/06/23/barbican-note/" data-id="clexlgj1e00028myye8o5041i" data-title="Barbican笔记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/07/31/nova-network/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          nova与neutron交互的细节分析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/04/01/neutron-lbv2-setup/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">lbv2启用loadbalancer ssl卸载服务</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>neutron代码解析之l3-agent的启动 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="每个 L3 Agent 运行在一个 network namespace 中，以 qrouter-命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces &#x3D; True开启namespace。本文只做单纯的分析代码，研究了neutron的l3-agent代码（m版本），代码路径为&#x2F;neutron&#x2F;agent&#x2F;l3">
+<meta property="og:type" content="article">
+<meta property="og:title" content="neutron代码解析之l3-agent的启动">
+<meta property="og:url" content="https://liushy.com/2018/03/11/neutron-l3-agent/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="每个 L3 Agent 运行在一个 network namespace 中，以 qrouter-命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces &#x3D; True开启namespace。本文只做单纯的分析代码，研究了neutron的l3-agent代码（m版本），代码路径为&#x2F;neutron&#x2F;agent&#x2F;l3">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-03-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:31:49.980Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-neutron-l3-agent" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/03/11/neutron-l3-agent/" class="article-date">
+  <time class="dt-published" datetime="2018-03-10T16:00:00.000Z" itemprop="datePublished">2018-03-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      neutron代码解析之l3-agent的启动
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>每个 L3 Agent 运行在一个 network namespace 中，以 qrouter-命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces = True开启namespace。本文只做单纯的分析代码，研究了neutron的l3-agent代码（m版本），代码路径为/neutron/agent/l3/agent.py。主要的类是： <span id="more"></span>   </p>
+<ul>
+<li>class L3PluginApi(object): l3-agent的rpc接口，用于回复和查询l3-plugin的。</li>
+<li>class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,ha.AgentMixin,dvr.AgentMixin,manager.Manager): l3-agent实现类。</li>
+</ul>
+<p>主要来说说<strong>L3NATAgent</strong>。该类在运行的时候，会启动两个周期任务：</p>
+<ul>
+<li>periodic_sync_routers_task：周期性获取router列表，并将需要操作的router加入到队列中；</li>
+<li>_process_routers_loop：从上个任务中获取队列中的router，并进行处理（增删和更新）。</li>
+</ul>
+<p>接下来依次分析这两个任务。</p>
+<h2><span id="periodic_sync_routers_task">periodic_sync_routers_task</span></h2><p>注意该类继承了<code>FWaaSL3AgentRpcCallback</code>和<code>Manager</code>两个类。Manager类里有个方法<code>periodic_tasks</code>，运行的是父类的方法<code>run_periodic_tasks</code>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Manager</span>(<span class="params">periodic_task.PeriodicTasks</span>):</span></span><br><span class="line">    target = oslo_messaging.Target(version=<span class="string">&#x27;1.0&#x27;</span>)</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">periodic_tasks</span>(<span class="params">self, context, raise_on_error=<span class="literal">False</span></span>):</span></span><br><span class="line">        self.run_periodic_tasks(context, raise_on_error=raise_on_error)</span><br></pre></td></tr></table></figure>
+<p>在neutron/service.py里的类Service，启动start的时候，会加载Manager的periodic_tasks方法，并设置周期时间：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Service</span>(<span class="params">n_rpc.Service</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">start</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.manager.init_host()</span><br><span class="line">        <span class="built_in">super</span>(Service, self).start()</span><br><span class="line">        <span class="keyword">if</span> self.report_interval:</span><br><span class="line">            pulse = loopingcall.FixedIntervalLoopingCall(self.report_state)</span><br><span class="line">            pulse.start(interval=self.report_interval,initial_delay=self.report_interval)</span><br><span class="line">            self.timers.append(pulse)</span><br><span class="line">        <span class="keyword">if</span> self.periodic_interval:</span><br><span class="line">            <span class="keyword">if</span> self.periodic_fuzzy_delay:</span><br><span class="line">                initial_delay = random.randint(<span class="number">0</span>, self.periodic_fuzzy_delay)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                initial_delay = <span class="literal">None</span></span><br><span class="line">            periodic = loopingcall.FixedIntervalLoopingCall(self.periodic_tasks)</span><br><span class="line">            periodic.start(interval=self.periodic_interval,initial_delay=initial_delay)</span><br><span class="line">            self.timers.append(periodic)</span><br><span class="line">        self.manager.after_start()</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">periodic_tasks</span>(<span class="params">self, raise_on_error=<span class="literal">False</span></span>):</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;Tasks to be run at a periodic interval.&quot;&quot;&quot;</span></span><br><span class="line">        ctxt = context.get_admin_context()</span><br><span class="line">        self.manager.periodic_tasks(ctxt, raise_on_error=raise_on_error)</span><br></pre></td></tr></table></figure>
+<p>然后说回L3NATAgent类，它定义了一个方法<code>periodic_sync_routers_task</code>，被<font color="red">@periodic_task.periodic_task(spacing=1, run_immediately=True)</font>进行了装饰，可以理解为间隔时间为1秒运行一次任务。periodic_task是oslo_service/periodic_task.py里的装饰器方法，用于将被装饰的方法声明为一个周期性任务；而该文件里还有一个方法也就是上文提到的<code>run_periodic_tasks</code>，用于运行所有的周期任务：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">@periodic_task.periodic_task(<span class="params">spacing=<span class="number">1</span>, run_immediately=<span class="literal">True</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">periodic_sync_routers_task</span>(<span class="params">self, context</span>):</span></span><br><span class="line">...</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="keyword">with</span> self.namespaces_manager <span class="keyword">as</span> ns_manager:</span><br><span class="line">            self.fetch_and_sync_all_routers(context, ns_manager)</span><br></pre></td></tr></table></figure>
+<p>periodic_sync_routers_task执行了一个任务<code>fetch_and_sync_all_routers</code>，即是通过l3-plugin RPC获取到router列表，然后将需要进行操作的router加入到 _queue 中。理解了这个，就能明白接下来的一个线程循环任务 _process_routers_loop。</p>
+<h2><span id="_process_routers_loop">_process_routers_loop</span></h2><p>在l3-agent开始启动过程after_start中，还会启动一个线程来循环执行一个任务<code>_process_routers_loop</code>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">after_start</span>(<span class="params">self</span>):</span></span><br><span class="line">    eventlet.spawn_n(self._process_routers_loop)</span><br><span class="line">    LOG.info(_LI(<span class="string">&quot;L3 agent started&quot;</span>))</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_routers_loop</span>(<span class="params">self</span>):</span></span><br><span class="line">    LOG.debug(<span class="string">&quot;Starting _process_routers_loop&quot;</span>)</span><br><span class="line">    pool = eventlet.GreenPool(size=<span class="number">8</span>)</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        pool.spawn_n(self._process_router_update)</span><br></pre></td></tr></table></figure>
+<p>再来看看方法<code>_process_router_update</code>，方法一开始就会通过_queue.each_update_to_next_router从上一个任务的队列里获取需要进行操作的router信息。然后会针对不同的action，进行一些处理，真正进行router操作的是<code>_process_router_if_compatible</code>:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_router_update</span>(<span class="params">self</span>):</span></span><br><span class="line">    <span class="keyword">for</span> rp, update <span class="keyword">in</span> self._queue.each_update_to_next_router():</span><br><span class="line">        LOG.debug(<span class="string">&quot;Starting router update for %s, action %s, priority %s&quot;</span>,</span><br><span class="line">                  update.<span class="built_in">id</span>, update.action, update.priority)</span><br><span class="line">        <span class="keyword">if</span> update.action == queue.PD_UPDATE:</span><br><span class="line">            self.pd.process_prefix_update()</span><br><span class="line">            LOG.debug(<span class="string">&quot;Finished a router update for %s&quot;</span>, update.<span class="built_in">id</span>)</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        router = update.router</span><br><span class="line">        ......</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            self._process_router_if_compatible(router)</span><br><span class="line">        ......</span><br><span class="line">        LOG.debug(<span class="string">&quot;Finished a router update for %s&quot;</span>, update.<span class="built_in">id</span>)</span><br><span class="line">        rp.fetched_and_processed(update.timestamp)</span><br></pre></td></tr></table></figure>
+<p>_process_router_if_compatible方法的主要实现，在最后：    </p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_router_if_compatible</span>(<span class="params">self, router</span>):</span></span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">if</span> router[<span class="string">&#x27;id&#x27;</span>] <span class="keyword">not</span> <span class="keyword">in</span> self.router_info:</span><br><span class="line">        self._process_added_router(router)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        self._process_updated_router(router)</span><br></pre></td></tr></table></figure>
+<p>以_process_updated_router为例：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_process_updated_router</span>(<span class="params">self, router</span>):</span></span><br><span class="line">    ri = self.router_info[router[<span class="string">&#x27;id&#x27;</span>]]</span><br><span class="line">    ri.router = router</span><br><span class="line">    registry.notify(resources.ROUTER, events.BEFORE_UPDATE,self, router=ri)</span><br><span class="line">    ri.process(self)</span><br><span class="line">    registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)</span><br></pre></td></tr></table></figure>
+<p>针对router的所有操作都在neutron/agent/l3/router_info.py中的方法<code>process</code>里。具体细节在这里就不做分析了，包括对external-port，internal-port和floating ip的一系列处理。    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/03/11/neutron-l3-agent/" data-id="clexlgj2h001a8myyeu7tgxtw" data-title="neutron代码解析之l3-agent的启动" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/04/01/neutron-lbv2-setup/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          lbv2启用loadbalancer ssl卸载服务
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/12/26/goon-2017/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">来日方长</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

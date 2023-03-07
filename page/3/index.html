@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="liushy">
+<meta property="og:url" content="https://liushy.com/page/3/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:locale" content="en_US">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-barbican-note" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/06/23/barbican-note/" class="article-date">
+  <time class="dt-published" datetime="2018-06-22T16:00:00.000Z" itemprop="datePublished">2018-06-23</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/06/23/barbican-note/">Barbican笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="杂记"><a href="#杂记" class="headerlink" title="杂记"></a>杂记</h2><p>记录一下最近研究barbican组件的个人理解。</p>
+<p>barbican主要是密钥管理的。存储（store secret）的时候有各种文件格式（text\plain），获取的时候根据它是证书，私钥进行PEM格式化。
+        
+          <p class="article-more-link">
+            <a href="/2018/06/23/barbican-note/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/06/23/barbican-note/" data-id="clexlgj1e00028myye8o5041i" data-title="Barbican笔记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-neutron-lbv2-setup" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/04/01/neutron-lbv2-setup/" class="article-date">
+  <time class="dt-published" datetime="2018-03-31T16:00:00.000Z" itemprop="datePublished">2018-04-01</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/04/01/neutron-lbv2-setup/">lbv2启用loadbalancer ssl卸载服务</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="安装lbv2"><a href="#安装lbv2" class="headerlink" title="安装lbv2"></a>安装lbv2</h2><p>首先是安装lbv2的流程，如果是p之后的版本lbaas应该是默认v2的：<br>1.控制节点：yum install -y openstack-neutron-lbaas<br>2.修改配置文件(采用octavia参考<a target="_blank" rel="noopener" href="https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html">config-lbaas</a>)：
+        
+          <p class="article-more-link">
+            <a href="/2018/04/01/neutron-lbv2-setup/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/04/01/neutron-lbv2-setup/" data-id="clexlgj2f00178myy46fe1x12" data-title="lbv2启用loadbalancer ssl卸载服务" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-neutron-l3-agent" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/03/11/neutron-l3-agent/" class="article-date">
+  <time class="dt-published" datetime="2018-03-10T16:00:00.000Z" itemprop="datePublished">2018-03-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/03/11/neutron-l3-agent/">neutron代码解析之l3-agent的启动</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>每个 L3 Agent 运行在一个 network namespace 中，以 qrouter-命名。网络节点如果不支持 Linux namespace 的，只能运行一个 Virtual Router。通过配置项use_namespaces = True开启namespace。本文只做单纯的分析代码，研究了neutron的l3-agent代码（m版本），代码路径为/neutron/agent/l3/agent.py。主要的类是：
+        
+          <p class="article-more-link">
+            <a href="/2018/03/11/neutron-l3-agent/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/03/11/neutron-l3-agent/" data-id="clexlgj2h001a8myyeu7tgxtw" data-title="neutron代码解析之l3-agent的启动" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-goon-2017" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/12/26/goon-2017/" class="article-date">
+  <time class="dt-published" datetime="2017-12-25T16:00:00.000Z" itemprop="datePublished">2017-12-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2017/12/26/goon-2017/">来日方长</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="心态变化"><a href="#心态变化" class="headerlink" title="心态变化"></a>心态变化</h2><p>春节过后，就立马投入到年前留下的的工作中去，非要谈个人在项目中的重要性话，其实也就是一个填坑的。你不干，就不行，干了也就那样，哈，其实也正常。然后就是三月份了，我记得这个月搞了一个月的KW，也是服了，搞得整个人的状态都是颓的。实话说，不是很喜欢做这种东西。<br>
+        
+          <p class="article-more-link">
+            <a href="/2017/12/26/goon-2017/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/12/26/goon-2017/" data-id="clexlgj21000l8myyfq6a4a6v" data-title="来日方长" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-docker+swarm" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/09/30/docker+swarm/" class="article-date">
+  <time class="dt-published" datetime="2017-09-29T16:00:00.000Z" itemprop="datePublished">2017-09-30</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2017/09/30/docker+swarm/">Docker编排工具之Swarm</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本文还将提到docker三剑客的docker-machine，我将利用其创建docker主机集群。     </p>
+        
+          <p class="article-more-link">
+            <a href="/2017/09/30/docker+swarm/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/09/30/docker+swarm/" data-id="clexlgj1k00058myydf4c33h7" data-title="Docker编排工具之Swarm" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-what-doing2" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/08/12/what-doing2/" class="article-date">
+  <time class="dt-published" datetime="2017-08-11T16:00:00.000Z" itemprop="datePublished">2017-08-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/code/">code</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2017/08/12/what-doing2/">技术杂记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本文主要是总结一下最近一个多月学习和折腾的一些技术，归纳了一些知识点，因为有的内容短时间内还无法驾轻就熟甚至还没完全搞明白，所以对这部分内容只做记录，研究将会持续进行。大概有以下几部分，按时间顺序：持续折腾java和python；然后是研究了负载均衡相关的技术；了解k8s和zookeeper；搞了一下jenkins。涉及到一些相关的资料，将在文中贴出来。 </p>
+        
+          <p class="article-more-link">
+            <a href="/2017/08/12/what-doing2/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/08/12/what-doing2/" data-id="clexlgj37002d8myyh9y80zq7" data-title="技术杂记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-scpy" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/07/16/scpy/" class="article-date">
+  <time class="dt-published" datetime="2017-07-15T16:00:00.000Z" itemprop="datePublished">2017-07-16</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/code/">code</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2017/07/16/scpy/">Python的scp小工具</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="scp简单实现"><a href="#scp简单实现" class="headerlink" title="scp简单实现"></a>scp简单实现</h2><p>scp是我们在shell上经常使用的命令，用来远程传输文件。python上也能做到scp的功能，需要依赖以下库：</p>
+<p><code>pip install paramiko</code><br><code>pip install scpclient</code>    </p>
+        
+          <p class="article-more-link">
+            <a href="/2017/07/16/scpy/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/07/16/scpy/" data-id="clexlgj2y00238myyfg0hgz95" data-title="Python的scp小工具" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-jdbc" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/06/10/jdbc/" class="article-date">
+  <time class="dt-published" datetime="2017-06-09T16:00:00.000Z" itemprop="datePublished">2017-06-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/code/">code</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2017/06/10/jdbc/">Java数据库一般操作</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="SQL常用命令"><a href="#SQL常用命令" class="headerlink" title="SQL常用命令"></a>SQL常用命令</h2><p>连接：mysql -u user -p passwd;<br>创建库：CREATE DATABASE 数据库名;<br>删除库：DROP DATABASE 数据库名;<br>使用库：USE 数据库名;
+        
+          <p class="article-more-link">
+            <a href="/2017/06/10/jdbc/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/06/10/jdbc/" data-id="clexlgj2a000z8myy1m4rbxwc" data-title="Java数据库一般操作" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+
+
+  <nav id="page-nav">
+    
+    <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
+  </nav>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>nova与neutron交互的细节分析 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言通过查询资料，我们应该大体都了解nova创建虚机的一般流程：首先是通过horizon下发指令到nova-API，然后是keystone认证，接着nova-conductor查询数据库，nova-scheduler进行物理主机选举，从glance下载镜像，通过neutron创建网络资源，最后nova-compute创建虚机。本文旨在记录一下，在代码层面，nova与neutron的交互过程中比较重">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nova与neutron交互的细节分析">
+<meta property="og:url" content="https://liushy.com/2018/07/31/nova-network/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言通过查询资料，我们应该大体都了解nova创建虚机的一般流程：首先是通过horizon下发指令到nova-API，然后是keystone认证，接着nova-conductor查询数据库，nova-scheduler进行物理主机选举，从glance下载镜像，通过neutron创建网络资源，最后nova-compute创建虚机。本文旨在记录一下，在代码层面，nova与neutron的交互过程中比较重">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-07-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:31:17.598Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-nova-network" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/07/31/nova-network/" class="article-date">
+  <time class="dt-published" datetime="2018-07-30T16:00:00.000Z" itemprop="datePublished">2018-07-31</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      nova与neutron交互的细节分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="前言">前言</span></h2><p>通过查询资料，我们应该大体都了解nova创建虚机的一般流程：首先是通过horizon下发指令到nova-API，然后是keystone认证，接着nova-conductor查询数据库，nova-scheduler进行物理主机选举，从glance下载镜像，通过neutron创建网络资源，最后nova-compute创建虚机。本文旨在记录一下，在代码层面，nova与neutron的交互过程中比较重要的细节。   </p>
+<span id="more"></span>
+<h2><span id="nova处理流程">nova处理流程</span></h2><p>nova-conductor通过rpc的方式通知nova-compute创建虚机。nova-compute创建虚机的入口是build_and_run_instance，在文件/nova/compute/manager.py中：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">build_and_run_instance</span>(<span class="params">self, context, instance, image, request_spec,</span></span></span><br><span class="line"><span class="params"><span class="function">                 filter_properties, admin_password=<span class="literal">None</span>, injected_files=<span class="literal">None</span>, requested_networks=<span class="literal">None</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">                 security_groups=<span class="literal">None</span>, block_device_mapping=<span class="literal">None</span>, node=<span class="literal">None</span>, limits=<span class="literal">None</span></span>):</span></span><br><span class="line"><span class="meta">    @utils.synchronized(<span class="params">instance.uuid</span>)</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_locked_do_build_and_run_instance</span>(<span class="params">*args, **kwargs</span>):</span></span><br><span class="line">        ......</span><br><span class="line">        <span class="keyword">with</span> self._build_semaphore:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                result = self._do_build_and_run_instance(*args, **kwargs)</span><br><span class="line">            <span class="keyword">except</span> Exception:</span><br></pre></td></tr></table></figure>
+<p>在这里，具体执行创建虚机流程的方法是_do_build_and_run_instance。进入这个方法，再进一步分析：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_do_build_and_run_instance</span>(<span class="params">self, context, instance, image,</span></span></span><br><span class="line"><span class="params"><span class="function">        request_spec, filter_properties, admin_password, injected_files,</span></span></span><br><span class="line"><span class="params"><span class="function">        requested_networks, security_groups, block_device_mapping, node=<span class="literal">None</span>, limits=<span class="literal">None</span></span>):</span></span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="keyword">with</span> timeutils.StopWatch() <span class="keyword">as</span> timer:</span><br><span class="line">            self._build_and_run_instance(context, instance, image,</span><br><span class="line">                    decoded_files, admin_password, requested_networks,</span><br><span class="line">                    security_groups, block_device_mapping, node, limits, filter_properties)</span><br><span class="line">    ......</span><br></pre></td></tr></table></figure>
+<p>在这个方法里，主要关注_build_and_run_instance的调用，进入该方法的主体：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_build_and_run_instance</span>(<span class="params">self, context, instance, image, injected_files,</span></span></span><br><span class="line"><span class="params"><span class="function">        admin_password, requested_networks, security_groups,</span></span></span><br><span class="line"><span class="params"><span class="function">        block_device_mapping, node, limits, filter_properties</span>):</span></span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">    ......</span><br><span class="line">            <span class="keyword">with</span> self._build_resources(context, instance,requested_networks, security_groups, image_meta,</span><br><span class="line">                    block_device_mapping) <span class="keyword">as</span> resources:</span><br><span class="line">                ......</span><br><span class="line">                instance.save(expected_task_state=task_states.BLOCK_DEVICE_MAPPING)</span><br><span class="line">                block_device_info = resources[<span class="string">&#x27;block_device_info&#x27;</span>]</span><br><span class="line">                network_info = resources[<span class="string">&#x27;network_info&#x27;</span>]</span><br><span class="line">                LOG.debug(<span class="string">&#x27;Start spawning the instance on the hypervisor.&#x27;</span>,</span><br><span class="line">                          instance=instance)</span><br><span class="line">                <span class="keyword">with</span> timeutils.StopWatch() <span class="keyword">as</span> timer:</span><br><span class="line">                    self.driver.spawn(context, instance, image_meta, injected_files, admin_password,</span><br><span class="line">                                      network_info=network_info, block_device_info=block_device_info)</span><br><span class="line">    ......</span><br></pre></td></tr></table></figure>
+<p>实现的时候，_build_resources主要是创建各种资源，其中就包括虚机的网络资源。self.driver.spawn就是调用具体的hypervisor的driver进行虚机创建的操作，比如libvirt，它的实现就是根据资源信息生成虚机的xml文件，然后通过xml配置启动虚机。     </p>
+<h2><span id="nova与neutron的交互">nova与neutron的交互</span></h2><p>nova与neutron的交互主要就是nova通知neutron服务器创建网络资源，并获取成功创建的资源信息。<br>首先进入_build_resources方法里：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_build_resources</span>(<span class="params">self, context, instance, requested_networks,</span></span></span><br><span class="line"><span class="params"><span class="function">    security_groups, image_meta, block_device_mapping</span>):</span></span><br><span class="line">    resources = &#123;&#125;</span><br><span class="line">    network_info = <span class="literal">None</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        LOG.debug(<span class="string">&#x27;Start building networks asynchronously for instance.&#x27;</span>,instance=instance)</span><br><span class="line">        network_info = self._build_networks_for_instance(context, instance,</span><br><span class="line">                requested_networks, security_groups)</span><br><span class="line">        resources[<span class="string">&#x27;network_info&#x27;</span>] = network_info</span><br></pre></td></tr></table></figure>
+<p>更深入查看方法的调用，_build_networks_for_instance方法：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_build_networks_for_instance</span>(<span class="params">self, context, instance,requested_networks, security_groups</span>):</span></span><br><span class="line">    ......</span><br><span class="line">    network_info = self._allocate_network(context, instance,</span><br><span class="line">            requested_networks, macs, security_groups, dhcp_options)</span><br></pre></td></tr></table></figure>
+<p>_allocate_network方法：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_allocate_network</span>(<span class="params">self, context, instance, requested_networks, macs, security_groups, dhcp_options</span>):</span></span><br><span class="line">    <span class="keyword">return</span> network_model.NetworkInfoAsyncWrapper(</span><br><span class="line">            self._allocate_network_async, context, instance,</span><br><span class="line">            requested_networks, macs, security_groups, is_vpn, dhcp_options)</span><br></pre></td></tr></table></figure>
+<p>_allocate_network_async方法：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_allocate_network_async</span>(<span class="params">self, context, instance, requested_networks,</span></span></span><br><span class="line"><span class="params"><span class="function">                            macs, security_groups, is_vpn, dhcp_options</span>):</span></span><br><span class="line">    ......</span><br><span class="line">    bind_host_id = self.driver.network_binding_host_id(context, instance)</span><br><span class="line">    <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, attempts + <span class="number">1</span>):</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            nwinfo = self.network_api.allocate_for_instance(</span><br><span class="line">                    context, instance, vpn=is_vpn, requested_networks=requested_networks,</span><br><span class="line">                    macs=macs, security_groups=security_groups,</span><br><span class="line">                    dhcp_options=dhcp_options, bind_host_id=bind_host_id)</span><br></pre></td></tr></table></figure>
+<p>在这个方法里，首先会通过self.driver.network_binding_host_id获取到虚机所在主机的host_id。然后进行虚机的网络资源的创建。也就是方法allocate_for_instance：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">allocate_for_instance</span>(<span class="params">self, context, instance, vpn,requested_networks, macs=<span class="literal">None</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">                          security_groups=<span class="literal">None</span>,dhcp_options=<span class="literal">None</span>, bind_host_id=<span class="literal">None</span></span>):</span></span><br><span class="line">    ......</span><br><span class="line">    neutron = get_client(context)</span><br><span class="line">    .....  </span><br><span class="line">    security_groups = self._clean_security_groups(security_groups)</span><br><span class="line">    security_group_ids = self._process_security_groups(instance, neutron, security_groups)</span><br><span class="line">    requests_and_created_ports = self._create_ports_for_instance(</span><br><span class="line">        context, instance, ordered_networks, nets, neutron, security_group_ids)</span><br><span class="line">    available_macs = _filter_hypervisor_macs(instance, ports, macs) </span><br><span class="line">    admin_client = get_client(context, admin=<span class="literal">True</span>)</span><br><span class="line">    ordered_nets, ordered_ports, preexisting_port_ids, \</span><br><span class="line">        created_port_ids = self._update_ports_for_instance(</span><br><span class="line">            context, instance, neutron, admin_client, requests_and_created_ports, nets,</span><br><span class="line">            bind_host_id, dhcp_options, available_macs)</span><br><span class="line">    nw_info = self.get_instance_nw_info(context, instance, networks=ordered_nets, port_ids=ordered_ports,</span><br><span class="line">        admin_client=admin_client,preexisting_port_ids=preexisting_port_ids, update_cells=<span class="literal">True</span>)</span><br><span class="line">    <span class="keyword">return</span> network_model.NetworkInfo([vif <span class="keyword">for</span> vif <span class="keyword">in</span> nw_info</span><br><span class="line">                                      <span class="keyword">if</span> vif[<span class="string">&#x27;id&#x27;</span>] <span class="keyword">in</span> created_port_ids + preexisting_port_ids])</span><br></pre></td></tr></table></figure>
+<p>从方法的实现上可以看到，首先会创建虚机的安全组和端口，注意这时候的端口，是最小配置的端口，还没有进行bind和qos策略这些extensions配置的，端口的bind状态是UNBOUND状态。创建成功后会调用_update_ports_for_instance方法将端口的bind_host_id传入进行端口bind_port操作。以上的操作都会调用neutron的api。重点关注以下几个方法的实现：    </p>
+<ul>
+<li>_process_security_groups</li>
+<li>_create_ports_for_instance 调用neutron的create_port</li>
+<li>_update_ports_for_instance 调用neutron的update_port   </li>
+</ul>
+<p>这里neutron创建端口的操作主要包括IP地址分配以及安全组的配置；接下来将单独分析一下neutron的端口绑定bind_port。<br>上面两部分的调用栈可以简单总结如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">build_and_run_instance</span><br><span class="line">---&gt;_locked_do_build_and_run_instance</span><br><span class="line">|   ---&gt;_do_build_and_run_instance</span><br><span class="line">|   |   ---&gt;_build_and_run_instance</span><br><span class="line">|   |   |   ---&gt;_build_resources</span><br><span class="line">|   |   |   |   ---&gt;_build_networks_for_instance</span><br><span class="line">|   |   |   |   |   ---&gt;_allocate_network</span><br><span class="line">|   |   |   |   |   |   ---&gt;_allocate_network_async</span><br><span class="line">|   |   |   |   |   |   |   ---&gt;allocate_for_instance</span><br><span class="line">|   |   |   |   |   |   |   |   ---&gt;_process_security_groups</span><br><span class="line">|   |   |   |   |   |   |   |   ---&gt;_create_ports_for_instance</span><br><span class="line">|   |   |   |   |   |   |   |   |   ---&gt;_create_port_minimal</span><br><span class="line">|   |   |   |   |   |   |   |   ---&gt;_update_ports_for_instance</span><br><span class="line">|   |   |   |   |   |   |   |   |   ---&gt;_populate_neutron_extension_values</span><br><span class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;QOS_QUEUE,BINDING_HOST_ID,DNS_INTEGRATION</span><br><span class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;_populate_pci_mac_address</span><br><span class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;_populate_mac_address</span><br><span class="line">|   |   |   |   |   |   |   |   |   |   ---&gt;extra_dhcp_opts</span><br><span class="line">|   |   |   |   |   |   |   |   |</span><br><span class="line">|   |   |   |   |   |   |   |   | </span><br><span class="line">|   |   |   ---&gt;self.driver.spawn</span><br></pre></td></tr></table></figure>
+<h2><span id="neutron端口绑定">neutron端口绑定</span></h2><p>neutron的端口绑定bind_port的代码，关注一下neutron的bind_port方法，在文件neutron/plugins/ml2/manager.py中：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">bind_port</span>(<span class="params">self, context</span>):</span></span><br><span class="line">    binding = context._binding</span><br><span class="line">    LOG.debug(<span class="string">&quot;Attempting to bind port %(port)s on host %(host)s &quot;</span></span><br><span class="line">              <span class="string">&quot;for vnic_type %(vnic_type)s with profile %(profile)s&quot;</span>,</span><br><span class="line">              &#123;<span class="string">&#x27;port&#x27;</span>: context.current[<span class="string">&#x27;id&#x27;</span>],<span class="string">&#x27;host&#x27;</span>: context.host,</span><br><span class="line">               <span class="string">&#x27;vnic_type&#x27;</span>: binding.vnic_type,<span class="string">&#x27;profile&#x27;</span>: binding.profile&#125;)</span><br><span class="line">    context._clear_binding_levels()</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> self._bind_port_level(context, <span class="number">0</span>,context.network.network_segments):</span><br><span class="line">        binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED</span><br></pre></td></tr></table></figure>
+<p>方法首先会获取端口即将binding的信息，清空端口的层次化绑定信息，然后调用_bind_port_level方法进行分层绑定。这里有个关注的点就是，目前的_bind_port_level方法是兼容了单层绑定和多层次化绑定的。目前对于层次化绑定可以参考这个<a target="_blank" rel="noopener" href="http://specs.openstack.org/openstack/neutron-specs/specs/kilo/ml2-hierarchical-port-binding.html">BP</a></p>
+<p>接下来分析_bind_port_level：    </p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_bind_port_level</span>(<span class="params">self, context, level, segments_to_bind</span>):</span></span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">for</span> driver <span class="keyword">in</span> self.ordered_mech_drivers:</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> self._check_driver_to_bind(driver, segments_to_bind,</span><br><span class="line">                                          context._binding_levels):</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            context._prepare_to_bind(segments_to_bind)</span><br><span class="line">            driver.obj.bind_port(context)</span><br><span class="line">            segment = context._new_bound_segment</span><br><span class="line">            <span class="keyword">if</span> segment:</span><br><span class="line">                context._push_binding_level(</span><br><span class="line">                    models.PortBindingLevel(port_id=port_id,host=context.host,</span><br><span class="line">                                            level=level,driver=driver.name,segment_id=segment))</span><br><span class="line">                next_segments = context._next_segments_to_bind</span><br><span class="line">                <span class="keyword">if</span> next_segments:</span><br><span class="line">                    <span class="keyword">if</span> self._bind_port_level(context, level + <span class="number">1</span>,next_segments):</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        LOG.warning(_LW(<span class="string">&quot;Failed to bind port %(port)s on &quot;</span></span><br><span class="line">                                        <span class="string">&quot;host %(host)s at level %(lvl)s&quot;</span>),</span><br><span class="line">                                    &#123;<span class="string">&#x27;port&#x27;</span>: context.current[<span class="string">&#x27;id&#x27;</span>],<span class="string">&#x27;host&#x27;</span>: context.host,<span class="string">&#x27;lvl&#x27;</span>: level + <span class="number">1</span>&#125;)</span><br><span class="line">                        context._pop_binding_level()</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    ......</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+<p>首先会遍历每个ml2 driver（例如openvswitch，networking-huawei等），调用_check_driver_to_bind，遍历每个context._binding_levels中的level，如果该level.segment_id在segments_to_bind里面以及level.driver与当前driver匹配的话，将会退出该driver的绑定流程，进行下一个driver的绑定。简单总结一下：就是在同一个driver上不能绑定相同的segment_id。     </p>
+<p>当然，如果是层次化绑定的话，需要higher level的driver将分配的segment_id通过continue_binding()传递给bottom level的driver。各种driver进行端口绑定的过程就不详细分析了，主要就是获取host中运行的alive状态的agent，如果agent的信息符合绑定的需求（如检验network_type），就会将该agent信息写入端口绑定信息里（vif_type：ovs，vif_details）。nova创建虚机，需要获取vif_type：ovs，vif_detail信息。     </p>
+<p>题外话：调研了一些大厂SDN处理vxlan网络的端口绑定，如华为思科，他们的实现方法都是通过层次化端口绑定来做的。做法都差不多，进行端口绑定的时候，如果判断端口所属网络类型是vxlan的，就会进行层次化绑定，控制器的driver绑定vxlan，底层driver绑定动态vlan的方式处理。    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/07/31/nova-network/" data-id="clexlgj2k001f8myy9w81cxv9" data-title="nova与neutron交互的细节分析" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/09/05/openstack-apic/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          neutron对接思科apic插件
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/06/23/barbican-note/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Barbican笔记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

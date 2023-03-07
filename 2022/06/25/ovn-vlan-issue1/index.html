@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ovn vlan东西向流量问题 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言 相关技术 dvr localnet port external port arp proxy mac_binding   二层流量问题分析 东西向路由问题分析 mtu 裸金属跨网段 ovn-chassis-mac-mappings的使用 广播问题   总结    前言ovn场景下vlan模式的流量问题，相关资料甚少，当前社区针对vlan网络的问题没有很明确的解决方案。本系列文章旨在阐述">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ovn vlan东西向流量问题">
+<meta property="og:url" content="https://liushy.com/2022/06/25/ovn-vlan-issue1/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言 相关技术 dvr localnet port external port arp proxy mac_binding   二层流量问题分析 东西向路由问题分析 mtu 裸金属跨网段 ovn-chassis-mac-mappings的使用 广播问题   总结    前言ovn场景下vlan模式的流量问题，相关资料甚少，当前社区针对vlan网络的问题没有很明确的解决方案。本系列文章旨在阐述">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/vlan-dvr.png">
+<meta property="og:image" content="https://liushy.com/imgs/external.png">
+<meta property="og:image" content="https://liushy.com/imgs/reside-vlan.png">
+<meta property="article:published_time" content="2022-06-24T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-06-28T08:50:10.274Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/vlan-dvr.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovn-vlan-issue1" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/06/25/ovn-vlan-issue1/" class="article-date">
+  <time class="dt-published" datetime="2022-06-24T16:00:00.000Z" itemprop="datePublished">2022-06-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ovn vlan东西向流量问题
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <!-- toc -->
+
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E7%9B%B8%E5%85%B3%E6%8A%80%E6%9C%AF">相关技术</a><ul>
+<li><a href="#dvr">dvr</a></li>
+<li><a href="#localnet-port">localnet port</a></li>
+<li><a href="#external-port">external port</a></li>
+<li><a href="#arp-proxy">arp proxy</a></li>
+<li><a href="#mac_binding">mac_binding</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BA%8C%E5%B1%82%E6%B5%81%E9%87%8F%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90">二层流量问题分析</a></li>
+<li><a href="#%E4%B8%9C%E8%A5%BF%E5%90%91%E8%B7%AF%E7%94%B1%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90">东西向路由问题分析</a><ul>
+<li><a href="#mtu">mtu</a></li>
+<li><a href="#%E8%A3%B8%E9%87%91%E5%B1%9E%E8%B7%A8%E7%BD%91%E6%AE%B5">裸金属跨网段</a></li>
+<li><a href="#ovn-chassis-mac-mappings%E7%9A%84%E4%BD%BF%E7%94%A8">ovn-chassis-mac-mappings的使用</a></li>
+<li><a href="#%E5%B9%BF%E6%92%AD%E9%97%AE%E9%A2%98">广播问题</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+<!-- tocstop -->
+
+<h2><span id="前言">前言</span></h2><p>ovn场景下vlan模式的流量问题，相关资料甚少，当前社区针对vlan网络的问题没有很明确的解决方案。本系列文章旨在阐述ovn vlan网络的关键点和问题，以供参考。      </p>
+<h2><span id="相关技术">相关技术</span></h2><p>首先介绍一下vlan网络模式下，几个相关技术点，了解了这些才能更容易理解问题的产生。<br><img src="/imgs/vlan-dvr.png" alt="vlan-dvr"><span id="more"></span>  </p>
+<h3><span id="dvr">dvr</span></h3><p>dvr即分布式路由（distributed virtual routing）的缩写，区别于传统集中式的路由模式，它是在每个计算节点上都会驻留一个虚拟router，并实现路由功能。也就是说访问不同网段的虚机流量，在源节点就完成了路由，直接转发给目的虚机。</p>
+<h3><span id="localnet-port">localnet port</span></h3><p>之前<a href="https://liushy.com/2022/03/26/ovn-sec/#logical-port">文章</a>也提到了localnet port。这种port是连接br-xx和br-int的patch端口，ovn-controller会在br-int与br-xx建立patch，该patch就用于与物理网络通信。</p>
+<h3><span id="external-port">external port</span></h3><p>externl port可以用于代理外部网络资源（无法接入br-int）的dhcp或者三层流量，比如裸金属网卡，sriov虚机网卡的流量。该类型的port只会驻留在网关节点上，也就是标记了<code>external-ids</code>为<code>ovn-cms-options=enable-chassis-as-gw</code>的节点。简单描述就是，裸金属的dhcp报文或者三层，只会被external port所在的网关节点处理。<br><img src="/imgs/external.png" alt="external port"></p>
+<h3><span id="arp-proxy">arp proxy</span></h3><p>二层arp-proxy：ovn针对非unkonw的port（配置了address），会进行arp代理。简单理解就是，针对同一网段下的虚机/裸金属发送arp请求后，是由ovn-controller来代答的。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=16(ls_in_arp_rsp), priority=50, </span><br><span class="line">match=(arp.tpa == 192.168.111.125 &amp;&amp; arp.op == 1),</span><br><span class="line">action=(eth.dst = eth.src; eth.src = fa:16:3e:20:ad:03; arp.op = 2; </span><br><span class="line"> /* ARP reply */ arp.tha = arp.sha; arp.sha = fa:16:3e:20:ad:03; </span><br><span class="line">arp.tpa = arp.spa; arp.spa = 192.168.111.125;</span><br><span class="line">outport = inport; flags.loopback = 1; output;)</span><br></pre></td></tr></table></figure>
+<p>三层arp-proxy：对于跨网段的访问，dvr模式下也实现了，将报文的目的mac地址修改为目的ip对应的mac。   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=14(lr_in_arp_resolve), priority=100  , </span><br><span class="line">match=(outport == <span class="string">&quot;lrp-07f9dcf3-4d7e-4047-8065-f2633c539d9f&quot;</span> &amp;&amp; </span><br><span class="line">reg0 == 192.168.111.125), </span><br><span class="line">action=(eth.dst = fa:16:3e:20:ad:03; next;)</span><br></pre></td></tr></table></figure>
+
+<h3><span id="mac_binding">mac_binding</span></h3><p>路由阶段，对于三层的ip&lt;–&gt;mac解析，比如说跨网段访问<strong>未知ip地址</strong>，ovn-controller会通过发送arp请求学习ip对应的mac地址，然后写入sb的<code>mac_binding</code>表中。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-tool-0 /]<span class="comment"># ovn-sbctl list mac_binding</span></span><br><span class="line">_uuid               : 7eca2810-cc4a-4a85-a41d-d9a40ca5ab55</span><br><span class="line">datapath            : 319f72b6-8128-482f-b8ca-10425c54d5f7</span><br><span class="line">ip                  : <span class="string">&quot;172.16.10.153&quot;</span></span><br><span class="line">logical_port        : lrp-860f48c9-d948-4d86-8a49-c9b00b1fe242</span><br><span class="line">mac                 : <span class="string">&quot;fa:16:3e:ab:ab:85&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意这个表项是没有老化机制的，所以在ip/mac关系有变化的同时进行新的arp学习，或者删除对应表项，要不然就会导致查询到老的ip/mac关系。</p>
+<p>大致流程如下：</p>
+<p>1.发送给目地ip未知的报文，则通过get_arp查询mac_binding表获取到对应的mac，然后将目的mac地址修改：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=14(lr_in_arp_resolve ), priority=0, match=(ip4), </span><br><span class="line">action=(get_arp(outport, reg0); next;)</span><br></pre></td></tr></table></figure>
+<p>如果没有查到，则将目的mac置为全0</p>
+<p>2.如果目的mac为全0，即上送ovn-controller，将arp请求从lrp发送出去：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=18(lr_in_arp_request ), priority=100, </span><br><span class="line">match=(eth.dst == 00:00:00:00:00:00 &amp;&amp; ip4), </span><br><span class="line">action=(arp &#123; eth.dst = ff:ff:ff:ff:ff:ff; arp.spa = reg1; arp.tpa = reg0; arp.op = 1; output; &#125;;)</span><br></pre></td></tr></table></figure>
+<p>3.从lrp收到arp回复报文，ovn-controller会先通过lookup_arp查看在mac_binding表项有没有记录：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=1 (lr_in_lookup_neighbor), priority=100, </span><br><span class="line">match=(arp.op == 2), </span><br><span class="line">action=(reg9[2] = lookup_arp(inport, arp.spa, arp.sha); reg9[3] = 1; next;)</span><br></pre></td></tr></table></figure>
+<p>4.如果没有记录，则通过put_arp将学习到的ip-mac映射关系写入mac_binding表中：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=2 (lr_in_learn_neighbor), priority=90, match=(arp), </span><br><span class="line">action=(put_arp(inport, arp.spa, arp.sha); next;)</span><br></pre></td></tr></table></figure>
+
+
+
+<h2><span id="二层流量问题分析">二层流量问题分析</span></h2><p>这种情况早前我们遇到比较频繁：发现同vlan网段的虚机icmp报文，在所有的计算节点都能抓到该报文，即单播报文被广播。<br>对于vlan模式的二层广播问题，结合前面基本概念里就提到的，ovn-controller会对已知port进行arp代答。这样导致的后果就是：    </p>
+<ul>
+<li>虚机/裸机的mac地址，在被访问的期间未被物理交换机fdb所学习到。    </li>
+<li>源虚机/裸机通过ovn-controller拿到目的mac后，直接封装目的地址，将报文发送出去了。     </li>
+</ul>
+<p>基于以上两种情况，就可能会出现，交换机在处理报文时会认为mac地址是未知的，进而将报文进行广播。直到下一次交换机学习到mac。</p>
+<p>我们的解决方案：ovn侧提供了一个可选参数 <code>arp-proxy</code>用于使能网络的arp代答功能，默认关闭了vlan网络的arp代答，除localnet port，localport外的其它所有port，产生流量期间都需要主动发送arp报文，从而使得交换机能适时地学习到mac。</p>
+<h2><span id="东西向路由问题分析">东西向路由问题分析</span></h2><p>vlan的东西向路由，有如下需要注意的地方</p>
+<h3><span id="mtu">mtu</span></h3><p>大家都知道geneve的包头更长，跨vlan网段访问geneve网络的时候，vlan网络的mtu值其实是不准确的了，所以这种情况下，需要将物理层面的mtu调整得更大。</p>
+<h3><span id="裸金属跨网段">裸金属跨网段</span></h3><p>上面提到了，裸金属的流量由对应的external port代理，包括它的三层流量，除external port所在节点的其它网关节点默认丢弃该报文。<br>又如果路由采用了集中式而不是dvr，即所有三层的流量都要集中转发到一个节点上处理。<br>那么就会出现一个矛盾的地方，如果external port所在节点和路由器网关节点不是同一个的话，裸金属访问三层的流量将会被丢掉。  </p>
+<p>这是neutron的一个<a target="_blank" rel="noopener" href="https://bugs.launchpad.net/neutron/+bug/1875852">较早的问题</a>，通过<code>reside-on-redirect-chassis</code>强制所有vlan要上路由的流量转发到路由节点，那么router就不是分布式的了。（最新的neutron做了部分调整）<br><img src="/imgs/reside-vlan.png"><br>ovn为什么引入该参数？是为了规避<a target="_blank" rel="noopener" href="https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a99">vlan mtu的问题</a>，有兴趣可以去了解。<br>解决方案：修改了ml2/ovn插件代码不走集中式路由，并利用ovn侧的这两个功能：<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/795d7f24ce0e2ed5454e193a059451d237289542">OVN: Enable E-W Traffic, Vlan backed DVR</a>, <a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/03493b33c073887a81ba90c84b5e063140712719">OVN: Vlan backed DVR N-S, redirect packet via localnet port</a>，解决了裸金属的跨网段流量不通的问题。    </p>
+<h3><span id="ovn-chassis-mac-mappings的使用">ovn-chassis-mac-mappings的使用</span></h3><p>正常使用vlan网络接入dvr，会有如下问题：   </p>
+<ul>
+<li>跨网段访问vlan网段报文，src mac是vlan网段网关mac，如果多个节点都有报文跨网段转发的话，物理交换机就会从不同节点学习到相同mac，这样就会出现流量冲突。</li>
+</ul>
+<p>对于以上问题，ovn提出了<code>ovn-chassis-mac-mappings</code>这个<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/795d7f24ce0e2ed5454e193a059451d237289542">配置项</a>，使用该配置项为每一个chassis（节点）配置一组不同的mac地址，ovn-controller会将src mac是子网网关mac的vlan报文，替换src mac为<code>ovn-chassis-mac-mappings</code>配置的对应mac。这样的话，就能保证跨网段的报文从不同节点发出的源mac是不同的，避免了交换机上mac冲突。<br>配置命令：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> Open_vSwitch . external-ids:ovn-chassis-mac-mappings=physnet1:aa:bb:cc:dd:ee:ff,physnet2:bb:aa:cc:dd:ee:ff</span><br></pre></td></tr></table></figure>
+
+<h3><span id="广播问题">广播问题</span></h3><p>类似二层vlan的广播问题，在三层路由时也会存在。当访问垮网段访问vlan网络时，由于ovn-controller进行了目的mac代理，所以如果物理交换机fdb没有目的mac的记录，则会判断报文目的mac为未知mac，然后将报文进行广播。</p>
+<p>可能有人会提出，采用类似上面提到的关闭arp代理的方案是不是就可以解决问题了，实际是不行的。如果关闭arp代理，按照ovn逻辑路由的流程，它还会走mac_binding的流程。即前面提到的，ovn在三层路由里实现了对未知ip的mac学习功能，也就是说即便arp代理关闭了，它还可以通过arp学习完成。   </p>
+<p>目前dvr下的广播问题，社区讨论<a target="_blank" rel="noopener" href="https://mail.openvswitch.org/pipermail/ovs-discuss/2022-May/051837.html">dvr for vlan is not completely supported</a>有一个很粗略的方案，简单描述就是，定期的往物理交换机上送虚机rarp报文，让交换机定期学习到mac。    </p>
+<p><a target="_blank" rel="noopener" href="https://patchwork.ozlabs.org/project/ovn/patch/27d1debf2f781d67e600e49b9c4eb9f6b3c04291.1655418594.git.lorenzo.bianconi@redhat.com/">这个patch：controller: send GARPs for LSPs in vlan-backed network scenario</a>提供参数使ovn-controller替虚机网卡发送rarp，不过看上去不能替裸机/sriov虚机发送。</p>
+<h2><span id="总结">总结</span></h2><p>总的来看，ovn的vlan网络存在诸多问题，其中像mtu和dvr子网网关mac冲突这些都还可以workaround的方式规避掉，但是广播问题却是没有好的方案去解决。所以我们目前是禁止vlan租户网络（不包括外部网络）接入dvr，如果你有更好的方案恳请沟通交流(^_^)。</p>
+<p><a href="https://liushy.com/2022/06/26/ovn-vlan-issue2/">下一篇文章</a>将会分析ovn vlan网络下的南北向流量问题。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2022/06/25/ovn-vlan-issue1/" data-id="clexlgj2r001r8myycpv5cdp6" data-title="ovn vlan东西向流量问题" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/06/26/ovn-vlan-issue2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ovn vlan南北向流量问题
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/06/24/ovn-mc/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">ovn multicast实现分析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

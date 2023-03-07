@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Java数据库一般操作 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="SQL常用命令连接：mysql -u user -p passwd;创建库：CREATE DATABASE 数据库名;删除库：DROP DATABASE 数据库名;使用库：USE 数据库名;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java数据库一般操作">
+<meta property="og:url" content="https://liushy.com/2017/06/10/jdbc/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="SQL常用命令连接：mysql -u user -p passwd;创建库：CREATE DATABASE 数据库名;删除库：DROP DATABASE 数据库名;使用库：USE 数据库名;">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-06-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:17:49.619Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-jdbc" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/06/10/jdbc/" class="article-date">
+  <time class="dt-published" datetime="2017-06-09T16:00:00.000Z" itemprop="datePublished">2017-06-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/code/">code</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Java数据库一般操作
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="sql常用命令">SQL常用命令</span></h2><p>连接：mysql -u user -p passwd;<br>创建库：CREATE DATABASE 数据库名;<br>删除库：DROP DATABASE 数据库名;<br>使用库：USE 数据库名;<span id="more"></span><br>查看表：DESC 表名;<br>创建表：CREATE TABLE 表名 （字段名1 字段类型 [default 默认值] [约束]，字段名2 ….）；<br>插入表：INSERT INTO 表名[字段1，字段2，…] VALUES(值1，值2，…);<br>删除记录：DELETE FROM 表名 where ….;<br>修改记录：UPDATE 表名 SET 字段1=值1，字段2=值2…. where …..;<br>查询记录：SELECT 字段1，字段2… FROM 表名;<br>SELECT *FROM 表名 字段1 LIKE ‘%..%’ LIMIT 0,5;（%表示匹配任意数据，_表示一个字符，limit指定开始结束行）</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> IF <span class="keyword">EXISTS</span> `stu`;</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `stu` (</span><br><span class="line">  `id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> auto_increment,</span><br><span class="line">  `name` <span class="type">varchar</span>(<span class="number">50</span>) <span class="keyword">default</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `city` <span class="type">varchar</span>(<span class="number">50</span>) <span class="keyword">default</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `number` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `picture` <span class="type">varchar</span>(<span class="number">500</span>) <span class="keyword">default</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY  (`id`)</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB AUTO_INCREMENT<span class="operator">=</span><span class="number">11</span> <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8;</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> `stu` <span class="keyword">VALUES</span> (<span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;zhangsan&#x27;</span>, <span class="string">&#x27;beijing&#x27;</span>,  <span class="string">&#x27;001&#x27;</span>, <span class="string">&#x27;001.jpg&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<h2><span id="jdbc主要类和接口">JDBC主要类和接口</span></h2><p>java.sql.DriverManager:用于管理JDBC驱动程序；<br>java.sql.Connection:用于建立与特定数据库的连接，一个连接即一个会话；<br>java.sql.Statement：一个statement对象用于执行静态sql语句；<br>java.sql.PrepareStatement:与statement相对应，创建一个可编译的sql语句对象，该对象可多次运行；<br>java.sql.ResultSet：创建sql语句检索结果的结果集，完成对数据库的访问。</p>
+<h2><span id="java操作数据库">JAVA操作数据库</span></h2><p>DriverManager静态方法：</p>
+<ul>
+<li>public static Connection getConnection(String url,String user,String passwd)返回connection对象   </li>
+</ul>
+<p>Connection对象：</p>
+<ul>
+<li>StateMent createStatement()创建一个statemen对象</li>
+<li>PrepareStatement prepareStatement(String sql)创建一个prepareStatement对象，预处理sql语句</li>
+</ul>
+<p>Statement对象：</p>
+<ul>
+<li>int executeUpdate(String sql) 执行数据库更新，插入，删除等语句</li>
+<li>ResultSet executeQuery(String sql) 执行数据库查询操作，返回结果集</li>
+<li>close()操作关闭</li>
+</ul>
+<p>PreparedStatement对象：   </p>
+<ul>
+<li>int executeUpdate() 执行设置的预处理sql</li>
+<li>ResultSet executeQuery() 执行数据库查询操作，返回结果集</li>
+<li>setInt(int parameterIndex, int x) 指定索引编号，设置整型内容</li>
+<li>setString(int parameterIndex, String x) 指定索引编号，设置字符串内容</li>
+<li>setFloat(int parameterIndex, Float x) 指定索引编号，设置浮点内容</li>
+<li>setDate(int parameterIndex, Date x) 指定索引编号，设置日期内容</li>
+</ul>
+<p>ResultSet对象：</p>
+<ul>
+<li>boolean next() 将指针指向下一行</li>
+<li>getInt(int columnIdex) 获取编号指定列的内容，整型</li>
+<li>getInt(String columnName) 获取指定列的内容，整型</li>
+<li>getFloat(int columnIdex) 获取编号指定列的内容，浮点型</li>
+<li>getFloat(String columnName) 获取指定列的内容，浮点型</li>
+<li>getString(int columnIdex) 获取编号指定列的内容，字符串</li>
+<li>getString(String columnName) 获取指定列的内容，字符串</li>
+<li>getDate(int columnIdex) 获取编号指定列的内容，日期</li>
+<li>getDate(String columnName) 获取指定列的内容，日期</li>
+</ul>
+<p>附上一段代码：           </p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String driver = <span class="string">&quot;com.mysql.jdbc.Driver&quot;</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String url = <span class="string">&quot;jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&amp;characterEncoding=UTF-8&quot;</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String username = <span class="string">&quot;root&quot;</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String password = <span class="string">&quot;root&quot;</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Connection con = <span class="keyword">null</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> PreparedStatement stmt = <span class="keyword">null</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ResultSet rs = <span class="keyword">null</span>;</span><br><span class="line"><span class="keyword">static</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Class.forName(driver);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Connection <span class="title">getConnection</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (con == <span class="keyword">null</span>) &#123;</span><br><span class="line">        con = DriverManager.getConnection(url, username, password);</span><br><span class="line">        <span class="keyword">return</span> con;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> con;</span><br><span class="line">&#125;</span><br><span class="line">String sqlQuery = <span class="string">&quot;select * from stu;&quot;</span>;</span><br><span class="line">stmt = con.prepareStatement(sqlQuery);</span><br><span class="line">rs = stmt.executeQuery();</span><br><span class="line">String sqlInst = <span class="string">&quot;INSERT INTO stu(name,passwd)&quot;</span>+<span class="string">&quot; VALUES(?,?)&quot;</span> ;</span><br><span class="line">PreparedStatement ps = con.prepareStatement(sqlInst);</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) </span><br><span class="line">&#123;</span><br><span class="line">    ps.setString(<span class="number">1</span>, <span class="string">&quot;boss&quot;</span> + i);</span><br><span class="line">    ps.setInt(<span class="number">2</span>,  i);</span><br><span class="line">    ps.executeUpdate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/06/10/jdbc/" data-id="clexlgj2a000z8myy1m4rbxwc" data-title="Java数据库一般操作" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/07/16/scpy/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Python的scp小工具
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/04/29/libvirt-qemu/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">虚拟化实践从qemu-kvm到libvirt</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

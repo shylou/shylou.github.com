@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>解析Floodlight之Forwarding模块 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪doFlood()方法，其它类型数据包执行doForwardFlow()方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解析Floodlight之Forwarding模块">
+<meta property="og:url" content="https://liushy.com/2017/02/12/floodlight-forwarding/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪doFlood()方法，其它类型数据包执行doForwardFlow()方法。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/forwarding.jpg">
+<meta property="article:published_time" content="2017-02-11T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:33:08.891Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/forwarding.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-floodlight-forwarding" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/02/12/floodlight-forwarding/" class="article-date">
+  <time class="dt-published" datetime="2017-02-11T16:00:00.000Z" itemprop="datePublished">2017-02-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      解析Floodlight之Forwarding模块
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪doFlood()方法，其它类型数据包执行doForwardFlow()方法。    <span id="more"></span><br>Forwarding类中对数据包的几种操作方法：</p>
+<ul>
+<li><code>doForwardFlow()</code>：转发    </li>
+<li><code>doFlood()</code>：泛洪    </li>
+<li><code>doDropFlow()</code>：丢包<br>接下来重点分析<code>doForwardFlow()</code>方法的实现流程。如图所示：<br><img src="/imgs/forwarding.jpg" alt="forwarding"> </li>
+</ul>
+<p>doForwardFlow方法的工作流程：    </p>
+<ul>
+<li>Step1：首先该方法会获取Packet_in消息中的数据包的匹配域，提取数据包中的交换机信息，依次判断源/目的交换机是否存在，是则继续执行，否则执行泛洪<code>doFlood()</code>；</li>
+<li>Step2：当源、目的交换机均存在，接着会判断两者是否同属一个island(即同一个二层网络)，判断后的操作与前面步骤一样；</li>
+<li>Step3：若同属一个island，然后会判断源目的交换机是否同一端口；</li>
+<li>Step4：如果是在同一个island不同端口，便调取路径引擎(routingEngine)中的<code>getRoute()</code>方法获取源、目的交换机的路径，最后执行<code>pushRoute()</code>方法将路径下发到相应的交换机。      </li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/02/12/floodlight-forwarding/" data-id="clexlgj1l00068myy1mtuh16b" data-title="解析Floodlight之Forwarding模块" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/03/04/iptables-note/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Iptables笔记
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/02/12/floodlight-linkdiscovermanager/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">解析Floodlight之LinkDiscoveryManager模块</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

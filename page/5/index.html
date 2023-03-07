@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="liushy">
+<meta property="og:url" content="https://liushy.com/page/5/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:locale" content="en_US">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-docker+hadoop" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2016/12/21/docker+hadoop/" class="article-date">
+  <time class="dt-published" datetime="2016-12-20T16:00:00.000Z" itemprop="datePublished">2016-12-21</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2016/12/21/docker+hadoop/">使用docker部署hadoop分布式集群</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这个部署是去年做的，有点久了，镜像上传在<a target="_blank" rel="noopener" href="https://hub.docker.com/r/liushy/ubuntu/tags/">dockerhub</a>，想了想，还是写下来，万一哪天有用，可以回顾一下。关于docker的一些内容，后序会写一些，碍于目前生产环境的限制，能做的不会太多，但更多的是熟练docker。hadoop呢，以前读书的时候，断断续续地研究过一段时间，然后就没然后了，事情太多太杂，而自身精力涣散，三天打鱼两天晒网，实际也就没弄明白什么。平时读点博客，看到docker，hadoop等字眼就会不住高潮，内心想说这玩意我玩过啊，然后也就仅限于此了。术业有专攻，如果不是经常接触，搞不久就会忘，若时常回顾一下，等到用时，就不会那么陌生了。<br>
+        
+          <p class="article-more-link">
+            <a href="/2016/12/21/docker+hadoop/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2016/12/21/docker+hadoop/" data-id="clexlgj1i00048myyfjrb800d" data-title="使用docker部署hadoop分布式集群" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-Linux-mem" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2016/11/27/Linux-mem/" class="article-date">
+  <time class="dt-published" datetime="2016-11-26T16:00:00.000Z" itemprop="datePublished">2016-11-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2016/11/27/Linux-mem/">Linux内存占用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用:
+        
+          <p class="article-more-link">
+            <a href="/2016/11/27/Linux-mem/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2016/11/27/Linux-mem/" data-id="clexlgj1a00018myy3al7f8xm" data-title="Linux内存占用" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-ovs-cli" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2016/11/26/ovs-cli/" class="article-date">
+  <time class="dt-published" datetime="2016-11-25T16:00:00.000Z" itemprop="datePublished">2016-11-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2016/11/26/ovs-cli/">OVS配置命令</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)
+        
+          <p class="article-more-link">
+            <a href="/2016/11/26/ovs-cli/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2016/11/26/ovs-cli/" data-id="clexlgj2t001w8myy6t35dtyf" data-title="OVS配置命令" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-talk--life" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/11/12/talk--life/" class="article-date">
+  <time class="dt-published" datetime="2015-11-11T16:00:00.000Z" itemprop="datePublished">2015-11-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2015/11/12/talk--life/">随便聊聊</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="唠唠"><a href="#唠唠" class="headerlink" title="唠唠"></a>唠唠</h2><p>快到年终了，该来个年终总结什么的。。。咳咳。。好久没发文了，本博创建伊始主要是为了记录自己平时的技术心得，距离上次发表文章超过半年了，很恐怖啊，其实这段时间也看了不少文章，还是有不少感悟。细细想来还是自己太懒了，当然中途有部分时间在写自己的小论文，找工作balala，很累，以至于忘了搭理自己这个博客了。现在忙的事情都先告一段落了，还好，今天得空了，想了想，还是得对自己这几个月梳理梳理，由于本文与技术无关，所以新建了一个专题 [Life] 打算以后写不出技术文章的时候，就在这里说说自己的生活感悟。    </p>
+        
+          <p class="article-more-link">
+            <a href="/2015/11/12/talk--life/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2015/11/12/talk--life/" data-id="clexlgj3000278myy1bnf1cs4" data-title="随便聊聊" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-floodlight-packetin" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/04/07/floodlight-packetin/" class="article-date">
+  <time class="dt-published" datetime="2015-04-06T16:00:00.000Z" itemprop="datePublished">2015-04-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2015/04/07/floodlight-packetin/">Floodlight中模块对Packet_in报文的处理</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>看源码最痛苦的是知其然而不知其所以然，当然也有人建议我不要在意这些细节~~，可是看不懂浑身不舒服啊亲，我也希望自己有高超的写代码能力，事实是还需努力。接触Floodlight这么久了，以前做的最多的是调用RET API进行一些实验，改过官方为开发者提供的MACTracker代码，但实际上没花太多时间看源码，最近做实验啥的感觉瓶颈了，唉，遂决心好好研究一下源码，看是否能给自己新的灵感。此次参考的源码是我修改过的MACTracker，我将要分析的是其中对Packet_in事件处理的方法recevie()。
+        
+          <p class="article-more-link">
+            <a href="/2015/04/07/floodlight-packetin/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2015/04/07/floodlight-packetin/" data-id="clexlgj1s000c8myy3kv019ly" data-title="Floodlight中模块对Packet_in报文的处理" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-sflow-queue" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/02/02/sflow-queue/" class="article-date">
+  <time class="dt-published" datetime="2015-02-01T16:00:00.000Z" itemprop="datePublished">2015-02-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2015/02/02/sflow-queue/">基于floodlight&amp;sflow的队列调整</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但OVS FAQ有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。
+        
+          <p class="article-more-link">
+            <a href="/2015/02/02/sflow-queue/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2015/02/02/sflow-queue/" data-id="clexlgj3100298myybzgl9v9a" data-title="基于floodlight&amp;sflow的队列调整" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-sflow-ddos" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/01/27/sflow-ddos/" class="article-date">
+  <time class="dt-published" datetime="2015-01-26T16:00:00.000Z" itemprop="datePublished">2015-01-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2015/01/27/sflow-ddos/">sflow流量监控之ddos防御</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如Floodlight FAQ所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。
+        
+          <p class="article-more-link">
+            <a href="/2015/01/27/sflow-ddos/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2015/01/27/sflow-ddos/" data-id="clexlgj2z00258myy9eusg5ch" data-title="sflow流量监控之ddos防御" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-floodlight-twohosts-ping" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2014/11/15/floodlight-twohosts-ping/" class="article-date">
+  <time class="dt-published" datetime="2014-11-14T16:00:00.000Z" itemprop="datePublished">2014-11-15</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2014/11/15/floodlight-twohosts-ping/">SDN环境下两主机通信过程</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="感悟"><a href="#感悟" class="headerlink" title="感悟"></a>感悟</h2><p>SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所 以无论是做科研还是学术，我们都应有一个严谨的态度。<br>
+        
+          <p class="article-more-link">
+            <a href="/2014/11/15/floodlight-twohosts-ping/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2014/11/15/floodlight-twohosts-ping/" data-id="clexlgj1v000e8myy11xw9sxx" data-title="SDN环境下两主机通信过程" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+
+
+  <nav id="page-nav">
+    
+    <a class="extend prev" rel="prev" href="/page/4/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/6/">Next &raquo;</a>
+  </nav>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

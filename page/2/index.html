@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="liushy">
+<meta property="og:url" content="https://liushy.com/page/2/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:locale" content="en_US">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-ovsdb-mod" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/12/08/ovsdb-mod/" class="article-date">
+  <time class="dt-published" datetime="2021-12-07T16:00:00.000Z" itemprop="datePublished">2021-12-08</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2021/12/08/ovsdb-mod/">ovsdb数据库修改</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>目前我们维护的ovsdb数据库主要是ovn nb和sb：ovn-nb.ovsschema ，ovn-sb.ovsschema<br>比如修改port_binding表，新增一个字段other_config：<br>第一步：修改ovn-sb.ovsschema文件，新增other_config 字段定义：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="string">&quot;Port_Binding&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;columns&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;logical_port&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>&#125;,</span><br><span class="line">        <span class="string">&quot;type&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>&#125;,</span><br><span class="line">        ......</span><br><span class="line">        <span class="string">&quot;other_config&quot;</span>: &#123;</span><br><span class="line">             <span class="string">&quot;type&quot;</span>: &#123;<span class="string">&quot;key&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">                      <span class="string">&quot;value&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">                      <span class="string">&quot;min&quot;</span>: 0,</span><br><span class="line">                      <span class="string">&quot;max&quot;</span>: <span class="string">&quot;unlimited&quot;</span>&#125;&#125;,</span><br></pre></td></tr></table></figure>
+        
+          <p class="article-more-link">
+            <a href="/2021/12/08/ovsdb-mod/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2021/12/08/ovsdb-mod/" data-id="clexlgj2w00218myyg9287w5w" data-title="ovsdb数据库修改" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-goon-2020" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2020/12/26/goon-2020/" class="article-date">
+  <time class="dt-published" datetime="2020-12-25T16:00:00.000Z" itemprop="datePublished">2020-12-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2020/12/26/goon-2020/">大江小鱼</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="工作总结"><a href="#工作总结" class="headerlink" title="工作总结"></a>工作总结</h2><p>今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。<br>年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。<br>三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感觉差距不明显。<br>上半年还做了将nova-docker纳入到virt里，作为一个driver在跑，也就是咱们iaas支持了创建容器的功能，此外还完成了容器网卡的ovs mirror功能。
+        
+          <p class="article-more-link">
+            <a href="/2020/12/26/goon-2020/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2020/12/26/goon-2020/" data-id="clexlgj25000r8myy4sus2uo3" data-title="大江小鱼" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-goon-2019" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2019/12/28/goon-2019/" class="article-date">
+  <time class="dt-published" datetime="2019-12-27T16:00:00.000Z" itemprop="datePublished">2019-12-28</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2019/12/28/goon-2019/">惨如老狗</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="工作总结"><a href="#工作总结" class="headerlink" title="工作总结"></a>工作总结</h2><p>年初投入工作的时间比较多，所以博客就歇了很长一段时间，人也懒索性后面就一直没有更新了。<br>工作上一直以来就人力不足，一个人至少同时兼顾两个人的活，在领导看来绩效不好看，于我们而言成天当背锅侠却没好名声。<br>除了完成需求，有时候还要分析特性，解决线上问题（需求归特性团队，网上问题直接挂个人）。<br>不靠谱的安排很多，我们到底是运维，设计，还是开发？
+        
+          <p class="article-more-link">
+            <a href="/2019/12/28/goon-2019/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2019/12/28/goon-2019/" data-id="clexlgj24000p8myy1flo21wu" data-title="惨如老狗" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-neutron-kuryr" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2019/03/15/neutron-kuryr/" class="article-date">
+  <time class="dt-published" datetime="2019-03-14T16:00:00.000Z" itemprop="datePublished">2019-03-15</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2019/03/15/neutron-kuryr/">kuryr研究笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="架构分析"><a href="#架构分析" class="headerlink" title="架构分析"></a>架构分析</h2><p>kuryr-k8s主要目的是统一vm和容器的网络，借助neutron来管理容器的网络。两种部署，一种是将kuryr服务和k8s集群部署在租户的虚机内，借助虚机网络间接给pod和service提供网络，需要开启trunk特性，同时l2agent也要支持trunk，使虚机port支持多vlan；另一种，在独立的虚机或者裸金属上部署kuryr和k8s集群，k8s集群和openstack节点间二层互通。      </p>
+        
+          <p class="article-more-link">
+            <a href="/2019/03/15/neutron-kuryr/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2019/03/15/neutron-kuryr/" data-id="clexlgj2e00168myyf7kne0ia" data-title="kuryr研究笔记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-goon-2018" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/12/26/goon-2018/" class="article-date">
+  <time class="dt-published" datetime="2018-12-25T16:00:00.000Z" itemprop="datePublished">2018-12-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/12/26/goon-2018/">南来北往</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="技能流水"><a href="#技能流水" class="headerlink" title="技能流水"></a>技能流水</h2><p>今年的主题就是工作投入了。新岗位很多姿势不熟，操作需要各种适应。公司im是微软的lync，这工具最强大的就是远程和电话会议，公司对lync的使用没有约束，所以也就有最大的缺点，那就是突然来个lync电话，基本上当下的事情就做不了了。<br>
+        
+          <p class="article-more-link">
+            <a href="/2018/12/26/goon-2018/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/12/26/goon-2018/" data-id="clexlgj22000m8myy2e6655yg" data-title="南来北往" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-lbaas-note" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/11/30/lbaas-note/" class="article-date">
+  <time class="dt-published" datetime="2018-11-29T16:00:00.000Z" itemprop="datePublished">2018-11-30</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/11/30/lbaas-note/">lbaas分析笔记</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>今年的云网方案，涉及很多lb的需求，大多数是客户亟需的而社区目前不支持的。针对类似需求，我们首要考虑能否通过其它方式去满足而不改动社区原有实现，其次才是考虑如何扩展并兼容社区实现。当然有的方案也会考虑能否向社区提交，话说回来了，搞开源本来就要结合实际需求来做，过于私有化的方案也就违背了开源的初心。说回lbaas，目前社区已经将其独立出neutron，成立新的项目<a target="_blank" rel="noopener" href="https://docs.openstack.org/octavia/latest/">octavia</a>。即便如此，当前很多云厂商，依然还是沿用的lbaas v1或v2。很多lb厂商如f5，a10还是以lbaas的插件为主，所以本文简要分析lbaas相关知识点。   </p>
+        
+          <p class="article-more-link">
+            <a href="/2018/11/30/lbaas-note/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/11/30/lbaas-note/" data-id="clexlgj2c00128myybme96917" data-title="lbaas分析笔记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-openstack-apic" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/09/05/openstack-apic/" class="article-date">
+  <time class="dt-published" datetime="2018-09-04T16:00:00.000Z" itemprop="datePublished">2018-09-05</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/09/05/openstack-apic/">neutron对接思科apic插件</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近在忙的一件事情，就是openstack对接思科的apic控制器。踩了些坑，但还好都解决了。目前apic的neutron插件已经从<a target="_blank" rel="noopener" href="https://github.com/openstack/networking-cisco">networking-cisco</a>移除，思科官方提供的安装办法是<a target="_blank" rel="noopener" href="https://github.com/noironetworks/opflex-documentation/wiki/Neutron-install-3.1">neutron-install</a>。大致总结了一下安装的步骤。
+        
+          <p class="article-more-link">
+            <a href="/2018/09/05/openstack-apic/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/09/05/openstack-apic/" data-id="clexlgj2i001c8myygsd8f0js" data-title="neutron对接思科apic插件" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-nova-network" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/07/31/nova-network/" class="article-date">
+  <time class="dt-published" datetime="2018-07-30T16:00:00.000Z" itemprop="datePublished">2018-07-31</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2018/07/31/nova-network/">nova与neutron交互的细节分析</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>通过查询资料，我们应该大体都了解nova创建虚机的一般流程：首先是通过horizon下发指令到nova-API，然后是keystone认证，接着nova-conductor查询数据库，nova-scheduler进行物理主机选举，从glance下载镜像，通过neutron创建网络资源，最后nova-compute创建虚机。本文旨在记录一下，在代码层面，nova与neutron的交互过程中比较重要的细节。   </p>
+        
+          <p class="article-more-link">
+            <a href="/2018/07/31/nova-network/#more">More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/07/31/nova-network/" data-id="clexlgj2k001f8myy9w81cxv9" data-title="nova与neutron交互的细节分析" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+
+
+  <nav id="page-nav">
+    
+    <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+  </nav>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

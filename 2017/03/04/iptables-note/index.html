@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Iptables笔记 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables结合TC进行数据流的Qos保障和流量控制。都快忘了怎么玩，最近在CI环境中，跑Robot测试用例时，需">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Iptables笔记">
+<meta property="og:url" content="https://liushy.com/2017/03/04/iptables-note/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables结合TC进行数据流的Qos保障和流量控制。都快忘了怎么玩，最近在CI环境中，跑Robot测试用例时，需">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/iptables-chain.JPEG">
+<meta property="og:image" content="https://liushy.com/imgs/table-chain.JPEG">
+<meta property="article:published_time" content="2017-03-03T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:29:46.867Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/iptables-chain.JPEG">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-iptables-note" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/03/04/iptables-note/" class="article-date">
+  <time class="dt-published" datetime="2017-03-03T16:00:00.000Z" itemprop="datePublished">2017-03-04</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Iptables笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="前言">前言</span></h2><p>Linux网络相关的技术有很多，常见的如Iptables，TC(Traffic Control)，Linux Bridge等会经常被应用到生产环境中，特别在组网时，部分技术会成为至关重要的解决方案。之前在读书期间，有做过利用Iptables做防火墙，过滤相关IP数据包，以及利用Iptables结合TC进行数据流的Qos保障和流量控制。都快忘了怎么玩，最近在CI环境中，跑Robot测试用例时，需要外网主机访问云平台的虚机，我采取的方法就是利用Iptables做DNAT转换。所以，学习并熟练运用相关Linux网络技术有助于解决一些网络相关的疑难问题。熟悉这些技术的小伙伴也许会觉得很简单，不过好记性不如烂笔头，本文将记录一下本人学习Iptables的笔记。           </p>
+<span id="more"></span>
+<h2><span id="四表五链">四表五链</span></h2><p>首先，介绍一下iptables技术中的表和链。iptables有四种表（table）和五条链（chain），其中表是按照对数据包的动作区分的，链是按照不同的Hook点来区分的。其原理是将处理不同IP包（五元组任意组合）的规则写入不同的链当中，数据包进来后，会与这些规则进行匹配，一旦匹配成功，即执行规则中的动作。   </p>
+<p><font color="blue">#四表</font>  </p>
+<p>iptables四种表分别是Filter，NAT，Mangle和Raw。表的处理优先级：raw&gt;mangle&gt;nat&gt;filter。功能介绍如下：</p>
+<ul>
+<li>Filter表：进行一般的包过滤操作；   </li>
+<li>NAT表：进行网络地址转换（IP/端口映射）；    </li>
+<li>Mangle表：进行数据包的修改，比如tos，ttl这些字段以及打标记（Mark）；      </li>
+<li>Raw表：此表优先级最高，功能是不再让iptables做数据包的链接跟踪处理，提高性能。<a target="_blank" rel="noopener" href="http://blog.chinaunix.net/uid-11639156-id-3181909.html">相关资料</a>  </li>
+</ul>
+<p>前面三个表就能满足处理常见问题的需要，使用[-t table]指定规则表，关于表的内容就不深入的阐述了。<a target="_blank" rel="noopener" href="http://blog.chinaunix.net/uid-134240-id-62371.html">参考网站</a>   </p>
+<p><font color="blue">#五链</font>   </p>
+<p>iptables的链规则定义了数据包被处理的位置，linux定义了五条链，我们也可以自定义新的链，借用<a target="_blank" rel="noopener" href="http://linux.vbird.org/linux_server/0250simple_firewall.php#netfilter_chain">鸟哥</a>的图:   </p>
+<p><img src="/imgs/iptables-chain.JPEG" alt="iptables-chains"></p>
+<p>简单理解，这五条链的规则：    </p>
+<ul>
+<li>PREROUTING:数据包进入路由表之前；</li>
+<li>INPUT:通过路由表后目的地为本机，上送协议栈；</li>
+<li>FORWARD:通过路由表后，经由本机转发，不上送协议栈；</li>
+<li>OUTPUT:由本机产生，向外转发；</li>
+<li>POSTROUTIONG:发送到网卡接口之前。    </li>
+</ul>
+<p>梳理一下，如果数据包只是通过本机转发而不上送本机处理的，路径：<code>PREROUTING—&gt;FORWARD—&gt;POSTROUTIONG</code>；如果是需要本机处理的，路径：<code>PREROUTING—&gt;INPUT—&gt;OUTPUT—&gt;POSTROUTIONG</code>。</p>
+<p>iptables表与链的对应关系：   </p>
+<p><img src="/imgs/table-chain.JPEG" alt="tables-chains">    </p>
+<p>使用如下命令指定规则链，如[-A chain]：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-A, —append： 新增规则到某个规则链中，该规则将会成为规则链中的最后一条规则。</span><br><span class="line">-D, —delete： 从某个规则链中删除一条规则，可以输入完整规则，或指定规则编号。</span><br><span class="line">-R, —replace： 取代现行规则，规则被取代后并不会改变顺序。</span><br><span class="line">-I, —insert： 插入一条规则，原本该位置上的规则将会往后移动一个顺位。</span><br><span class="line">-L, —list： 列出某规则链中的所有规则。</span><br><span class="line">-F, —flush： 删除某规则链中的所有规则。</span><br><span class="line">-Z, —zero： 将封包计数器归零。封包计数器是用来计算同一封包出现次数，是过滤阻断式攻击不可或缺的工具。</span><br><span class="line">-N, —new-chain： 定义新的规则链。</span><br><span class="line">-X, —delete-chain： 删除某个规则链。</span><br><span class="line">-P, —policy： 定义过滤政策。 也就是未符合过滤条件之封包，预设的处理方式。</span><br><span class="line">-E, —rename-chain： 修改某自定义规则链的名称。    </span><br></pre></td></tr></table></figure>
+
+<h2><span id="使用iptables">使用Iptables</span></h2><p>使用iptables的语法：   </p>
+<p><strong><code>iptables　[-t table]　command　[chain]　[match]　[-j target/jump]</code></strong>    </p>
+<p>其中，<code>-t table</code>前文提到，是指定表规则，<code>command</code>后面指定链规则；<code>match</code>指定数据包的匹配规则，一般是指定五元组等；<code>-j target/jump</code>指定匹配成功后的动作，主要包括<code>ACCEPT</code>（通过），<code>DROP</code>（丢弃），<code>REJECT</code>（丢弃并重定向），<code>DNAT</code>，<code>SNAT</code>，<code>MARK</code>，<code>MASQUERADE</code>（伪装宿主机IP）。匹配规则的常用语句：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-p, —protocol：匹配通讯协议类型是否相符。</span><br><span class="line">-s, —src, —<span class="built_in">source</span>： 匹配封包的来源 IP，可以匹配单机或网络。</span><br><span class="line">-d, —dst, —destination：匹配封包的目的地 IP。</span><br><span class="line">-i, —in-interface： 匹配封包是从哪块网卡进入，可以使用通配字符 + 来做大范围匹配。</span><br><span class="line">-o, —out-interface：匹配封包要从哪 块网卡送出。</span><br><span class="line">—sport, —source-port：匹配封包的源端口，可以匹配单一端口，或是一个范围。</span><br><span class="line">—dport, —destination-port：匹配封包的目的地端口号。</span><br><span class="line">—tcp-flags：TCP 封包的状态标志。</span><br><span class="line">-m <span class="built_in">limit</span> —<span class="built_in">limit</span>：匹配某段时间内封包的平均流量。</span><br><span class="line">—limit-burst：匹配瞬间大量封包的数量，超过此上限的封包将被直接丢弃。</span><br><span class="line">-m mac —mac-source ：匹配封包来源网络接口的硬件地址，这个参数不能用在 OUTPUT 和 POSTROUTING 规则链上。</span><br><span class="line">—mark：匹配封包是否被表示某个号码。</span><br></pre></td></tr></table></figure>
+<p>配置iptables后，可以使用如下命令查看规则及其对应的编号：</p>
+<p><strong><code>iptables　-L　-n　—line-number</code></strong></p>
+<p>接下来举几个例子。</p>
+<p><font color="blue">#包过滤</font>   </p>
+<p>包过滤也就是实现简单的防火墙功能，阻止或者允许指定包的通过。例如：<br>允许访问本机的ICMP包，丢弃经过本机转发的http（80端口）包：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">iptables　-A　INPUT　-p　icmp　-j　ACCEPT     </span><br><span class="line">iptables　-A　FORWARD　-p　tcp　--dport　80　-j　DROP</span><br></pre></td></tr></table></figure>
+<p>其中，-p指定了协议，如-p　icmp指定了ICMP协议，-p　tcp　–dport　80指定了TCP协议，以及目的端口为80即http协议常用的tcp端口。</p>
+<p><font color="blue">#内外网访问</font>      </p>
+<p>内外网访问，就需要为内网的虚机分配一个外网地址。这里两个概念需要简单介绍一下，那就是DNAT(目的IP网络地址转换)和SNAT(源IP网络地址转换)。两者的应用场景是，当外网访问内网服务器时，要对目的IP进行DNAT转换；而当内网主机要访问外网时，需进行SNAT转换。例如：</p>
+<p>场景一：</p>
+<ul>
+<li>eth0:10 172.168.0.110（外网IP）</li>
+<li>eth1:10.0.2.1（内网IP）</li>
+<li>内网虚机1：10.0.2.5 。外网主机能够访问该虚机，做一对一的DNAT转换：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ifconfig etho:10 172.168.0.110/24 up</span><br><span class="line">iptables -t nat -A PREROUTING -d 172.168.0.110 -j DNAT -to--destination 10.0.2.5  </span><br><span class="line">iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1</span><br></pre></td></tr></table></figure>
+<p>以上命令可以理解为：</p>
+<ul>
+<li>将目的地址是172.168.0.110的数据包的目的地址修改为10.0.2.5</li>
+<li>将目的地址为10.0.2.5的数据包的源地址修改为10.0.2.1     </li>
+</ul>
+<p>所以外网主机访问内网虚机1，不是虚机的IP地址，而是虚机进行DNAT的外网地址，当数据包到达linux服务器，首先会将数据包的目的地址改为虚机地址并进行转发；这时iptables还会将目的地址是虚机地址的数据包进行SNAT转换，以保证内网其它主机通过外网地址访问虚机时，能够处理虚机回复的数据包。</p>
+<p>场景二：</p>
+<ul>
+<li>eth0:10 172.168.0.110（外网IP）</li>
+<li>eth1:10.0.2.1（内网IP）</li>
+<li>内网虚机1：10.0.2.5</li>
+<li>内网虚机2：10.0.2.6。外网主机能够访问两台虚机的http服务（80端口）：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ifconfig etho:10 172.168.0.110/24 up</span><br><span class="line">iptables -t nat -A PREROUTING -d 172.168.0.110 -p tcp --dport 80 -j DNAT -to--destination 10.0.2.5:80</span><br><span class="line">iptables -t nat -A POSTROUTING -d 10.0.2.5 -j SNAT -to--source 10.0.2.1  </span><br><span class="line">iptables -t nat -A PREROUTING -d 172.168.0.110 -p tcp --dport 81 -j DNAT -to--destination 10.0.2.6:80 </span><br><span class="line">iptables -t nat -A POSTROUTING -d 10.0.2.6 -j SNAT -to--source 10.0.2.1</span><br></pre></td></tr></table></figure>
+<p>上面的命令，我让两台虚机公用一个外网地址的不同端口号，简单的做了一个端口映射。外网主机可以通过172.168.0.110的80和81端口分别访问内网虚机1和2的http服务。   </p>
+<h2><span id="总结">总结</span></h2><p>目前的云平台如OpenStack，其网络管理项目Neutron对租户的安全组也是基于Iptables来做的。前两天某云的租户互通事件，引起很大的讨论，可见云网络中安全问题越来受到重视。所以，熟练使用Iptables，也许会帮助你管理好自己的云网络。写的有点零碎，但尽量争取不了解的人一看就会用，自己回头看能很快明白，后续可能还会在此基础上进行补充，就这些吧。    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/03/04/iptables-note/" data-id="clexlgj29000y8myybttfcuxi" data-title="Iptables笔记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/03/18/what-doing/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          最近在干嘛
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/02/12/floodlight-forwarding/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">解析Floodlight之Forwarding模块</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

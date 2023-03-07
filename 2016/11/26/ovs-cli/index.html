@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>OVS配置命令 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OVS配置命令">
+<meta property="og:url" content="https://liushy.com/2016/11/26/ovs-cli/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言)">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2016-11-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:12:54.714Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovs-cli" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2016/11/26/ovs-cli/" class="article-date">
+  <time class="dt-published" datetime="2016-11-25T16:00:00.000Z" itemprop="datePublished">2016-11-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      OVS配置命令
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>在ovs结构中，如果网络拓扑是vxlan或gre，则有两个bridge，分别是br-int和br-tun，br-int叫集成网桥，用于连接起上方的各个设备（包括vm、dhcp-agent、l3-agent），br-tun叫隧道网桥，隧道既可以是gre，也可以是vxlan，br-tun负责在原始报文中加入gre或vxlan报文头。相当于软件实现了vtep设备(对于vxlan而言) <span id="more"></span><br>以下是本人使用和收集的OVS相关配置命令：<br>建立 VXLAN Network ID (VNI) 和指定的 OpenFlow port number, eg: VNI=5566, OF_PORT=9    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=x.x.x.x option:key=5566 ofport_request=9</span><br></pre></td></tr></table></figure>
+<p>VNI flow by flow     </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> interface vxlan <span class="built_in">type</span>=vxlan option:remote_ip=140.113.215.200 option:key=flow ofport_request=9</span><br></pre></td></tr></table></figure>
+<p>设置 VXLAN tunnel id    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-ofctl add-flow ovs-br in_port=1,actions=set_field:5566-&gt;tun_id,output:2</span><br><span class="line">ovs-ofctl add-flow s1 in_port=2,tun_id=5566,actions=output:1</span><br></pre></td></tr></table></figure>
+<p>查询out-of-band $ in-band     </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl get controller ovs-br connection-mode</span><br></pre></td></tr></table></figure>
+<p>Out-of-band    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> controller ovs-br connection-mode=out-of-band</span><br></pre></td></tr></table></figure>
+<p>In-band (default)    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> controller ovs-br connection-mode=in-band</span><br></pre></td></tr></table></figure>
+<p>移除 hidden flow</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> bridge br0 other-config:disable-in-band=<span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>设置 GRE tunnel    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">vs−vsctl add−port ovs-br ovs-gre -- <span class="built_in">set</span> interface ovs-gre <span class="built_in">type</span>=gre options:remote_ip=1.2.3.4</span><br></pre></td></tr></table></figure>
+<p>设置 Vlan trunk    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl add-port ovs-br eth0 trunk=3,4,5,6</span><br></pre></td></tr></table></figure>
+<p>设置已 add 的 port 为 access port, vlan id 9     </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovs-vsctl <span class="built_in">set</span> port eth0 tag=9</span><br></pre></td></tr></table></figure>
+<p>网络工程是一门大学问，虽然本科四年里偶有涉及，硕士阶段专攻了一年多的路由交换原理，到目前开始从事网络安全开发工作，我也不敢说自己精通网络，深知自身仍然还有很多要学的地方，而对于网络知识的学习，我觉得最好的方式莫过于搞一套网络设备来慢慢折腾，模拟一个个应用场景，敲一下各种配置命令，能够一步步照着做了，想弄明白网络就不是难事，总的来说，急不得，在了解理论的基础上，动手实践理解会更深刻，还有一点就是多做记录，正所谓好记性不如烂笔头，我推荐做一个自己的博客或者使用笔记软件，记录自己平时的实践和理论学习。<br>参考网站：<br><a target="_blank" rel="noopener" href="http://blog.csdn.net/beginning1126/article/details/41172365">http://blog.csdn.net/beginning1126/article/details/41172365</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/tantexian/article/details/46707175">http://blog.csdn.net/tantexian/article/details/46707175</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2016/11/26/ovs-cli/" data-id="clexlgj2t001w8myy6t35dtyf" data-title="OVS配置命令" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/11/27/Linux-mem/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Linux内存占用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/11/12/talk--life/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">随便聊聊</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

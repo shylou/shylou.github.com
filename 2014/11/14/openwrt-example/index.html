@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>openwrt-example | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.接下来是添加模块具体步骤：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="openwrt-example">
+<meta property="og:url" content="https://liushy.com/2014/11/14/openwrt-example/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.接下来是添加模块具体步骤：">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2014-11-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:13:15.076Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-openwrt-example" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2014/11/14/openwrt-example/" class="article-date">
+  <time class="dt-published" datetime="2014-11-13T16:00:00.000Z" itemprop="datePublished">2014-11-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      openwrt-example
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>这里的开发环境是在Ubuntu下，搭建好OpenWrt的交叉编译环境，这里不多说了，网上有很多教程。本次示例选择的OpenWrt版本是trunk版.<br>接下来是添加模块具体步骤：  <span id="more"></span><br>1.进入trunk的package文件夹，创建模块目录：<br>cd trunk/package<br>mkdir example<br>2.进入example目录，创建Mackefile文件和代码路径：<br>cd example<br>touch Mackefile<br>mkdir src<br>Makefile代码如下：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">include $(TOPDIR)/rules.mk   </span><br><span class="line">include $(INCLUDE_DIR)/kernel.mk   </span><br><span class="line">PKG_NAME:=example</span><br><span class="line">PKG_RELEASE:=1</span><br><span class="line">include $(INCLUDE_DIR)/package.mk</span><br><span class="line">   </span><br><span class="line">define KernelPackage/example</span><br><span class="line">  SUBMENU:=Other modules</span><br><span class="line">  TITLE:=example driver</span><br><span class="line">  DEPENDS:=@LINUX_2_6</span><br><span class="line">  FILES:=$(PKG_BUILD_DIR)/*.$(LINUX_KMOD_SUFFIX)</span><br><span class="line">  KCONFIG:=</span><br><span class="line">endef</span><br><span class="line">    </span><br><span class="line">define KernelPackage/example/description</span><br><span class="line">  Kernel module to example</span><br><span class="line">endef</span><br><span class="line">   </span><br><span class="line">EXTRA_KCONFIG:= \</span><br><span class="line">	CONFIG_EXAMPLE=m</span><br><span class="line">EXTRA_CFLAGS:= \</span><br><span class="line">	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(EXTRA_KCONFIG)))) \</span><br><span class="line">	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=y,%,$(filter %=y,$(EXTRA_KCONFIG)))) \</span><br><span class="line">MAKE_OPTS:= \</span><br><span class="line">	ARCH=<span class="string">&quot;<span class="subst">$(LINUX_KARCH)</span>&quot;</span> \</span><br><span class="line">	CROSS_COMPILE=<span class="string">&quot;<span class="subst">$(TARGET_CROSS)</span>&quot;</span> \</span><br><span class="line">	SUBDIRS=<span class="string">&quot;<span class="subst">$(PKG_BUILD_DIR)</span>&quot;</span> \</span><br><span class="line">	EXTRA_CFLAGS=<span class="string">&quot;<span class="subst">$(EXTRA_CFLAGS)</span>&quot;</span> \</span><br><span class="line">	$(EXTRA_KCONFIG)</span><br><span class="line">   </span><br><span class="line">define Build/Prepare</span><br><span class="line">	mkdir -p $(PKG_BUILD_DIR)</span><br><span class="line">	$(CP) ./src/* $(PKG_BUILD_DIR)/</span><br><span class="line">endef</span><br><span class="line">       </span><br><span class="line">define Build/Compile</span><br><span class="line">	$(MAKE) -C <span class="string">&quot;<span class="subst">$(LINUX_DIR)</span>&quot;</span> \</span><br><span class="line">		$(MAKE_OPTS) \</span><br><span class="line">		modules</span><br><span class="line">endef</span><br><span class="line">$(<span class="built_in">eval</span> $(call KernelPackage,example))   </span><br></pre></td></tr></table></figure>
+<p>3.进入src目录，创建代码路径和相关源文件<br>cd src<br>touch example.c Kconfig Makefile<br>example.c代码：        </p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/init.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/module.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/kernel.h&gt;</span></span></span><br><span class="line"><span class="comment">/* hello_init ---- 初始化函数，当模块装载时被调用，如果成功装载返回0 否则返回非0值 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> __init <span class="title">hello_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	printk(<span class="string">&quot;I bear a charmed life.\n&quot;</span>);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* hello_exit ---- 退出函数，当模块卸载时被调用 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> __exit <span class="title">hello_exit</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	printk(<span class="string">&quot;Out, out, brief candle\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line">module_init(hello_init);</span><br><span class="line">module_exit(hello_exit);</span><br><span class="line">MODULE_LICENSE(<span class="string">&quot;GPL&quot;</span>);</span><br><span class="line">MODULE_AUTHOR(<span class="string">&quot;liuxie&quot;</span>);</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2014/11/14/openwrt-example/" data-id="clexlgj2l001h8myy6i1j9k4z" data-title="openwrt-example" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2014/11/15/floodlight-twohosts-ping/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          SDN环境下两主机通信过程
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

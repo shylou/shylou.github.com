@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>且行且看 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="工作总结今年换了工作，入职就过元旦节。新年熟悉公司产品的同时，还见证了公司v6的发布。以前的工作的主要是基于硬件sdn，而公司产品基于社区实现也就是软sdn，两者有些许不同但是技术栈差别不大，不过还是花了一些功夫研究了一下社区方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="且行且看">
+<meta property="og:url" content="https://liushy.com/2021/12/31/goon-2021/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="工作总结今年换了工作，入职就过元旦节。新年熟悉公司产品的同时，还见证了公司v6的发布。以前的工作的主要是基于硬件sdn，而公司产品基于社区实现也就是软sdn，两者有些许不同但是技术栈差别不大，不过还是花了一些功夫研究了一下社区方案。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-12-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-06-26T12:06:01.573Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-goon-2021" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/12/31/goon-2021/" class="article-date">
+  <time class="dt-published" datetime="2021-12-30T16:00:00.000Z" itemprop="datePublished">2021-12-31</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      且行且看
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="工作总结">工作总结</span></h2><p>今年换了工作，入职就过元旦节。<br>新年熟悉公司产品的同时，还见证了公司v6的发布。以前的工作的主要是基于硬件sdn，而公司产品基于社区实现也就是软sdn，两者有些许不同但是技术栈差别不大，不过还是花了一些功夫研究了一下社区方案。    </p>
+<span id="more"></span>
+<p>春节到公司后，组内就开始搞基于ovn的软sdn方案了。在很快的时间内咱们就把ovn run起来了，接着我也着手分析了ovn 的acl实现，以及基于它来做安全组的细节，目前还没有防火墙，不过我们已经有一个初步分析，明年计划基于ovn推出防火墙产品。    </p>
+<p>接下来分析了sriov网卡的支持情况。ovn最初是无法响应sriov网卡(包括裸机)的dhcp报文的，为了解决这个问题，ovn新增了<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/96080083581275afaec8bc281d6a648aff7ef39e">external port</a>，实现对sriov网卡的dhcp响应。    </p>
+<p>四五月份的时候，花费了大部分时间梳理了ovn的二层，三层路由和南北向流量，发现了一些问题特别是vlan网络的场景问题颇多。分析了ovn的网关实现原理，overlay模式和bridge模式的流量走向。    </p>
+<p>当然既然是中立的云厂商，不可避免的要对接一些第三方厂商插件，对接sdn有maipu，ruijie和紫光。说来也巧紫光那边的牵头的人尽然是当初在华三的老熟人。    </p>
+<p>下半年进行了几个月的云产品拆分，详情不表了。    </p>
+<p>十月份的时候，公司接了个项目，要在十一月份发布软sdn。国庆后大家集结在了成都集中开发了一个月，太卷了，经常干到晚上12点过后，实时发现问题然后讨论解决方案改代码。最终效果还是不错的，踩了很多坑解决了ovn的诸多问题，包括ovn-controller重启丢包，sb数据库集群性能瓶颈，支持部署裸金属，热迁移丢包等等。    </p>
+<p>年底这一个月，主要是收敛软sdn的问题单，没什么好描述的，最终内部成功发布了软sdn，客户那里上线。最近这几天，参与规划了明年的网络云产品，后续会逐步设计方案和派活了。    </p>
+<p>今年工作内容以【卷】为主题，在大厂们纷纷取消加班的背景下，我们确实是一朵奇葩。这期间我算是肝了不少内容，自己也提升也不少，不过还是感觉身体有点吃不消哈。    </p>
+<h2><span id="生活杂记">生活杂记</span></h2><p>今年终于摇到房了，跑腿了几次后总算搞定了，公积金贷无压力，明年总结的话应该就有装修了哈。   </p>
+<p>唯一一次出游，还是集中开发的时候，团队出去跑到一个深山里，下着雨的泥泞烂路，算是爬了一个寂寞。       </p>
+<p>身边朋友四散开来，老张搬去龙泉了，老丁交房了，浩斌去了深圳，杨总去了北京，ruijian去电信了，许总在didi苟着。。          </p>
+<p>还有龙泉水蜜桃，万科烤五花，三街鸡毛店，贰麻酒馆。。。</p>
+<p>外婆的病一直是我的心病，有反复，中秋前还因为心脏问题住院了，那几天我回到老家，白天就跑去医院陪护，陪她说说话给她端饭。没成想我竟然和病房里的其他爷爷奶奶也能聊的起来，这些老年人也是很喜欢和年轻人说话，没别的就算多看几眼年轻人他们都高兴的很。        </p>
+<p>今年的生活乏善可陈，不过我会记得老佛爷的蛙炉和四河边上的羊肉粉。其他的事情就是与工作相关的了，很累长进也不少，不过自己的身体状态很明显不如前两年，来年的话一定要多多关注身体健康。今年的总结就是这样了，来年继续苟着吧！<br>此刻的我坐在老家客厅，打着这行字，窗外面有烟火冲天，新年快乐啊朋友们～</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2021/12/31/goon-2021/" data-id="clexlgj27000u8myy26kmglph" data-title="且行且看" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/03/26/ovn-sec/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ovn安全组总结
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/12/08/ovsdb-mod/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">ovsdb数据库修改</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

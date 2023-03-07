@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ovs删除dp流表后的流量不中断 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="现象描述 问题分析 问题总结    前段时间无意触发了一个删除dp流表的操作，然后出现流量依然正常的奇怪现象，遂对其进行了分析，走查了一下代码，本文记录一下。 现象描述现象：ping一个虚机的fip的时候的同时，使用ovs-dpctl del-flow ufid:xxxx删除dp里的流表，发现流量依然正常没有中断，并且通过ovs-dpctl dump-flows却没有发现重新创建flow。社">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ovs删除dp流表后的流量不中断">
+<meta property="og:url" content="https://liushy.com/2023/02/18/ovs-del-flows/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="现象描述 问题分析 问题总结    前段时间无意触发了一个删除dp流表的操作，然后出现流量依然正常的奇怪现象，遂对其进行了分析，走查了一下代码，本文记录一下。 现象描述现象：ping一个虚机的fip的时候的同时，使用ovs-dpctl del-flow ufid:xxxx删除dp里的流表，发现流量依然正常没有中断，并且通过ovs-dpctl dump-flows却没有发现重新创建flow。社">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/del-flow.png">
+<meta property="article:published_time" content="2023-02-17T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-19T04:31:51.372Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/del-flow.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovs-del-flows" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/02/18/ovs-del-flows/" class="article-date">
+  <time class="dt-published" datetime="2023-02-17T16:00:00.000Z" itemprop="datePublished">2023-02-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ovs删除dp流表后的流量不中断
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <!-- toc -->
+
+<ul>
+<li><a href="#%E7%8E%B0%E8%B1%A1%E6%8F%8F%E8%BF%B0">现象描述</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90">问题分析</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93">问题总结</a></li>
+</ul>
+<!-- tocstop -->
+
+<p>前段时间无意触发了一个删除dp流表的操作，然后出现流量依然正常的奇怪现象，遂对其进行了分析，走查了一下代码，本文记录一下。</p>
+<h2><span id="现象描述">现象描述</span></h2><p>现象：ping一个虚机的fip的时候的同时，使用<code>ovs-dpctl del-flow ufid:xxxx</code>删除dp里的流表，发现流量依然正常没有中断，并且通过<code>ovs-dpctl dump-flows</code>却没有发现重新创建flow。<br><a target="_blank" rel="noopener" href="https://mail.openvswitch.org/pipermail/ovs-discuss/2019-June/048887.html">社区类似现象</a><br> <span id="more"></span></p>
+<h2><span id="问题分析">问题分析</span></h2><p>分析本问题，首先需要摸清ovs接收到普通报文后，如何进行流表处理的：<br>1.当ovs的datapath接收到报文后，首先会提取报文的端口信息，源目的ip/mac等信息<br>2.查看内核里的flow table，如果命中了就直接执行action<br>3.如果没有命中，则通过netlink upcall上送给用户态的ovs-vswitchd处理<br>4.ovs-vswitchd 查询用户态精确流表和模糊流表<br>5.如果模糊命中， ovs-vswitchd 会同时刷新用户态精确流表和内核态精确流表；如果精确命中，则只更新内核态流表。<br>6.刷新后，重新把该数据包注入给内核态 datapath 模块处理。<br>7.datapath 重新发起选路，查询内核流表，匹配；报文转发，结束</p>
+<p>好了，在我们的认知里，上述流程主要针对流量的首包。<br>那么本问题的现象里，却是另一种情形，ovs datapath已经生成了flow，但是把它给删了，会造成什么后果呢？</p>
+<p>进一步地，我们查看了后续dp的flow匹配统计：<br><img src="/imgs/del-flow.png" alt="dp"><br>在这里我们发现dp flow的统计里，报文不再hit命中，而是一直在missed，也就是一直上送vswitchd处理了。<br>在此，我们就基本确认了，删除dp flow后为什么流量依然正常：原因就是后续报文一直被上送给了vswitchd处理。</p>
+<p>那接下来，我们分析为什么没有生成新的flow<br>这一部分的分析，需要理解upcall中如何通知datapath创建flow的处理，细节在函数<code>handle_upcalls</code>：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span></span></span><br><span class="line"><span class="function"><span class="title">handle_upcalls</span><span class="params">(struct udpif *udpif, struct upcall *upcalls,</span></span></span><br><span class="line"><span class="params"><span class="function">               <span class="keyword">size_t</span> n_upcalls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">dpif_op</span> *<span class="title">opsp</span>[<span class="title">UPCALL_MAX_BATCH</span> * 2];</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ukey_op</span> <span class="title">ops</span>[<span class="title">UPCALL_MAX_BATCH</span> * 2];</span></span><br><span class="line">    <span class="keyword">size_t</span> n_ops, n_opsp, i;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Handle the packets individually in order of arrival.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     *   - For SLOW_CFM, SLOW_LACP, SLOW_STP, SLOW_BFD, and SLOW_LLDP,</span></span><br><span class="line"><span class="comment">     *     translation is what processes received packets for these</span></span><br><span class="line"><span class="comment">     *     protocols.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     *   - For SLOW_ACTION, translation executes the actions directly.</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * The loop fills &#x27;ops&#x27; with an array of operations to execute in the</span></span><br><span class="line"><span class="comment">     * datapath. */</span></span><br><span class="line">    n_ops = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n_upcalls; i++) &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">upcall</span> *<span class="title">upcall</span> =</span> &amp;upcalls[i];</span><br><span class="line">        <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">dp_packet</span> *<span class="title">packet</span> =</span> upcall-&gt;packet;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">ukey_op</span> *<span class="title">op</span>;</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (should_install_flow(udpif, upcall)) &#123;</span><br><span class="line">            <span class="class"><span class="keyword">struct</span> <span class="title">udpif_key</span> *<span class="title">ukey</span> =</span> upcall-&gt;ukey;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (ukey_install(udpif, ukey)) &#123;</span><br><span class="line">                upcall-&gt;ukey_persists = <span class="literal">true</span>;</span><br><span class="line">                put_op_init(&amp;ops[n_ops++], ukey, DPIF_FP_CREATE);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>vswitchd通知datapath创建flow：通过netlink下发<code>DPIF_FP_CREATE</code>指令给datapath。<br>那么我们可以把问题范围缩小到<code>if (should_install_flow(udpif, upcall))</code>包含的这一块代码：</p>
+<p>是<code>should_install_flow</code>判断为false了吗？<br>1.查看本函数的实现细节，只要是miss upcall的报文，该判断一般都是true的，暂时排除；<br>2.那么问题就应该是<code>ukey_install</code>判断为false了，于是在该函数的内部，我们加了打印后，基本确认了问题所在。<br>原来在首包进行<code>ukey_install</code>后，vswitchd就缓存了一份包含该flow的ukey，而ukey的索引是通过flow的ufid来唯一确认的。如果在进行<code>ukey_install</code>的时候，查询ukey存在的话，就会返回false。</p>
+<p>那么：<br>1.通过<code>dpctl del-flow</code>是无法触发vswitchd删除该ukey，所以该ukey会在vswitchd里缓存一段时间。<br>2.只要vswitchd没有重启的话，flow对应的ufid也是不会变化的。</p>
+<p>再基于以上这两个前提，我们不难分析出：当删除了dp的flow后，后续报文upcall给vswitchd，而vswitchd是能查到已有的ukey-&gt;ufid的，所以也就不会再创建新的flow。</p>
+<h2><span id="问题总结">问题总结</span></h2><p>到这里，问题基本就确认了，将dp flow删除后，报文会一直upcall；而由于vswitchd里缓存了对应的ukey，所以upcall的报文也就不会下发新的flow了。<br>当然，ovs-doc里也是不建议通过dpctl操作流表：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DATAPATH FLOW TABLE DEBUGGING COMMANDS</span><br><span class="line">    The following commands are primarily useful for debugging Open vSwitch.</span><br><span class="line">    The  flow  table entries (both matches and actions) that they work with</span><br><span class="line">    are not OpenFlow flow entries.  Instead, they are different and consid‐</span><br><span class="line">    erably  simpler flows maintained by the Open vSwitch kernel module.  Do</span><br><span class="line">    not use  commands  to  add  or  remove  or  modify  datapath  flows  if</span><br><span class="line">    ovs-vswitchd  is  running because it interferes with ovs-vswitchd&#x27;s own</span><br><span class="line">    datapath flow management.  Use  ovs-ofctl(8),  instead,  to  work  with</span><br><span class="line">    OpenFlow flow entries.</span><br><span class="line"></span><br><span class="line">    The  dp argument to each of these commands is optional when exactly one</span><br><span class="line">    datapath exists, in which case that datapath is the default.  When mul‐</span><br><span class="line">    tiple datapaths exist, then a datapath name is required.</span><br></pre></td></tr></table></figure>
+<p>所以大家在操作的时候一定注意，尽量避免通过dpctl去操作流表，当然查询流表是允许的。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2023/02/18/ovs-del-flows/" data-id="clexlgj2v001z8myyh0gn9pld" data-title="ovs删除dp流表后的流量不中断" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/03/06/ovn-sec2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ovn lsp里addresses和port_security的区别
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/12/30/goon-2022/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">隐入尘烟</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

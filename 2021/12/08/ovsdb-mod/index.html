@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ovsdb数据库修改 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="目前我们维护的ovsdb数据库主要是ovn nb和sb：ovn-nb.ovsschema ，ovn-sb.ovsschema比如修改port_binding表，新增一个字段other_config：第一步：修改ovn-sb.ovsschema文件，新增other_config 字段定义： &quot;Port_Binding&quot;: &amp;#123;    &quot;columns&quot;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ovsdb数据库修改">
+<meta property="og:url" content="https://liushy.com/2021/12/08/ovsdb-mod/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="目前我们维护的ovsdb数据库主要是ovn nb和sb：ovn-nb.ovsschema ，ovn-sb.ovsschema比如修改port_binding表，新增一个字段other_config：第一步：修改ovn-sb.ovsschema文件，新增other_config 字段定义： &quot;Port_Binding&quot;: &amp;#123;    &quot;columns&quot;">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-12-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-03-26T05:00:49.162Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovsdb-mod" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/12/08/ovsdb-mod/" class="article-date">
+  <time class="dt-published" datetime="2021-12-07T16:00:00.000Z" itemprop="datePublished">2021-12-08</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ovsdb数据库修改
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>目前我们维护的ovsdb数据库主要是ovn nb和sb：ovn-nb.ovsschema ，ovn-sb.ovsschema<br>比如修改port_binding表，新增一个字段other_config：<br>第一步：修改ovn-sb.ovsschema文件，新增other_config 字段定义：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="string">&quot;Port_Binding&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;columns&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;logical_port&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>&#125;,</span><br><span class="line">        <span class="string">&quot;type&quot;</span>: &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>&#125;,</span><br><span class="line">        ......</span><br><span class="line">        <span class="string">&quot;other_config&quot;</span>: &#123;</span><br><span class="line">             <span class="string">&quot;type&quot;</span>: &#123;<span class="string">&quot;key&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">                      <span class="string">&quot;value&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">                      <span class="string">&quot;min&quot;</span>: 0,</span><br><span class="line">                      <span class="string">&quot;max&quot;</span>: <span class="string">&quot;unlimited&quot;</span>&#125;&#125;,</span><br></pre></td></tr></table></figure>
+<span id="more"></span>  
+<p>第二步：修改schema的版本号和校验和，方法是先修改schema的version字段比如”version”: “20.17.1”，然后用工具生成校验和：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">./build-aux/calculate-schema-cksum ovn-sb.ovsschema</span><br><span class="line">3176199392 26758</span><br></pre></td></tr></table></figure>
+<p>再填入校验和，就像这样：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="string">&quot;name&quot;</span>: <span class="string">&quot;OVN_Southbound&quot;</span>,</span><br><span class="line"><span class="string">&quot;version&quot;</span>: <span class="string">&quot;20.17.1&quot;</span>,</span><br><span class="line"><span class="string">&quot;cksum&quot;</span>: <span class="string">&quot;3176199392 26758&quot;</span>,</span><br></pre></td></tr></table></figure>
+<p>第三步：编译ovn，将生成的ovn-sbctl， ovn-controller等二进制替换掉</p>
+<p>第四步：使用新的schema，用ovsdb-client  convert命令使其生效：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovsdb-client convert  unix:/var/run/ovn/ovnsb_db.sock /usr/share/ovn/ovn-sb.ovsschema</span><br></pre></td></tr></table></figure>
+
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2021/12/08/ovsdb-mod/" data-id="clexlgj2w00218myyg9287w5w" data-title="ovsdb数据库修改" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2021/12/31/goon-2021/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          且行且看
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/12/26/goon-2020/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">大江小鱼</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

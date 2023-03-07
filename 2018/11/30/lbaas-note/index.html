@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>lbaas分析笔记 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言今年的云网方案，涉及很多lb的需求，大多数是客户亟需的而社区目前不支持的。针对类似需求，我们首要考虑能否通过其它方式去满足而不改动社区原有实现，其次才是考虑如何扩展并兼容社区实现。当然有的方案也会考虑能否向社区提交，话说回来了，搞开源本来就要结合实际需求来做，过于私有化的方案也就违背了开源的初心。说回lbaas，目前社区已经将其独立出neutron，成立新的项目octavia。即便如此，当前很">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lbaas分析笔记">
+<meta property="og:url" content="https://liushy.com/2018/11/30/lbaas-note/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言今年的云网方案，涉及很多lb的需求，大多数是客户亟需的而社区目前不支持的。针对类似需求，我们首要考虑能否通过其它方式去满足而不改动社区原有实现，其次才是考虑如何扩展并兼容社区实现。当然有的方案也会考虑能否向社区提交，话说回来了，搞开源本来就要结合实际需求来做，过于私有化的方案也就违背了开源的初心。说回lbaas，目前社区已经将其独立出neutron，成立新的项目octavia。即便如此，当前很">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/lbaas.png">
+<meta property="article:published_time" content="2018-11-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:32:25.261Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/lbaas.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-lbaas-note" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/11/30/lbaas-note/" class="article-date">
+  <time class="dt-published" datetime="2018-11-29T16:00:00.000Z" itemprop="datePublished">2018-11-30</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>►<a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      lbaas分析笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="前言">前言</span></h2><p>今年的云网方案，涉及很多lb的需求，大多数是客户亟需的而社区目前不支持的。针对类似需求，我们首要考虑能否通过其它方式去满足而不改动社区原有实现，其次才是考虑如何扩展并兼容社区实现。当然有的方案也会考虑能否向社区提交，话说回来了，搞开源本来就要结合实际需求来做，过于私有化的方案也就违背了开源的初心。说回lbaas，目前社区已经将其独立出neutron，成立新的项目<a target="_blank" rel="noopener" href="https://docs.openstack.org/octavia/latest/">octavia</a>。即便如此，当前很多云厂商，依然还是沿用的lbaas v1或v2。很多lb厂商如f5，a10还是以lbaas的插件为主，所以本文简要分析lbaas相关知识点。   </p>
+<span id="more"></span>
+<h2><span id="lbaas-plugin">lbaas plugin</span></h2><p>lbaas的功能入口是它的restAPI。厂商们针对api开发相应的lbaas plugin，并且要对应到设备上的具体功能。简单阐述以下lbaas的几个组件的关系：<br><img src="/imgs/lbaas.png" alt="lbaas-arch"><br>api和lbaas plugin服务是随neutron-server一起跑在控制节点上；agent是跑在网络节点上的。neutron-server接收到restapi的请求后，会触发lb的插件处理body，插件会选取lb的agent，将相应的请求通过rpc发送给agent，agent处理消息时会调用设备的driver。而device driver就是具体与设备打交道的组件。插件部分没什么好说的，接触的几个厂商都是沿用的lb社区的插件。配置在/etc/neutron/neutron.conf:    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">service_plugins = [already defined plugins],neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2</span><br></pre></td></tr></table></figure>
+<p>当然还需要配置相应的service_provider（neutron里对理解provider这个概念很重要）。比如f5的配置：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">service_provider = LOADBALANCERV2:F5Networks:neutron_lbaas.drivers.f5.driver_v2.F5LBaaSV2Driver:default</span><br></pre></td></tr></table></figure>
+<p>我们看到，这里的provider路径指向的是<code>F5LBaaSV2Driver</code>。这个driver可以理解是调用f5-agent服务的插件驱动<code>service driver</code>，注意区别前文提到的<code>device driver</code>。我们也可以看lb的代码里，插件在创建资源的时候，是调的<code>self._call_driver_operation</code>这个方法，从方法名看出，调的是driver，也就是刚刚讲的这个driver。    </p>
+<h2><span id="lbaas-agent">lbaas agent</span></h2><p>这部分分析agent的处理流程。在此之前还是先分析一下前文提到的service_provider。参照f5的社区代码，他们的service driver在处理创建lb的开始阶段，会通过<code>_schedule_agent_create_service</code>选取一个agent，因此是支持多agent的（有个可用域的概念）。除此之外，还做了一个特殊处理，那就是将vip的端口类型改为了裸金属<code>baremetal</code>。对于这样的处理，第三方的ml2处理port需要特别注意，建议增加判断<code>device_owner</code>为f5的特殊流程。</p>
+<p>lbaas agent的处理主要就是调用device driver进行资源的增删改，以及同步资源的状态status。配置device driver的地方在/etc/neutron/lbaas_agent.ini:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver</span><br></pre></td></tr></table></figure>
+<p>类似f5的配置在/etc/neutron/services/f5/f5-openstack-agent.ini：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">f5_bigip_lbaas_device_driver = f5_openstack_agent.lbaasv2.drivers.bigip.icontrol_driver.iControlDriver</span><br></pre></td></tr></table></figure>
+<p>可以看得出来，社区的方案里，agent与plugin的处理是异步进行的。driver的处理流程就不分析了，各家厂商的处理都不同。</p>
+<h2><span id="lbaas方案">lbaas方案</span></h2><p>这里就不说设备的组网方案了，单臂双臂等等。针对lb的纳管方案，目前就是两种，分别是云平台纳管和sdn控制器纳管。云平台纳管的情况，lb的插件和agent的部署就直接对应为设备的，类似f5，那么这种情况下，lb做不到的引流等相关操作的话，就需要其它方案补齐，比如额外的网络规划；sdn纳管lb设备的情况，插件与agent都对应sdn的，这种情况下，云上就不关心具体的引流情况了，这时候sdn就需要做到自动化部署lb资源。而实际部署的时候，真正复杂的地方在于，往往会涉及到sdn与云和lb插件三者的交互。所以，每部分摊开来都看似容易，但是融合在一起形成方案的时候，一定要考虑到各种细节。</p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2018/11/30/lbaas-note/" data-id="clexlgj2c00128myybme96917" data-title="lbaas分析笔记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/12/26/goon-2018/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          南来北往
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/09/05/openstack-apic/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">neutron对接思科apic插件</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

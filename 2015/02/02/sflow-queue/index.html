@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>基于floodlight&amp;sflow的队列调整 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但OVS FAQ有提到OVS2.0以后都支持了meter,可是还没有实现meter的功">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于floodlight&amp;sflow的队列调整">
+<meta property="og:url" content="https://liushy.com/2015/02/02/sflow-queue/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但OVS FAQ有提到OVS2.0以后都支持了meter,可是还没有实现meter的功">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/ddos-topo.png">
+<meta property="og:image" content="https://liushy.com/imgs/console-view.png">
+<meta property="og:image" content="https://liushy.com/imgs/queue-flows.png">
+<meta property="og:image" content="https://liushy.com/imgs/s1-eth0-rate.png">
+<meta property="og:image" content="https://liushy.com/imgs/s1-eth1-rate.png">
+<meta property="article:published_time" content="2015-02-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-30T05:49:39.536Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/ddos-topo.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-sflow-queue" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/02/02/sflow-queue/" class="article-date">
+  <time class="dt-published" datetime="2015-02-01T16:00:00.000Z" itemprop="datePublished">2015-02-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      基于floodlight&amp;sflow的队列调整
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="前言">前言</span></h2><p>介绍本次实验前，我想先讲讲关于流量监控的事。嗯，基于sflow的ddos防御 的成功，坚定了我继续基于sflow做流量监控。对于流量监控，我最初的想法是通过openflow协议的count和meter入手。不幸的是，通过count能统计端口数据包和字节数，难以实现速率的监控；meter可以对端口进行速率控制，但OVS FAQ有提到OVS2.0以后都支持了meter,可是还没有实现meter的功能。回到主题，这一次的实验是基于sflow监控的基础上，通过floodlight进行的队列调整。 <span id="more"></span>      </p>
+<h2><span id="实验设计">实验设计</span></h2><p>1.拓扑结构沿用上次实验的：switch+3hosts+floodlight+sflow如图：：<br><img src="/imgs/ddos-topo.png" alt="topo"><br>2.设计思想：switch上有三个端口分别连接有host1,host2,host3。在端口3上设置3条队列，分别带宽设置为：<br>--id=@q0 create queue other-config:min-rate=1000000000 other-config:max-rate=1000000000<br>--id=@q1 create queue other-config:max-rate=20000000 other-config:min-rate=20000000<br>--id=@q2 create queue other-config:max-rate=2000000 other-config:min-rate=2000000      </p>
+<p>让host1和host2同时向host3发包通过流量监控，获取端口1和端口2的速率分别为R1和R2，然后进行判断：<br>若R1&gt;R2:端口1到端口3的队列—&gt;q0 端口2到端口3的队列—&gt;q2<br>若R2&gt;R1:端口1到端口3的队列—&gt;q2 端口2到端口3的队列—&gt;q0<br>若R1=R2:端口1到端口3的队列—&gt;q1 端口2到端口3的队列—&gt;q1     </p>
+<h2><span id="结果分析">结果分析</span></h2><p>首先让host1和host2分别向host3泛洪：<br>　　h1&gt; ping -f h3<br>　　h2&gt; ping -f h3<br>执行队列调整应用后终端显示:<br><img src="/imgs/console-view.png" alt="console"><br>可以看出，由于端口1(注意：eth0-eth2依次对应端口1-3)的速率比端口2的速率快，应用立即通知控制器下发流表给端口1和端口2设定不同的出口队列，再来看看控制器的流表：<br><img src="/imgs/queue-flows.png" alt="sdnflow"><br>从流表可以看到，控制器已经下发了队列调整流表项。端口1的速率变化：<br><img src="/imgs/s1-eth0-rate.png" alt="sflow-port1"><br> 端口2的速率变化：<br><img src="/imgs/s1-eth1-rate.png" alt="sflow-port1"><br>从图中我们可以看到，最初阶段，端口1和端口2的速率均在2M左右；从时间17:13:18开始，也就是实施队列调整应用后，端口1的速率上升到了大于2M阶段，而端口2的速率下降到了500k以下。   </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2015/02/02/sflow-queue/" data-id="clexlgj3100298myybzgl9v9a" data-title="基于floodlight&amp;sflow的队列调整" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/04/07/floodlight-packetin/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Floodlight中模块对Packet_in报文的处理
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/01/27/sflow-ddos/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">sflow流量监控之ddos防御</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

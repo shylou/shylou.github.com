@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>技术杂记 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="本文主要是总结一下最近一个多月学习和折腾的一些技术，归纳了一些知识点，因为有的内容短时间内还无法驾轻就熟甚至还没完全搞明白，所以对这部分内容只做记录，研究将会持续进行。大概有以下几部分，按时间顺序：持续折腾java和python；然后是研究了负载均衡相关的技术；了解k8s和zookeeper；搞了一下jenkins。涉及到一些相关的资料，将在文中贴出来。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="技术杂记">
+<meta property="og:url" content="https://liushy.com/2017/08/12/what-doing2/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="本文主要是总结一下最近一个多月学习和折腾的一些技术，归纳了一些知识点，因为有的内容短时间内还无法驾轻就熟甚至还没完全搞明白，所以对这部分内容只做记录，研究将会持续进行。大概有以下几部分，按时间顺序：持续折腾java和python；然后是研究了负载均衡相关的技术；了解k8s和zookeeper；搞了一下jenkins。涉及到一些相关的资料，将在文中贴出来。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-08-11T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:10:02.777Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-what-doing2" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/08/12/what-doing2/" class="article-date">
+  <time class="dt-published" datetime="2017-08-11T16:00:00.000Z" itemprop="datePublished">2017-08-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/code/">code</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      技术杂记
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本文主要是总结一下最近一个多月学习和折腾的一些技术，归纳了一些知识点，因为有的内容短时间内还无法驾轻就熟甚至还没完全搞明白，所以对这部分内容只做记录，研究将会持续进行。大概有以下几部分，按时间顺序：持续折腾java和python；然后是研究了负载均衡相关的技术；了解k8s和zookeeper；搞了一下jenkins。涉及到一些相关的资料，将在文中贴出来。 </p>
+<span id="more"></span>
+
+<h2><span id="java多线程">java多线程</span></h2><p>java多线程，最重要的是要理清以下的几个知识点：</p>
+<ul>
+<li>线程安全：保证线程安全，即在多线程并发的情况下，线程的调度不影响任何结果。</li>
+<li>同步：同步的作用就是通过人为的调度保证线程的安全，比如使用注解关键字@synchronized。</li>
+<li>Thread类和Runable接口：实现接口可以避免java类单继承特性带来的局限，增强了程序的健壮性，代码能够被多个线程共享。</li>
+<li>join方法和yield方法：join方法强制线程执行，yield方法可以让同等级的某一线程先运行。</li>
+<li>wait方法和sleep方法：wait方法与sleep方法最大的区别在于wait会释放对象锁，而sleep不会。sleep属于Thread类，wait属于Object类。</li>
+<li>ThreadLocal类：使用ThreadLocal维护变量时，为每一个使用该变量的线程都提供一个变量值的副本，使每一个线程都可以独立地改变自己的副本，而不会和其它线程的副本冲突。</li>
+<li>Lock类和ReentrantLock类：都是锁相关的类，同@synchronized，都是解决同步的问题，处理线程间资源的争端。</li>
+<li>ReentrantReadWriteLock类：写写，写读互斥；读读不互斥。</li>
+<li>BlockingQueue：阻塞队列，提供了阻塞接口put和take，带超时功能的阻塞接口offer和poll。</li>
+<li>ThreadPoolExecutor：用于管理线程，本身不是多线程，了解ThreadPoolExecutor的参数。  </li>
+</ul>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/wxd0108/p/5479442.html">Java中的多线程你只要看这一篇就够了</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/lufeng20/article/details/24314381/">彻底理解ThreadLocal</a><br><a target="_blank" rel="noopener" href="http://ifeve.com/java-concurrency-thread-directory/">并发编程网</a><br><a target="_blank" rel="noopener" href="http://wsmajunfeng.iteye.com/blog/1629354">BlockingQueue</a> </p>
+<h2><span id="java-nio">java nio</span></h2><p>与IO面向流不同，其操作以数据块为单位进行，而不是字节。NIO还提供了非阻塞IO，单线程多通道等技术，相关知识点：    </p>
+<ul>
+<li>同步和异步：同步会不断轮询等待结果，等到了才继续执行后续的操作；异步不会等待，将继续执行其它操作，当有结果返回时再来执行未完成的操作。</li>
+<li>阻塞和非阻塞：阻塞就是系统调用在IO调用完成时才返回，被阻塞的进程挂起；非阻塞不管系统调用是否完成都立刻返回。</li>
+<li>通道channel：通道类似流，但程序不会直接操作通道，所有的内容先读／写到缓冲区中，然后再从缓冲区取得或者写入。几个比较常用的管道：FileChannel，DatagramChannel，SocketChannel，ServerSocketChannel。</li>
+<li>Buffer：IO与NIO的操作不同在于，IO操作基于流的形式完成，而NIO的操作需要使用到Buffer。flip方法将Buffer从写切换到读模式，在读模式下，可以读取之前写入到Buffer的数据。Buffer三个属性capacity，position，limit。</li>
+<li>ServerSocketChannel和DatagramChannel：ServerSocketChannel是可以监听TCP连接的通道, 类似IO中的ServerSocket，常用方法open和accept；DatagramChannel是一个能收发UDP包的通道，类似DatagramSocket，receive和send方法处理数据。</li>
+<li>Selector：用于非阻塞式网络服务，一个选择器可以被多个通道注册。通道需要configureBlocking为false即非阻塞，然后register注册到选择器。SelectionKey的四个常量：OP_CONNECT，OP_ACCEPT，OP_READ，OP_WRITE。</li>
+</ul>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/fanzhidongyzby/p/4098546.html">高性能IO模型浅析</a><br><a target="_blank" rel="noopener" href="http://blog.chinaunix.net/uid-26000296-id-3754118.html">IO中同步、异步与阻塞、非阻塞的区别</a><br><a target="_blank" rel="noopener" href="http://ifeve.com/overview/">并发编程网</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/dd864140130/article/details/50299687">通俗编程——白话NIO之Selector</a><br><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/19732473/answer/14413599">知乎—怎样理解阻塞非阻塞与同步异步的区别</a>     </p>
+<h2><span id="python相关">python相关</span></h2><p>看了一些资料，大多是入门相关的：</p>
+<ul>
+<li>Django：Django的MTV模型，目录结构，urls路由，settings配置，ORM操作，模板渲染等。</li>
+<li>猴子补丁：简单来讲，就是不去改变原函数而对其功能进行追加和变更，在此之前需要理解python的函数式编程。</li>
+<li>setup.py：用来安装模块的。 setup函数里的参数可以指定处理哪些包以及被映射到哪个源码包。了解entry points的使用。</li>
+</ul>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/feixuelove1009/p/5823135.html">简约而不简单的Django新手图文教程</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/youxin/p/3805706.html">Python Monkey patch猴子补丁</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/lynn_kong/article/details/17540207">关于python中的setup.py</a>    </p>
+<h2><span id="lvs负载均衡技术">lvs负载均衡技术</span></h2><p>lvs即linux虚拟服务器，主要针对一组服务器实现负载均衡调度。有以下实现方式：</p>
+<ul>
+<li><p>VS/NAT：调度器收到客户端的报文后，通过NAT转换并结合负载均衡算法，改写报文目的地址，将请求发送到某一台真实服务器上；而真实服务器的响应报文的源地址也会被调度器改写，回应给客户端。</p>
+</li>
+<li><p>VS/TUN：真实服务器和调度器都额外有一块隧道网卡，并将VIP配置到隧道网卡上。客户端的请求报文会首先通过调度器，调度器通过IP隧道封装报文并发送给某一台真实服务器，真实服务器解封装报文后，发现VIP配置到隧道网卡上，所以它的响应报文会直接返回给客户端。</p>
+</li>
+<li><p>VS/DR：类似TUN模式，当调度器接收到客户端的请求时，会改写请求报文的mac地址并转发给真实服务器，真实服务器会将响应报文直接回复给客户端，免去了VS/TUN中的IP隧道开销。但是必须要求调度器与真实服务器都有一块网卡连在同一物理网段。</p>
+</li>
+<li><p>arp_ignore：当客户端向VIP发送请求时，确保该请求发送至Director上的VIP，而不是真实服务器的，需要配置arp_ignore和arp_announce参数。<br> arp_ignore为0时，表示无论哪块网卡收到arp查询请求，只要本机有此mac地址的网卡，就给予回应。<br> arp_ignore为1时，表示只有请求的mac地址是自己的网卡时，才给予回应。</p>
+</li>
+<li><p>arp_announce:参数说明<br> arp_announce为0时，表示无论哪块网卡收到了arp的请求，只要发现本机有请求的mac，就会响应。<br> arp_announce为1时，表示尽量避免响应ARP请求中MAC不是本网卡的。如一个主机有多块网卡，其中一块网卡接收到了ARP请求，发现所请求的MAC是本机另一块网卡的，这个时候接收到ARP请求的这块网卡就尽量避免响应。<br> arp_announce为2时，表示总是使用最合适的网卡来响应。一个主机有多块网卡，其中一块网卡接收到了ARP请求，发现所请求的MAC是本机另一块网卡的，这个时候接收到ARP请求的这块网卡就一定不响应，只有发现请求的MAC是自己的才给与响应</p>
+</li>
+</ul>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://ixdba.blog.51cto.com/2895551/552947">Linux负载均衡软件LVS之一</a><br><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000002609473">ipvsadm 命令详解</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/lgfeng/archive/2012/10/16/2726308.html">LVS负载均衡中arp_ignore和arp_annonuce参数配置的含义</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/liwei0526vip/p/6370103.html">使用LVS实现负载均衡原理及安装配置详解</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/nimasike/article/details/53893609">LVS-TUN(Virtual Server via IP Tunneling)原理说明与配置用例</a>   </p>
+<h2><span id="mysql调优">mysql调优</span></h2><p>mysql的学习，主要是主备以及分区分表：</p>
+<ul>
+<li>binlog：要保持两台数据库的自动同步，需要开启使用主机上的binlog。binlog日志记录了所有更新了数据或者已经潜在更新了数据，也即是将主机上执行过的sql，在备机上执行一次。</li>
+<li>分区分表：分区就是把一张表的数据分成N多个区块，这些区块可以在同一个磁盘上，也可以在不同的磁盘，但它们还是一张表；分表与前者的区别就是把一张表分成若干张小表。</li>
+</ul>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://blog.csdn.net/wyzxg/article/details/7412777">mysql的binlog详解</a><br><a target="_blank" rel="noopener" href="http://blog.51yip.com/mysql/949.html">mysql分表的3种方法</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/phpshen/p/6198375.html">mysql的分区和分表</a>    </p>
+<h2><span id="k8s和zookeeper学习">k8s和zookeeper学习</span></h2><ul>
+<li>k8s：Kubernetes是一款docker容器集群的管理系统，类比docker官方的swarm。Kubernetes集群中的两大角色分别为master和minion节点。minion节点是运行docker容器的节点，master节点对外提供一系列管理集群的api接口，实现对集群的管理。还有一款工具etcd，它是一个分布式一致性key-values数据库，用来存储kubernetes的信息。</li>
+<li>zookeeper：一款分布式一致性协调系统。集群中有两大角色Leader和Learner，Learner角色又分为Observer和Follower。核心是原子广播，这个机制保证了各个Server之间的同步。选主的流程采用fast paxos算法。还有一个著名的分布式一致性算法是raft算法。本文就不做深入阐述了（还在研究中）</li>
+<li>paxos算法和raft算法</li>
+</ul>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/galengao/p/5780938.html">kubernetes 集群的安装部署</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/tynia/p/k8s-cluster.html">kubernetes 1.3 的安装和集群环境部署</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/xuxiuning/article/details/51218941">Zookeeper原理架构</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/telwanggs/p/6934396.html">Zookeeper系列（一)</a><br><a target="_blank" rel="noopener" href="http://blog.csdn.net/coledaddy/article/details/50975712">Raft 一致性算法</a><br><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/36648084">知乎—raft算法与paxos算法相比有什么优势，使用场景有什么差异</a>    </p>
+<h2><span id="jenkins-api笔记">jenkins api笔记</span></h2><p>最近安排了一个任务，需要写脚本调jenkins的rest api，做了下面两件事：</p>
+<p>带参数的rest api：我们在构建Jenkins job时，可以选择带参数的方式，配置任务时指定参数名，然后通过以下api来触发任务</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -X POST http://user:password@jenkinsurl/job/Robot/buildWithParameters?PKG=pkgname&amp;第2个变量名=第2个变量名的值</span><br></pre></td></tr></table></figure>
+<p>服务器免密登陆：bash脚本实现scp免密的功能，需要使用到expect工具</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">expect -c <span class="string">&quot;</span></span><br><span class="line"><span class="string">spawn scp -r <span class="variable">$PKG</span> <span class="variable">$remote_path</span></span></span><br><span class="line"><span class="string">expect &#123;</span></span><br><span class="line"><span class="string">    \&quot;*password\&quot; &#123;set timeout 100; send \&quot;<span class="variable">$password</span>\r\&quot;&#125;</span></span><br><span class="line"><span class="string">    \&quot;*yes/no\&quot; &#123;send \&quot;yes\r\&quot;; exp_continue;&#125;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">expect eof&quot;</span></span><br></pre></td></tr></table></figure>
+<p>expect是一种脚本语言,代替人实现与终端的交互。一般<code>spawn</code>后面跟上一条命令操作；<code>expect -c</code>与命令里的<code>expect</code>是不同的，前者是<code>expect</code>工具的使用，后者表示等待输出特定的字符串，然后再进行<code>send</code>操作。单纯的expect脚本还可以接收输入参数：<code>set param0 [lindex $argv 0]</code>。    </p>
+<p>资料：<br><a target="_blank" rel="noopener" href="http://blog.csdn.net/houmou/article/details/53102051">每次进步一点点——linux expect 使用</a><br><a target="_blank" rel="noopener" href="http://www.cnblogs.com/mologa-jie/p/6064815.html">shell 中scp密码输入 —expect</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/08/12/what-doing2/" data-id="clexlgj37002d8myyh9y80zq7" data-title="技术杂记" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/09/30/docker+swarm/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Docker编排工具之Swarm
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/07/16/scpy/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Python的scp小工具</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

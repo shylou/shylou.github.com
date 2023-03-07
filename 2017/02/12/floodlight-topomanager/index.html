@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>解析Floodlight之TopologyManager模块 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数compute()重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程UpdateTopologyW">
+<meta property="og:type" content="article">
+<meta property="og:title" content="解析Floodlight之TopologyManager模块">
+<meta property="og:url" content="https://liushy.com/2017/02/12/floodlight-topomanager/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数compute()重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程UpdateTopologyW">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/topoman.jpg">
+<meta property="article:published_time" content="2017-02-11T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:32:54.102Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/topoman.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-floodlight-topomanager" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/02/12/floodlight-topomanager/" class="article-date">
+  <time class="dt-published" datetime="2017-02-11T16:00:00.000Z" itemprop="datePublished">2017-02-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      解析Floodlight之TopologyManager模块
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>Floodlight的拓扑管理模块主要由TopologyManager 类来实现。TopologyManager监听LinkDiscoverManager的更新信息，一旦有链路更新了，就会实例化拓扑计算模块TopologyInstance，并运行函数<code>compute()</code>重新计算路径，并为转发模块Forwarding提供路径转发服务。模块启动后会间隔500ms运行一次线程<code>UpdateTopologyWorker</code>： <span id="more"></span></p>
+<p><img src="/imgs/topoman.jpg" alt="UpdateTopologyWorker">        </p>
+<p><code>UpdateTopologyWorker</code>线程中只运行了一个方法<code>updateTopology()</code>，该方法大致的流程：    </p>
+<ul>
+<li>Step1：首先调用<code>applyUpdates()</code>方法获取拓扑更新，如果链路有更新如新增链路就执行<code>addOrUpdateLink()</code>，如果链路down掉了，就执行删除<code>removeLink()</code>；    </li>
+<li>Step2：然后调用<code>createNewInstance()</code>方法创建一个<code>TopologyInstance</code>实例，并运行方法<code>compute()</code>计算路径；    </li>
+<li>Step3：<code>lastUpdateTime</code>用于记录上一次更新的时间，<code>informListeners()</code>向所有需要监听拓扑信息的模块传递拓扑更新信息。    </li>
+</ul>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/02/12/floodlight-topomanager/" data-id="clexlgj1x000h8myyfgp51n5d" data-title="解析Floodlight之TopologyManager模块" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/02/12/floodlight-topoins/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          解析Floodlight之TopologyInstance模块
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/12/24/goon-2016/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">贰零幺陆</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

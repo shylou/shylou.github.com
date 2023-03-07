@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Linux内存占用 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux内存占用">
+<meta property="og:url" content="https://liushy.com/2016/11/27/Linux-mem/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用:">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2016-11-26T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:16:37.907Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Linux-mem" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2016/11/27/Linux-mem/" class="article-date">
+  <time class="dt-published" datetime="2016-11-26T16:00:00.000Z" itemprop="datePublished">2016-11-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Linux内存占用
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>记录一下几个常用的查看Linux内存和硬盘的命令，以备查看使用:    <span id="more"></span></p>
+<h2><span id="top">top</span></h2><p>top命令是Linux下常用的性能分析工具，能够实时显示系统中进程的资源占用状况，类似于Windows的任务管理器可以直接使用top命令后，查看%MEM的内容。可以指定进程或者用户查看，如查看oracle用户的进程内存使用情况的话可以使用如下的命令：    </p>
+<pre><code class="bash">$ top -u oracle
+</code></pre>
+<p>显示内容解释： </p>
+<pre><code class="bash">PID：进程的ID     
+USER：进程所有者
+PR：进程的优先级别，越小越优先被执行
+NInice：值
+VIRT：进程占用的虚拟内存
+RES：进程占用的物理内存
+SHR：进程使用的共享内存
+S：进程的状态。S表示休眠，R表示正在运行，Z表示僵死状态，N表示该进程优先值为负数
+%CPU：进程占用CPU的使用率
+%MEM：进程使用的物理内存和总内存的百分比
+TIME+：该进程启动后占用的总的CPU时间，即占用CPU使用时间的累加值。
+COMMAND：进程启动命令名称
+</code></pre>
+<p>常用的命令：    </p>
+<pre><code class="bash">P：按%CPU使用率排行
+T：按MITE+排行
+M：按%MEM排行
+</code></pre>
+<h2><span id="pmap">pmap</span></h2><p>可以根据进程查看进程相关信息占用的内存情况，(进程号可以通过ps查看)如下所示：   </p>
+<pre><code class="bash">$ pmap -d 14596
+</code></pre>
+<h2><span id="ps">ps</span></h2><p>ps 的参数众多, 在此仅列出几个常用的参数：</p>
+<pre><code class="bash">-A 列出所有的行程
+-w 显示加宽可以显示较多的资讯
+-au 显示较详细的资讯
+-aux 显示所有包含其他使用者的行程
+</code></pre>
+<p>au(x) 输出格式 :<br>USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND     </p>
+<pre><code class="bash">USER: 行程拥有者
+PID: pid
+%CPU: 占用的 CPU 使用率
+%MEM: 占用的记忆体使用率
+VSZ: 占用的虚拟记忆体大小
+RSS: 占用的记忆体大小
+TTY: 终端的次要装置号码 (minor device number of tty)
+STAT: 该行程的状态:
+D: 不可中断的静止
+R: 正在执行中
+S: 静止状态
+T: 暂停执行
+Z: 不存在但暂时无法消除
+W: 没有足够的记忆体分页可分配
+&lt;: 高优先序的行程
+N: 低优先序的行程
+L: 有记忆体分页分配并锁在记忆体内
+START: 行程开始时间
+TIME: 执行的时间
+COMMAND:所执行的指令
+</code></pre>
+<h2><span id="du">du</span></h2><p>du命令主要是用来查看硬盘使用情况的：  </p>
+<pre><code class="bash">du -sh : 查看当前目录总共占的容量。而不单独列出各子项占用的容量
+du -lh —max-depth=1 : 查看当前目录下一级子文件和子目录占用的磁盘容量。
+</code></pre>
+<h2><span id="free">free</span></h2><p>free是最常用的查看内存占用的命令，有以下参数：    </p>
+<pre><code class="bash">-b：以Byte为单位显示内存使用情况
+-k：以KB为单位显示内存使用情况
+-m：以MB为单位显示内存使用情况
+-o：不显示缓冲区调节列
+-s&lt;间隔秒数&gt;：持续观察内存使用状况
+-t：显示内存总和列
+-V：显示版本信息
+</code></pre>
+<p>举例说明：    </p>
+<pre><code class="bash">free -m 
+            total  used  free shared  buffers cached 
+Mem:        2016   1973  42     0     163    1497 
+-/+ buffers/cache: 312   1703 
+Swap:       4094    0    4094     
+</code></pre>
+<p>输出的第一行：    </p>
+<pre><code class="bash">total：内存总数
+used：已经使用的内存数
+free：空闲的内存数
+shared：当前已经废弃不用
+buffers Buffer：缓存内存数
+cached Page：缓存内存数
+</code></pre>
+<p>第二行（-/+ buffers/cache）：   </p>
+<pre><code class="bash">(-buffers/cache) used内存数：第一行Mem行中的 used – buffers – cached
+(+buffers/cache) free内存数: 第一行Mem行中的 free + buffers + cached
+</code></pre>
+<p>第三行是交换区的使用情况，那么什么时候会用到交换区的内存呢，即当可用内存少于额定值的时候，就会进行交换。可以通过cat /proc/meminfo来查看内存额定值：    </p>
+<pre><code class="bash">hadoop@hadoop:~$ cat /proc/meminfo 
+MemTotal:        1017576 kB
+MemFree:          206012 kB
+MemAvailable:     479832 kB
+Buffers:           47344 kB
+Cached:           333836 kB
+SwapCached:            0 kB
+Active:           455128 kB
+Inactive:         271084 kB
+Active(anon):     345856 kB
+Inactive(anon):     4140 kB
+Active(file):     109272 kB
+Inactive(file):   266944 kB
+Unevictable:          32 kB
+Mlocked:              32 kB
+SwapTotal:       1047548 kB
+SwapFree:        1047548 kB
+Dirty:               588 kB
+Writeback:             0 kB
+AnonPages:        345060 kB
+Mapped:           174264 kB
+Shmem:              4968 kB
+Slab:              38328 kB
+SReclaimable:      20452 kB
+SUnreclaim:        17876 kB
+KernelStack:        5312 kB
+PageTables:        23708 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     1556336 kB
+Committed_AS:    2404256 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:       23324 kB
+VmallocChunk:   34359709832 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:     65536 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+</code></pre>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2016/11/27/Linux-mem/" data-id="clexlgj1a00018myy3al7f8xm" data-title="Linux内存占用" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/12/21/docker+hadoop/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          使用docker部署hadoop分布式集群
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/11/26/ovs-cli/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OVS配置命令</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

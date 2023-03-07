@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>大江小鱼 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="工作总结今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感觉差距不明显。上半年还做了将nova-docker纳入到virt里，作为一个driver在跑，也就是咱">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大江小鱼">
+<meta property="og:url" content="https://liushy.com/2020/12/26/goon-2020/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="工作总结今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感觉差距不明显。上半年还做了将nova-docker纳入到virt里，作为一个driver在跑，也就是咱">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-12-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:34:10.393Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-goon-2020" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2020/12/26/goon-2020/" class="article-date">
+  <time class="dt-published" datetime="2020-12-25T16:00:00.000Z" itemprop="datePublished">2020-12-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/life/">life</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      大江小鱼
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="工作总结">工作总结</span></h2><p>今年研究的技术比较杂，更多的是有关于上一年公司项目中涉及到的需求。<br>年初完成了将ironic容器化，主要是为了提高ironic的可用性和简易部署，该需求最终搁置了。<br>三月份左右试着将token存放memcached切换成redis，后续也测试了使用memcached_pool，在规模小的场景感觉差距不明显。<br>上半年还做了将nova-docker纳入到virt里，作为一个driver在跑，也就是咱们iaas支持了创建容器的功能，此外还完成了容器网卡的ovs mirror功能。    <span id="more"></span><br>下半年最重要的任务就是支撑pc实验室项目，大批量地创建虚机和容器，涉及到数据库查询，服务多副本，ovs agent安全组处理能力等多个优化点。<br>研究了一下metal3项目，这个是云原生用于部署k8s服务器的项目，项目中的baremetal-operator其底层调的仍然是ironic。<br>研究了一下ovn项目，实现对接纯软交换的sdn方案，没有了rpc调用。需要了解ovn的南北向数据库，ovsdb等相关知识点。   </p>
+<p>今年延续了去年的低气压，整个人状态低迷。组内人力不足，除了做需求讨论方案还要处理网上问题，所以工作内容处于积压状态，造成了整个人比较压抑。神经都脆弱了不少，有时半夜醒来，整个人清醒的不得了，睡不着就会想工作上的事情，有时候甚至会挨到天亮。整个人气色很差，今年体检结果出来后，明显看到肝上的毛病很突出。脾气暴躁，很多同事估计也感受到了，有时候遇到很傻叉的方案讨论，脾气上来了就会碍着怼人，遇到扯皮的邮件，也会数落问题细节即使领导也在邮件列表里。但是到没有出现工作上的失误，手头的事情最终都能按时解决掉，不过却伤害到了自己伤肝伤神。    </p>
+<p>最终呢，在年底的时候离开了，没有太大的感触，很多项目还是付出了不少心血，格式化的那一刻一阵酸爽。<br>解脱！？   </p>
+<h2><span id="生活杂记">生活杂记</span></h2><p>成都房价又涨了一点，摇号几次都是陪玩，不过我也变得佛系了，看运气吧首付应该能够得上。    </p>
+<p>今年没有出去玩耍，各种原因搁置了，旅游计划要排到21年了哈。交工卡前那段时间，由于我还有年假没用，于是休假了两周，每天上午逛菜市场做饭，晚上看点东西十点多就睡了，过的惬意而自在，真正体会到了不当打工人的闲适。     </p>
+<p>家里长辈又老了一岁，父母催我另一半的问题也越来迫切了，是啊我即将三十了。有一件令全家人揪心的事情是，外婆突然生病，家里人在医院照顾了将近两个月。目前外婆的病情况好转但不能完全恢复，回家里修养，请了一名家政帮着妈一起照顾加煮饭，希望外婆能健康开心吧。    </p>
+<p>今年整体看起来都很丧，最直观的感受是身边的朋友怨气大于开心，好像大家都因为某些事丧到不行。其实大可不必，就像那大江里的小鱼儿，逆流顺流又如何呢，长江黄河依然奔腾不息。世界看上去并没有变好的迹象，既然如此就随它吧，活着吧，看看它究竟会变成个啥样，总得有点盼头不是。<br>开心点吧朋友们，最后还是那句新年快乐<br>happy&amp;future</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2020/12/26/goon-2020/" data-id="clexlgj25000r8myy4sus2uo3" data-title="大江小鱼" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2021/12/08/ovsdb-mod/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ovsdb数据库修改
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/12/28/goon-2019/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">惨如老狗</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

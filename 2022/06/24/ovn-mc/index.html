@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ovn multicast实现分析 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="ovn fdb实现分析 fdb学习阶段 fdb使用阶段   mc_unknown实现分析 northd处理 ovn-controller处理 mc_unknown问题修复   mc_flood实现分析 northd处理 ovn-controller处理   mc_flood_l2实现分析    ovn fdb实现分析ovn的fdb实现主要作用于unkown的port，关于unknown po">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ovn multicast实现分析">
+<meta property="og:url" content="https://liushy.com/2022/06/24/ovn-mc/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="ovn fdb实现分析 fdb学习阶段 fdb使用阶段   mc_unknown实现分析 northd处理 ovn-controller处理 mc_unknown问题修复   mc_flood实现分析 northd处理 ovn-controller处理   mc_flood_l2实现分析    ovn fdb实现分析ovn的fdb实现主要作用于unkown的port，关于unknown po">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/put_fdb.png">
+<meta property="og:image" content="https://liushy.com/imgs/known_port.png">
+<meta property="og:image" content="https://liushy.com/imgs/get_fdb.png">
+<meta property="og:image" content="https://liushy.com/imgs/mc_un.png">
+<meta property="og:image" content="https://liushy.com/imgs/add_mc_un.png">
+<meta property="og:image" content="https://liushy.com/imgs/key_of_un.png">
+<meta property="og:image" content="https://liushy.com/imgs/con_mc.png">
+<meta property="og:image" content="https://liushy.com/imgs/pflow_mc.png">
+<meta property="og:image" content="https://liushy.com/imgs/openflow_mc.png">
+<meta property="og:image" content="https://liushy.com/imgs/mc_flood.png">
+<meta property="og:image" content="https://liushy.com/imgs/mc_bit.png">
+<meta property="og:image" content="https://liushy.com/imgs/con_flood.png">
+<meta property="og:image" content="https://liushy.com/imgs/mc_flood_l2.png">
+<meta property="article:published_time" content="2022-06-23T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-06-26T13:15:28.948Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/put_fdb.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovn-mc" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/06/24/ovn-mc/" class="article-date">
+  <time class="dt-published" datetime="2022-06-23T16:00:00.000Z" itemprop="datePublished">2022-06-24</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ovn multicast实现分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <!-- toc -->
+
+<ul>
+<li><a href="#ovn-fdb%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90">ovn fdb实现分析</a><ul>
+<li><a href="#fdb%E5%AD%A6%E4%B9%A0%E9%98%B6%E6%AE%B5">fdb学习阶段</a></li>
+<li><a href="#fdb%E4%BD%BF%E7%94%A8%E9%98%B6%E6%AE%B5">fdb使用阶段</a></li>
+</ul>
+</li>
+<li><a href="#mc_unknown%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90">mc_unknown实现分析</a><ul>
+<li><a href="#northd%E5%A4%84%E7%90%86">northd处理</a></li>
+<li><a href="#ovn-controller%E5%A4%84%E7%90%86">ovn-controller处理</a></li>
+<li><a href="#mc_unknown%E9%97%AE%E9%A2%98%E4%BF%AE%E5%A4%8D">mc_unknown问题修复</a></li>
+</ul>
+</li>
+<li><a href="#mc_flood%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90">mc_flood实现分析</a><ul>
+<li><a href="#northd%E5%A4%84%E7%90%86-1">northd处理</a></li>
+<li><a href="#ovn-controller%E5%A4%84%E7%90%86-1">ovn-controller处理</a></li>
+</ul>
+</li>
+<li><a href="#mc_flood_l2%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90">mc_flood_l2实现分析</a></li>
+</ul>
+<!-- tocstop -->
+
+<h2><span id="ovn-fdb实现分析">ovn fdb实现分析</span></h2><p>ovn的fdb实现主要作用于unkown的port，关于unknown port的含义，狭义的理解就是未配置安全策略的port。对应到neutron即没有配置port-security的端口：无安全的虚机port，localnet port等。    </p>
+<span id="more"></span>     
+
+<h3><span id="fdb学习阶段">fdb学习阶段</span></h3><p>报文从unknown的虚机port出来，进入交换机时，ovn会先通过lookup_fdb查询sb的fdb表，如果没有对应的记录，则通过put_fdb记录（逻辑流表）：<br><img src="/imgs/put_fdb.png" alt="ovn_put_fdb"><br>port_key表示从哪个tunnel_key的port学习到mac，dp_key表示datapath的tunnel_key:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-tool-0 /]<span class="comment"># ovn-sbctl list fdb</span></span><br><span class="line">_uuid               : 58d385f1-a4a7-4c97-b557-5a5d80cd9b01</span><br><span class="line">dp_key              : 1</span><br><span class="line">mac                 : <span class="string">&quot;06:a7:c2:8a:00:4a&quot;</span></span><br><span class="line">port_key            : 1</span><br></pre></td></tr></table></figure>
+<p>这里需要注意一点，从localnet port进入的报文，不会被学习mac地址并记录fdb信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">commit dd94f1266ca4f3c750bc59c474ea342ef3ff9983 </span><br><span class="line">Author: Numan Siddique </span><br><span class="line">Date: 2021/1/31, 6:25 </span><br><span class="line">PM Path: ~/Documents/ezstack/ovn-ovs/ovn/northd/ovn-northd.c  </span><br><span class="line"></span><br><span class="line">northd: MAC learning: Add logical flows for fdb.  </span><br><span class="line">This patch adds the logical flows to do mac learning </span><br><span class="line">for the logical ports whose port security is disabled </span><br><span class="line">with &#x27;unknown&#x27; addresses set.  </span><br><span class="line"></span><br><span class="line">Until now, OVN delivers the unknown destination packets to all </span><br><span class="line">the logical ports with &#x27;unknown&#x27; addresses set. With this </span><br><span class="line">mac learning feature, such flooding of packets is avoided once </span><br><span class="line">OVN has learnt the port-to-mac bindings.  </span><br><span class="line"></span><br><span class="line">Note that we don&#x27;t learn macs seen on the localnet logical ports. </span><br></pre></td></tr></table></figure>
+<p>近期ovn新进patch，支持可以配置参数允许localnet port学习mac：<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/93514df0d4c8fe7986dc5f287d7011f420d1be6d">Add option to enable MAC learning on localnet</a><br>开放localnet port学习mac，可能会导致网络问题，请谨慎使用。</p>
+<h3><span id="fdb使用阶段">fdb使用阶段</span></h3><p>在ls_in_l2_lkup阶段，如果目的是普通port（有安全组的或者地址已知），根据目的mac它是能明确地outport到对应的port：<br><img src="/imgs/known_port.png" alt="known_ports"> </p>
+<p>但是对于目的地址unknown的报文，它会通过get_fdb查询mac对应的端口来确定outport：<br><img src="/imgs/get_fdb.png" alt="ovn_get_fdb"> </p>
+<p>如果没有查到说明fdb还没有学习到目的mac，则该报文会outport给本datapath的mc_unknown，也就会出现出现未知单播报文被多播。<br>mc_unknown解释：所有unknown ports的列表，mc即multicast缩写。</p>
+<h2><span id="mc_unknown实现分析">mc_unknown实现分析</span></h2><h3><span id="northd处理">northd处理</span></h3><p>ovn-northd在组装逻辑流表的过程中，如果ls中存在unknown的port，则会将其添加进mc_unknown表项里：<br><img src="/imgs/mc_un.png"><br><img src="/imgs/add_mc_un.png"><br>mc_unknown的tunnel_key是32769，对应16进制0x8001:<br><img src="/imgs/key_of_un.png"><br>sb数据库的Multicast_Group表可查：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-tool-0 /]<span class="comment"># ovn-sbctl list multicast_group</span></span><br><span class="line">_uuid               : 515d57c0-980b-46da-a7ff-acb95772cf17</span><br><span class="line">datapath            : d1fdf01e-e9a2-42a2-be19-76edaf6f00c7</span><br><span class="line">name                : _MC_unknown</span><br><span class="line">ports               : [464ac60d-5b00-43da-8363-873a3d2959c0, 5c6f0418-17f3-4766-adc7-dd6489f4af5e, 9c4f88fe-99a0-485c-a83c-4efe6bfec26d]</span><br><span class="line">tunnel_key          : 32769</span><br></pre></td></tr></table></figure>
+
+<h3><span id="ovn-controller处理">ovn-controller处理</span></h3><p>ovn-controller会监听Multicast_Group表的变化，并进行相应的处理：<br><img src="/imgs/con_mc.png"><br><img src="/imgs/pflow_mc.png"></p>
+<p>openflow流表根据reg15=0x8001（进制转换32769）匹配mc_unknown，然后output给所有的mc_unknown ports，再进行resubmit：<br><img src="/imgs/openflow_mc.png"></p>
+<h3><span id="mc_unknown问题修复">mc_unknown问题修复</span></h3><p>要解决未知单播报文被多播造成的网络问题，那么就是尽量减少mc_unknown里的port数目。<br>限制在vlan网络下只添加localnet port即可，这样未知单播报文默认也就从localnet port出去，且实际应用场景中单个chassis只会有一个localnet port。所以最终的效果就是，这种单播报文只会从单个localnet port出去，能够避免多播造成的影响。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">- Added limited support <span class="keyword">for</span> logical switches with multiple localnet ports.</span><br><span class="line">  The feature requires that no chassis has two or more physical networks</span><br><span class="line">  with localnet ports that belong to the same logical switch mapped. Routing</span><br><span class="line">  between the ports to be implemented by fabric.</span><br></pre></td></tr></table></figure>
+<p>本修改可能存在的问题：如果目的地址是unknown port的mac一直未在fdb里注册，那么就有可能导致该port收不到报文。</p>
+<h2><span id="mc_flood实现分析">mc_flood实现分析</span></h2><h3><span id="northd处理">northd处理</span></h3><p>该mc存在于内部网络switch中，所有的lsp都会加入mc_flood里。主要是用于处理ip组播，目的地址为组播mac的报文。<br><img src="/imgs/mc_flood.png"><br>以太网定义的组播mac，第40bit为1：<br><img src="/imgs/mc_bit.png"></p>
+<h3><span id="ovn-controller处理">ovn-controller处理</span></h3><p>ovn-controller解析逻辑流表中的mcast方式如下，会将eth.mcast转换成eth.dst[40]为1表示组播<br><img src="/imgs/con_flood.png"> </p>
+<h2><span id="mc_flood_l2实现分析">mc_flood_l2实现分析</span></h2><p>存在于连接了路由器的switch中。区别于mc_flood，除了type是router的其它lsp都会加入mc_flood_l2里。<br><img src="/imgs/mc_flood_l2.png"> </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2022/06/24/ovn-mc/" data-id="clexlgj2n001k8myygbv5ay4s" data-title="ovn multicast实现分析" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/06/25/ovn-vlan-issue1/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ovn vlan东西向流量问题
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/03/26/ovn-sec/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">ovn安全组总结</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ovn vlan南北向流量问题 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言 相关技术 gateway nat redirect-type   分布式浮动ip访问外网 报文分析 逻辑流表分析 源码分析 解决方案   同路由器下访问浮动ip 报文分析 逻辑流表分析 解决方案   切换网关lrp的高可用节点 问题分析 解决方案   总结    前言本文将对ovn支持vlan网络的南北向流量问题进行阐述，涉及到报文通过snat，dnat_and_snat访问外部网络。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ovn vlan南北向流量问题">
+<meta property="og:url" content="https://liushy.com/2022/06/26/ovn-vlan-issue2/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言 相关技术 gateway nat redirect-type   分布式浮动ip访问外网 报文分析 逻辑流表分析 源码分析 解决方案   同路由器下访问浮动ip 报文分析 逻辑流表分析 解决方案   切换网关lrp的高可用节点 问题分析 解决方案   总结    前言本文将对ovn支持vlan网络的南北向流量问题进行阐述，涉及到报文通过snat，dnat_and_snat访问外部网络。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/gr.png">
+<meta property="og:image" content="https://liushy.com/imgs/replace_mac.png">
+<meta property="og:image" content="https://liushy.com/imgs/cr_mac.png">
+<meta property="og:image" content="https://liushy.com/imgs/external_port_flow.png">
+<meta property="article:published_time" content="2022-06-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-09-25T10:30:50.251Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/gr.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ovn-vlan-issue2" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/06/26/ovn-vlan-issue2/" class="article-date">
+  <time class="dt-published" datetime="2022-06-25T16:00:00.000Z" itemprop="datePublished">2022-06-26</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ovn vlan南北向流量问题
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <!-- toc -->
+
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E7%9B%B8%E5%85%B3%E6%8A%80%E6%9C%AF">相关技术</a><ul>
+<li><a href="#gateway">gateway</a></li>
+<li><a href="#nat">nat</a></li>
+<li><a href="#redirect-type">redirect-type</a></li>
+</ul>
+</li>
+<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E6%B5%AE%E5%8A%A8ip%E8%AE%BF%E9%97%AE%E5%A4%96%E7%BD%91">分布式浮动ip访问外网</a><ul>
+<li><a href="#%E6%8A%A5%E6%96%87%E5%88%86%E6%9E%90">报文分析</a></li>
+<li><a href="#%E9%80%BB%E8%BE%91%E6%B5%81%E8%A1%A8%E5%88%86%E6%9E%90">逻辑流表分析</a></li>
+<li><a href="#%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90">源码分析</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88">解决方案</a></li>
+</ul>
+</li>
+<li><a href="#%E5%90%8C%E8%B7%AF%E7%94%B1%E5%99%A8%E4%B8%8B%E8%AE%BF%E9%97%AE%E6%B5%AE%E5%8A%A8ip">同路由器下访问浮动ip</a><ul>
+<li><a href="#%E6%8A%A5%E6%96%87%E5%88%86%E6%9E%90-1">报文分析</a></li>
+<li><a href="#%E9%80%BB%E8%BE%91%E6%B5%81%E8%A1%A8%E5%88%86%E6%9E%90-1">逻辑流表分析</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-1">解决方案</a></li>
+</ul>
+</li>
+<li><a href="#%E5%88%87%E6%8D%A2%E7%BD%91%E5%85%B3lrp%E7%9A%84%E9%AB%98%E5%8F%AF%E7%94%A8%E8%8A%82%E7%82%B9">切换网关lrp的高可用节点</a><ul>
+<li><a href="#%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90">问题分析</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-2">解决方案</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+<!-- tocstop -->
+
+<h2><span id="前言">前言</span></h2><p>本文将对ovn支持vlan网络的南北向流量问题进行阐述，涉及到报文通过snat，dnat_and_snat访问外部网络。</p>
+<h2><span id="相关技术">相关技术</span></h2><p>首先介绍一下南北向流量场景，会提到的几个技术点。<a href="https://liushy.com/2022/06/25/ovn-vlan-issue1/">上一篇文章</a>提到的内容也会用到。<span id="more"></span>  </p>
+<h3><span id="gateway">gateway</span></h3><p>gateway顾名思义就是网关的意思，即处理内部流量和外部流量的实例。ovn对于网关的实现提出了两种类型：</p>
+<ul>
+<li>L3 Gateway Routers: 集中式router。区别于dvr，它在实现上会将所有内部流量转发到集中式的router上。借用红帽的一个图：<br><img src="/imgs/gr.png" alt="GR"></li>
+</ul>
+<p>配置该router指定其落在哪个chassis上：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ovn-nbctl <span class="built_in">set</span> Logical_Router 01aa12e3-d2d4-4133-9577-166629aaf991 options:chassis=5cb6a97d-defe-4ec2-9247-d8951b3ed090</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Distributed Gateway Ports（dgw_ports）: 分布式网关port。即路由器外部网关lrp（logical_router_port），它是挂在dvr上的，所以是分布式的，也就是访问网关lrp的流量在节点本地就处理了。而访问外部网络时依然会<strong>将流量转发到网关lrp驻留的节点处理</strong>。通过给该lrp配置gateway_chassis来支持高可用，标记它peer为’chassis-redirect-port’（cr-lrp）。查询高可用的节点有哪些：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-tool-0 /]<span class="comment"># ovn-nbctl lrp-get-gateway-chassis lrp-860f48c9-d948-4d86-8a49-c9b00b1fe242</span></span><br><span class="line">lrp-860f48c9-d948-4d86-8a49-c9b00b1fe242_5cb6a97d-defe-4ec2-9247-d8951b3ed090     3</span><br><span class="line">lrp-860f48c9-d948-4d86-8a49-c9b00b1fe242_b4512432-6ff5-4914-bd8e-75f602e492a7     2</span><br><span class="line">lrp-860f48c9-d948-4d86-8a49-c9b00b1fe242_94f12bc5-5987-4900-9b60-e8f2d4f18460     1</span><br></pre></td></tr></table></figure>
+<p>逻辑流表里，常用<code>is_chassis_resident</code>这个字段来判断网关lrp是否驻留在本节点。</p>
+<p>对于两者，目前我们都有对应的使用场景，而本文提到的问题主要是使用dgw_ports的情况。</p>
+<h3><span id="nat">nat</span></h3><p>ovn实现nat里，最常见的是：snat，dnat，dnat_and_snat。可以配置带状态（stateful）的nat或者无状态（stateless）</p>
+<ul>
+<li>snat: 内部流量通过snat成外部网关ip地址，访问外部网络。</li>
+<li>dnat: 外部网络的资源访问内部虚机的dnat地址，外部网关进行dnat转换成虚机ip，转发给虚机。</li>
+<li>dnat_and_snat: 一般用于浮动ip，也就是内部虚机既可以被外部网络的资源访问，也可以主动访问外部网络。支持分布式和集中式两种，分布式需要external_mac，即fip的mac。分布式在网卡所在节点完成浮动ip的nat转换；而集中式需要转发到网关所在节点处理。<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">()[root@ovn-ovsdb-nb-2 /]<span class="comment"># ovn-nbctl lr-nat-list neutron-6560713f-19c1-429d-a955-01fda8599acd</span></span><br><span class="line">TYPE             EXTERNAL_IP        EXTERNAL_PORT    LOGICAL_IP            EXTERNAL_MAC         LOGICAL_PORT</span><br><span class="line">dnat_and_snat    172.90.0.100                        66.66.66.101</span><br><span class="line">dnat_and_snat    172.90.0.104                        66.66.66.150          fa:16:3e:a7:14:e4    60d84737-5a96-4fa6-830a-52948461f619</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>注意：采用分布式浮动ip的场景，需要计算节点北向网桥br-ex能够访问外网；大规模下ct对性能的影响较大，建议dnat_and_snat配置为无状态的</p>
+<h3><span id="redirect-type">redirect-type</span></h3><p>提到这个参数之前，回顾ovn实现网关的流量的转发：本地节点完成路由，将流量通过隧道转发给网关节点，由网关节点发送给外部vlan网络。这里有个问题：本来vlan的流量被overlay发送给了网关节点，这并不是完整链路的vlan实现，而且会有mtu过小的问题，。</p>
+<p>ovn社区做了不少尝试，希望将vlan模式做得更纯粹，不需要隧道封装这样的处理，比如说采用<code>reside-on-redirect-chassis</code>（<a href="https://liushy.com/2022/06/25/ovn-vlan-issue1/#%E8%A3%B8%E9%87%91%E5%B1%9E%E8%B7%A8%E7%BD%91%E6%AE%B5">上一篇文章</a>提到）通过localnet port转发给网关节点，不过限制就是所有vlan网络的路由变成集中式的。   </p>
+<ul>
+<li>East - West routing is no more distributed for the VLAN tagged localnet logical switches if ‘reside-on-redirect-chassis’ option is defined    </li>
+<li>‘dnat_and_snat’ NAT rules with ‘logical_mac’ and ‘logical_port’ columns defined will not work for these logical switches.</li>
+</ul>
+<p>后续又推出了这两个实现<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/795d7f24ce0e2ed5454e193a059451d237289542">OVN: Enable E-W Traffic, Vlan backed DVR</a>, <a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/03493b33c073887a81ba90c84b5e063140712719">OVN: Vlan backed DVR N-S, redirect packet via localnet port</a>。简单介绍一下两者实现原理：</p>
+<ul>
+<li><p>东西向vlan dvr：<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/795d7f24ce0e2ed5454e193a059451d237289542">OVN: Enable E-W Traffic, Vlan backed DVR</a>，引入参数ovn-chassis-mac-mappings，该参数配置chassis的mac地址。在计算节点上完成路由策略，将src mac（目的网关地址）替换成chassis的mac，并标记目的网络vlan来实现东西向路由。并且不再使用is_chassis_resident参数来判断外部网关是否在本主机上来限制东西向路由，在计算节点间就处理掉了。</p>
+</li>
+<li><p>南北向vlan dvr：<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/commit/03493b33c073887a81ba90c84b5e063140712719">OVN: Vlan backed DVR N-S, redirect packet via localnet port</a>，该方案依赖上面的ovn-chassis-mac-mappings参数，新增了参数redirect-type 用来指定是否进行隧道封装，可选参数是overlay(默认)和bridged。指定bridged类型并配合chassis mac，在流量出计算节点的时候修改src mac为chassis的mac，并打上外部网络的vlan，通过localnet port将流量牵引到网关节点处理。   </p>
+</li>
+</ul>
+<p>而redirect-type就能决定vlan网络的真实效果，采用bridged模式就能达到纯粹的vlan转发。而社区默认的配置仍然是overlay，究其原因，我的理解是社区还未完全解决bridged模式实现上的南北向流量问题。</p>
+<p>本文后续提到的南北向流量问题，建立的基础是：外部网关转发采用redirect-type为bridged模式。</p>
+<h2><span id="分布式浮动ip访问外网">分布式浮动ip访问外网</span></h2><p><strong>场景</strong>：虚机通过分布式浮动ip去访问外网。</p>
+<ul>
+<li>floatingip mac：fa:16:3e:e3:a1:f5<br>路由器外部网关（172.90.0.102）mac：fa:16:3e:d6:42:62<br>外部网络子网网关（172.90.0.1）mac：f8:bc:12:4e:44:dd</li>
+</ul>
+<p><strong>预期</strong>：报文nat转换后从本节点出去，下一跳为外部网络子网网关的mac，直接发送到外部网络。<br><strong>实际</strong>：虚机访问外网流量正常，不过流量先去了外部网关所在节点，再转发出去。  </p>
+<h3><span id="报文分析">报文分析</span></h3><p>源节点北向网卡抓到的icmp request报文：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">fa:16:3e:e3:a1:f5 &gt; fa:16:3e:d6:42:62, ethertype 802.1Q (0x8100), length 102: vlan 2901, p 0, ethertype IPv4, 172.90.0.100 &gt; 110.242.68.3: ICMP <span class="built_in">echo</span> request, id 29185, seq 160, length 64</span><br></pre></td></tr></table></figure>
+<p>可以看到：<strong>在本机完成了nat：dst mac修改成外部网关地址，src mac为floatingip的mac地址，snat转换成floatingip。</strong><br>也就是下一跳修改成了路由网关的地址，而不是外部网络的网关地址，所以会出现报文先到网关节点再转发出去。</p>
+<h3><span id="逻辑流表分析">逻辑流表分析</span></h3><p>1.访问外网资源，在routing阶段会将外部网络子网网关172.90.0.1配置为下一跳<code>reg0</code>（但是后续流表未用到）:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=10(lr_in_ip_routing), priority=1, match=(ip4.dst == 0.0.0.0/0), </span><br><span class="line">action=(ip.ttl--; reg8[0..15] = 0; reg0 = 172.90.0.1; reg1 = 172.90.0.102; eth.src = fa:16:3e:d6:42:62; </span><br><span class="line">outport = <span class="string">&quot;lrp-85ac07a7-d9d7-4ddf-923b-59298d76d968&quot;</span>; flags.loopback = 1; next;)</span><br></pre></td></tr></table></figure>
+<p>2.在lr_in_arp_resolve阶段，会判断路由器网关是否在本节点，不在的话将目的mac改为路由器网关mac：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=14(lr_in_arp_resolve ), priority=50 , </span><br><span class="line">match=(outport == <span class="string">&quot;lrp-85ac07a7-d9d7-4ddf-923b-59298d76d968&quot;</span> &amp;&amp; !is_chassis_resident(<span class="string">&quot;cr-lrp-85ac07a7-d9d7-4ddf-923b-59298d76d968&quot;</span>)),</span><br><span class="line">action=(eth.dst = fa:16:3e:d6:42:62; next;)</span><br></pre></td></tr></table></figure>
+<p>后续不再有修改目的mac的流表。而实际上在lr_in_arp_resolve阶段，还有一条流表是get_arp获取下一跳<code>reg0</code>的mac，因为先匹配了上面的流表，所以该流表未起作用：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=14(lr_in_arp_resolve), priority=0, match=(ip4), action=(get_arp(outport, reg0); next;)</span><br></pre></td></tr></table></figure>
+<p>当然如果虚机和网关是同一个节点，也就不会出现问题。</p>
+<h3><span id="源码分析">源码分析</span></h3><p>为什么会产生上述流表，查看了northd代码：如果分布式外部网关是bridged模式，默认会增加一条流表判断是否在本机，不在的话修改dst mac为网关mac，也就不会去get_arp下一跳的mac了：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (!op-&gt;derived &amp;&amp; op-&gt;od-&gt;l3redirect_port) &#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *redirect_type = smap_get(&amp;op-&gt;nbrp-&gt;options,</span><br><span class="line">                                          <span class="string">&quot;redirect-type&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (redirect_type &amp;&amp; !strcasecmp(redirect_type, <span class="string">&quot;bridged&quot;</span>)) &#123;</span><br><span class="line">        <span class="comment">/* Packet is on a non gateway chassis and</span></span><br><span class="line"><span class="comment">          * has an unresolved ARP on a network behind gateway</span></span><br><span class="line"><span class="comment">          * chassis attached router port. Since, redirect type</span></span><br><span class="line"><span class="comment">          * is &quot;bridged&quot;, instead of calling &quot;get_arp&quot;</span></span><br><span class="line"><span class="comment">          * on this node, we will redirect the packet to gateway</span></span><br><span class="line"><span class="comment">          * chassis, by setting destination mac router port mac.*/</span></span><br><span class="line">        ds_clear(match);</span><br><span class="line">        ds_put_format(match, <span class="string">&quot;outport == %s &amp;&amp; &quot;</span></span><br><span class="line">                      <span class="string">&quot;!is_chassis_resident(%s)&quot;</span>, op-&gt;json_key,</span><br><span class="line">                      op-&gt;od-&gt;l3redirect_port-&gt;json_key);</span><br><span class="line">        ds_clear(actions);</span><br><span class="line">        ds_put_format(actions, <span class="string">&quot;eth.dst = %s; next;&quot;</span>,</span><br><span class="line">                      op-&gt;lrp_networks.ea_s);</span><br><span class="line"></span><br><span class="line">        ovn_lflow_add_with_hint(lflows, op-&gt;od,</span><br><span class="line">                                S_ROUTER_IN_ARP_RESOLVE, <span class="number">50</span>,</span><br><span class="line">                                ds_cstr(match), ds_cstr(actions),</span><br><span class="line">                                &amp;op-&gt;nbrp-&gt;header_);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>bridged模式额外增加的这条流表，其目的是默认在网关节点进行未知ip的mac查询或学习，避免非网关节点（可能与外部网络不通）直接发送到外部网络。但与此同时也影响了分布式浮动ip的实现，导致其变成snat阶段是集中式的了。</p>
+<h3><span id="解决方案">解决方案</span></h3><p>目前没有好的解决方案，我们将路由器外部网关修改成默认的overlay模式，也就少了上述流表，直接转发出去了，不需要经过网关节点。<br>2022-09-19更新：<br><a target="_blank" rel="noopener" href="https://bugzilla.redhat.com/show_bug.cgi?id=2007120">相关bug</a><br>社区正在提交<a target="_blank" rel="noopener" href="https://patchwork.ozlabs.org/project/ovn/patch/308a75da796460cc3905e02387c46d57c4c4f529.1663593740.git.lorenzo.bianconi@redhat.com/">patch</a>试图解决这个问题。简单看了一下该方案，如果判断是bridge模式，则提前进行get_arp，避免dst mac被默认修改。</p>
+<h2><span id="同路由器下访问浮动ip">同路由器下访问浮动ip</span></h2><p><strong>场景</strong>：两虚机关联同一个路由器，和网关均在不同节点，其中一台虚机有<strong>集中式</strong>浮动ip。</p>
+<ul>
+<li>vm1: 66.66.66.101，fip-172.90.0.100<br>vm2: 66.66.66.45<br>外部网关: 172.90.0.102/fa:16:3e:d6:42:62<br>源节点chassis-mac: 9a:63:53:54:e5:4f </li>
+</ul>
+<p><strong>预期</strong>：vm2能正常访问vm1的浮动ip<br><strong>实际</strong>：流量不通</p>
+<h3><span id="报文分析">报文分析</span></h3><p>1.分析源节点发出去的请求报文，在北向抓request报文：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">9a:63:53:54:e5:4f &gt; fa:16:3e:d6:42:62, ethertype 802.1Q (0x8100), length 102: vlan 2901, p 0, ethertype IPv4, 66.66.66.45 &gt; 172.90.0.100: ICMP <span class="built_in">echo</span> request, id 65282, seq 599, length 64</span><br></pre></td></tr></table></figure>
+<p>vm2的request报文源ip是自身；而目的mac是外部网关mac，也就是说未进行snat发送给了外部网关。</p>
+<p>2.分析网关节点处理后的报文，在南向抓request报文：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">96:45:cc:7c:02:45 &gt; fa:16:3e:c1:0b:f7, ethertype 802.1Q (0x8100), length 102: vlan 1147, p 0, ethertype IPv4, 66.66.66.45 &gt; 66.66.66.101: ICMP <span class="built_in">echo</span> request, id 65282, seq 969, length 64</span><br></pre></td></tr></table></figure>
+<p>这个报文是经过dnat后，目的ip/mac对应目的虚机，配置了虚机网络vlan。也就是说最终到达目标虚机的报文，源ip未做snat。<br>那么可以分析得出，目标虚机vm1收到报文后会将其当作同二层的报文给处理，直接回复给源虚机vm2。</p>
+<p>3.继续抓目标节点的reply报文：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">fa:16:3e:c1:0b:f7 &gt; fa:16:3e:85:e1:85, ethertype 802.1Q (0x8100), length 102: vlan 1147, p 0, ethertype IPv4, 66.66.66.101 &gt; 66.66.66.45: ICMP <span class="built_in">echo</span> reply, id 65282, seq 1320, length 64</span><br></pre></td></tr></table></figure>
+<p>可以看到reply给了源虚机ip，证实了我们的分析。而后续源虚机vm2收到未知的reply报文，不会做处理。</p>
+<h3><span id="逻辑流表分析">逻辑流表分析</span></h3><p>1.报文在网关节点处理时，在lr_in_dnat阶段，完成dnat转换，也就是目的地址修改为子网网段66.66.66.101：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=6 (lr_in_dnat), priority=100  , </span><br><span class="line">match=(ip &amp;&amp; ip4.dst == 172.90.0.100 &amp;&amp; inport == <span class="string">&quot;lrp-85ac07a7-d9d7-4ddf-923b-59298d76d968&quot;</span> &amp;&amp; is_chassis_resident(<span class="string">&quot;cr-lrp-85ac07a7-d9d7-4ddf-923b-59298d76d968&quot;</span>)), </span><br><span class="line">action=(ct_dnat(66.66.66.101);)</span><br></pre></td></tr></table></figure>
+<p>2.在lr_in_ip_routing阶段，如果访问子网的话，会将outport设置为子网网关:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=10(lr_in_ip_routing), priority=49 , </span><br><span class="line">match=(ip4.dst == 66.66.66.0/24), </span><br><span class="line">action=(ip.ttl--; reg8[0..15] = 0; reg0 = ip4.dst; reg1 = 66.66.66.1; eth.src = fa:16:3e:d8:52:22; </span><br><span class="line">outport = <span class="string">&quot;lrp-e13835a9-34b5-45a0-9b48-3f931f0de86c&quot;</span>; flags.loopback = 1; next;)</span><br></pre></td></tr></table></figure>
+<p>3.在lr_in_arp_resolve阶段，配置目的地址为vm1的mac:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=14(lr_in_arp_resolve), priority=100  ,</span><br><span class="line">match=(outport == <span class="string">&quot;lrpe13835a9-34b5-45a0-9b48-3f931f0de86c&quot;</span> &amp;&amp; reg0 == 66.66.66.101), action=(eth.dst = fa:16:3e:c1:0b:f7; next;)</span><br></pre></td></tr></table></figure>
+<p>4.后续在egress的lr_out_snat阶段进行snat的流表如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">table=1 (lr_out_snat), priority=153 , </span><br><span class="line">match=(ip &amp;&amp; ip4.src == 66.66.66.0/24 &amp;&amp; outport == <span class="string">&quot;lrp-85ac07a7-d9d7-4ddf-923b-59298d76d968&quot;</span> &amp;&amp; is_chassis_resident(<span class="string">&quot;cr-lrp-85ac07a7-d9d7-4ddf-923b-5929        8d76d968&quot;</span>)),</span><br><span class="line">action=(ct_snat(172.90.0.102))</span><br></pre></td></tr></table></figure>
+<p>也就是说要进行snat的话，必须满足两个条件：</p>
+<ul>
+<li><strong>a</strong>.匹配outport是外部网关lrp（可以理解为需要访问外网时才进行snat）</li>
+<li><strong>b</strong>.必须在外部网关所在节点执行</li>
+</ul>
+<p>然而上述报文在完成dnat和路由后，显然不满足条件a了，所以源ip地址就不会进行snat转换成外部网关地址。</p>
+<p>这里引申一下：同样条件，如果是访问<strong>分布式的浮动ip</strong>会怎么样？答案是与集中式浮动ip情况类似，流量也不通。<br>原因就是不满足条件b，源节点发出去的报文未进行snat转换发送给了浮动ip，即dst mac是浮动ip的mac：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">9a:63:53:54:e5:4f &gt; fa:16:3e:e3:a1:f5, ethertype 802.1Q (0x8100), length 102: vlan 2901, p 0, ethertype IPv4, 66.66.66.45 &gt; 172.90.0.100: ICMP <span class="built_in">echo</span> request, id 28673, seq 54240, length 64</span><br></pre></td></tr></table></figure>
+<p>同样的，同一个路由器跨网段虚机访问对方浮动ip依然有问题，原因与上述情况类似，有兴趣可以trace流表。<br>总结一下：如果同一路由下的虚机在东西向是网络可达的，且源虚机和外部网关不在一个节点上，源虚机访问目标虚机的浮动ip是不通的。</p>
+<p>已向社区提了issue：<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/issues/86">issue#86</a></p>
+<h3><span id="解决方案">解决方案</span></h3><p>解决方案也是，修改为overlay模式。</p>
+<h2><span id="切换网关lrp的高可用节点">切换网关lrp的高可用节点</span></h2><p>我们在验证多次切换lrp的高可用节点优先级顺序时，发现了流量不通的问题。<br><strong>场景</strong>：有三个节点node-1，node-2，node-3作为网关节点。<br><strong>操作</strong>：lrp的高可用节点一开始是node-1优先级最高，然后手动修改优先级将node-2作为最高。<br><strong>预期</strong>：内部虚机访问外部流量正常。<br><strong>实际</strong>：切换前正常，切换后流量不通，重启ovn-controller正常。    </p>
+<p>对比了切换前node-1和切换后node-2的北向网卡报文，发现了不同之处：</p>
+<ul>
+<li>切换前，从node-1发出的报文，src mac是外部网关的地址</li>
+<li>切换后，从node-2发出的报文，src mac是节点的chassis mac</li>
+</ul>
+<p>也就是说，正常来讲，切换到node-2后，访问外部的报文src mac应该是外部网关mac而不是chassis mac。</p>
+<h3><span id="问题分析">问题分析</span></h3><p>先来说一下为什么正常情况下发出的报文src mac是外部网关的mac：按前面提到的chassis mac的使用原理，vlan报文出网关不是默认都会修改成chassis-mac吗？其实这样会有一个问题存在，那就是外部网关的mac被替换后，交换机就可能学不到网关mac了。    </p>
+<p>所以社区提了一个方案：<br><a target="_blank" rel="noopener" href="https://mail.openvswitch.org/pipermail/ovs-dev/2019-August/361279.html">OVN: Do not replace router port mac on gateway chassis</a>。该patch的目的就是防止网关节点的src mac被替换成chassis mac。<br>在方法consider_port_binding处理<code>locanet port</code>的流程中，会去完成 “网关mac是否replace为chassis-mac”的操作：<br><img src="/imgs/replace_mac.png"><br>如果网关的cr-lrp在本节点，则不会修改mac为chassis-mac：<br><img src="/imgs/cr_mac.png"><br>所以正常流量从网关节点发出去的时候src mac是外部网关的mac。   </p>
+<p>但与此同时，该实现会有另外一个问题：我们手动操作改变了cr-lrp的网关节点优先级，但cr-lrp的变动可能不会触发localnet port的流程，也就是说上述流程<code>put_replace_router_port_mac_flows</code>可能不会被触发。最终导致节点的localnet port相关流表没有变化，出去的流量依然被替换成了chassis-mac。</p>
+<h3><span id="解决方案">解决方案</span></h3><p>1.参考external port的处理方式，在<code>physical_handle_flows_for_lport</code>处理external port的流表下发流程中，再处理一次localnet port：<br><img src="/imgs/external_port_flow.png"><br>类似的，我们也可以加一个判断，如果port_binding是chassisredirect类型的且datapath有localnet port，则需要再处理一次localnet port的流表。</p>
+<p>已向ovn社区提了issue：<a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/issues/129">issue#129</a></p>
+<p>2.从当前使用来看：</p>
+<ul>
+<li>流量从其它节点到网关节点通过隧道连接；</li>
+<li>流量出外网的时候均是外部网关的mac。</li>
+</ul>
+<p>所以网关节点的chassis-mac配置没有实际用处，因此去掉chassis-mac配置，避免其导致的一系列的流量问题。</p>
+<h2><span id="总结">总结</span></h2><p>ovn社区目标是希望实现全链路的vlan，但综上所述，实际上会遇到的不少的问题。目前我们的总体方案是：<strong>默认外部网关采用overlay模式，调大链路的mtu值，并且放弃使用chassis-mac。</strong></p>
+<p>参考文档：<br><a target="_blank" rel="noopener" href="https://www.openvswitch.org/support/ovscon2018/6/1440-sharma.pdf">OVSCON2018</a><br><a target="_blank" rel="noopener" href="http://dani.foroselectronica.es/">dani.foroselectronica.es</a><br><a target="_blank" rel="noopener" href="https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html-single/networking_with_open_virtual_network/index">NETWORKING WITH OPEN VIRTUAL NETWORK</a>     </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2022/06/26/ovn-vlan-issue2/" data-id="clexlgj2s001u8myy71u6857g" data-title="ovn vlan南北向流量问题" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/12/30/goon-2022/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          隐入尘烟
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/06/25/ovn-vlan-issue1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">ovn vlan东西向流量问题</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

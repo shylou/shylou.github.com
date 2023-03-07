@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Docker编排工具之Swarm | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker编排工具之Swarm">
+<meta property="og:url" content="https://liushy.com/2017/09/30/docker+swarm/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/docker-virtualbox.png">
+<meta property="article:published_time" content="2017-09-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:22:18.188Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/docker-virtualbox.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-docker+swarm" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/09/30/docker+swarm/" class="article-date">
+  <time class="dt-published" datetime="2017-09-29T16:00:00.000Z" itemprop="datePublished">2017-09-30</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Docker编排工具之Swarm
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="前言">前言</span></h2><p>提到docker集群，相关的关键字有Swarm，Kubernetes（k8s)，Mesos等。三者都是目前常见的容器编排工具，选择哪一款使用于生产环境，由具体的需求决定。简单对比一下，swarm是docker原生的集群编排工具，上手简单，适用于一些小规模的集群；k8s功能是三者最全的，大规模的容器集群也没问题，学习成本最高；mesos相比之下，排在中间位置。本文主要介绍一下swarm的玩法，本文还将提到docker三剑客的docker-machine，我将利用其创建docker主机集群。     </p>
+<span id="more"></span>
+<h2><span id="docker-machine创建主机">docker-machine创建主机</span></h2><p>docker-machine是docker原生工具【三剑客】之一（另外：docker-compose和swarm），主要用于创建docker主机，这里的主机指的就是运行docker daemon的虚拟机。docker daemon即是运行docker的后台守护进程，运行着docker server，engine和job，server接收docker client ，并在engine中处理请求，然后创建出指定的job并运行。所以我们可以通过ssh的方式，发送请求给docker-machine，然后进行创建docker容器，运行任务等操作。    </p>
+<h3><span id="安装docker-machine">安装docker-machine</span></h3><p><em>Linux系统</em>   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ curl -L https://github.com/docker/machine/releases/download/v0.12.2/docker-machine-`uname -s`-`uname -m` &gt;/tmp/docker-machine &amp;&amp;</span><br><span class="line">chmod +x /tmp/docker-machine &amp;&amp;</span><br><span class="line">sudo cp /tmp/docker-machine /usr/<span class="built_in">local</span>/bin/docker-machine</span><br></pre></td></tr></table></figure>
+<p><em>Macos系统</em></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ curl -L https://github.com/docker/machine/releases/download/v0.12.2/docker-machine-`uname -s`-`uname -m` &gt;/usr/<span class="built_in">local</span>/bin/docker-machine &amp;&amp; \</span><br><span class="line">  chmod +x /usr/<span class="built_in">local</span>/bin/docker-machine</span><br></pre></td></tr></table></figure>
+<p><em>Windows with Git BASH</em></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ <span class="keyword">if</span> [[ ! -d <span class="string">&quot;<span class="variable">$HOME</span>/bin&quot;</span> ]]; <span class="keyword">then</span> mkdir -p <span class="string">&quot;<span class="variable">$HOME</span>/bin&quot;</span>; <span class="keyword">fi</span> &amp;&amp; \</span><br><span class="line">curl -L https://github.com/docker/machine/releases/download/v0.12.2/docker-machine-Windows-x86_64.exe &gt; <span class="string">&quot;<span class="variable">$HOME</span>/bin/docker-machine.exe&quot;</span> &amp;&amp; \</span><br><span class="line">chmod +x <span class="string">&quot;<span class="variable">$HOME</span>/bin/docker-machine.exe&quot;</span></span><br></pre></td></tr></table></figure>
+<p>安装结束后，可以通过<code>docker-machine version</code>查看docker-machine的版本。    </p>
+<h3><span id="创建docker虚机">创建docker虚机</span></h3><p>利用<code>docker-machine create</code>命令创建docker虚机，这里需要指定在哪种集成环境中部署docker虚机，比如virtualbox通过<code>--driver</code>指定：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker-machine create --driver virtualbox vbox</span><br></pre></td></tr></table></figure>
+<p>docker-machine支持的driver可以<a target="_blank" rel="noopener" href="https://docs.docker.com/machine/drivers/">参考官网</a>。<br>创建成功后，可以通过<code>docker-machine env vbox</code>来查看虚机vbox的信息，还可以通过<code>docker-machine ssh vbox</code>进入vbox虚机。创建过程中如果出现类似【x509: certificate is valid for 192.168.99.100, not 192.168.99.101】错误，可通过<code>docker-machine regenerate-certs</code>解决。<br>同样的命令创建vbox2和vbox3。通过下面的命令查看创建的虚机：   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">liushy <span class="keyword">in</span> ~  docker-machine ls</span><br><span class="line">NAME    ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER        ERRORS</span><br><span class="line">vbox    -        virtualbox   Running   tcp://192.168.99.100:2376           v17.06.2-ce</span><br><span class="line">vbox2   -        virtualbox   Running   tcp://192.168.99.101:2376           v17.06.2-ce</span><br><span class="line">vbox3   -        virtualbox   Running   tcp://192.168.99.102:2376           v17.06.2-ce</span><br></pre></td></tr></table></figure>
+<p>也可以打开virtualbox，看到创建的这几台虚机：<br><img src="/imgs/docker-virtualbox.png" alt="vbox"></p>
+<h2><span id="swarm集群管理">swarm集群管理</span></h2><p>前面我们已经创建了几台docker虚拟机，目前来讲，这几台docker主机相互之间是没有关联的。不同虚机里创建的docker容器还不能算是同一个集群。这时候，我们需要在每台虚机里启动swarm，来建立不同docker虚机内部容器之间的关联。集群中的角色分为manager和worker，manager管理和创建service，service描述了task如何执行，worker执行task创建容器并执行任务，默认情况下manager也会执行task。    </p>
+<h3><span id="swarm初始化集群">swarm初始化集群</span></h3><p>将vbox作为集群的manager，进入vbox虚机里，初始化swarm集群：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker@vbox:~$ docker swarm init --listen-addr 192.168.99.100:2377 --advertise-addr 192.168.99.100</span><br><span class="line">Swarm initialized: current node (9pvoc8y1ouu1zl4dzd0fojtl2) is now a manager.</span><br><span class="line">         </span><br><span class="line">To add a worker to this swarm, run the following <span class="built_in">command</span>:</span><br><span class="line">         </span><br><span class="line">    docker swarm join --token SWMTKN-1-2ns4voyrkx885wzh9l2bo69bbrg70sonkcpuxi0wz5ywvzqofb-8xd74j4wxn5it3euiko5m899z 192.168.99.100:2377</span><br><span class="line">        </span><br><span class="line">To add a manager to this swarm, run <span class="string">&#x27;docker swarm join-token manager&#x27;</span> and follow the instructions.</span><br></pre></td></tr></table></figure>
+<p><code>--listen-addr</code>指定监听地址，即manager节点的docker服务所在的IP:PORT，<code>--advertise-addr</code>指定广播的地址，即其他节点加入该swarm集群时需要访问的IP。执行命令后，我们可以看到反馈的信息，分别交代了其它节点如何以worker或者manager加入集群。没必要记住生成的token，可以通过<code>docker swarm join-token worker</code>或者<code>docker swarm join-token manager</code>查看token。    </p>
+<h3><span id="节点加入集群">节点加入集群</span></h3><p>可以不用ssh进入虚机，直接通过docker-machine命令将节点vbox2加入集群中作为worker：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">liushy <span class="keyword">in</span> ~  docker-machine ssh vbox2 docker swarm join --token SWMTKN-1-2ns4voyrkx885wzh9l2bo69bbrg70sonkcpuxi0wz5ywvzqofb-8xd74j4wxn5it3euiko5m899z 192.168.99.100:2377</span><br><span class="line">This node joined a swarm as a worker.</span><br></pre></td></tr></table></figure>
+<p>同样的方式将vbox3加入集群作为worker。只有manager节点才有权限查看集群状态，在vbox上查看以及管理集群：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker@vbox:~$ docker node ls</span><br><span class="line">ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS</span><br><span class="line">9pvoc8y1ouu1zl4dzd0fojtl2 *   vbox                Ready               Active              Leader</span><br><span class="line">rgrof4dclul3kki4uo76k0kn6     vbox3               Ready               Active</span><br><span class="line">zngbo89y89gczgd7dljq9r06l     vbox2               Ready               Active</span><br></pre></td></tr></table></figure>
+<p>离开集群命令<code>docker swarm leave</code>。</p>
+<h3><span id="创建service">创建service</span></h3><p>集群的service即是在节点内创建容器，并在容器内执行任务。登陆进manager节点vbox创建service：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker@vbox:~$ docker service create --replicas 2 --name ping centos ping docker.com</span><br></pre></td></tr></table></figure>
+<p><code>--replicas</code>指定service需要的任务数量，<code>--name</code>指定了service的名称，在这里使用了镜像centos，执行的任务是<code>ping docker.com</code>。在manager节点上查看service:   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker@vbox:~$ docker service ls</span><br><span class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</span><br><span class="line">vjxa7mdk1tvm        ping                replicated          2/2                 centos:latest</span><br></pre></td></tr></table></figure>
+<p>目前执行任务的节点有两个，主要是两个worker。可以在任意一个节点上查看容器运行情况：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker@vbox2:~$ docker ps</span><br><span class="line">CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES</span><br><span class="line">e3222a5593e2        centos:latest       <span class="string">&quot;ping docker.com&quot;</span>   26 seconds ago      Up 26 secon   </span><br></pre></td></tr></table></figure>
+<p>任务的数量也是可以改变的，比如，将任务数增加到4个：   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker@vbox:~$ docker service scale ping=4</span><br><span class="line">ping scaled to 4</span><br><span class="line">docker@vbox:~$ docker service ls</span><br><span class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</span><br><span class="line">vjxa7mdk1tvm        ping                replicated          4/4                 centos:latest   </span><br><span class="line">docker@vbox:~$ docker ps</span><br><span class="line">CONTAINER ID        IMAGE               COMMAND             CREATED                  STATUS                  PORTS               NAMES</span><br><span class="line">b4b5c3350b6b        centos:latest       <span class="string">&quot;ping docker.com&quot;</span>   Less than a second ago   Up Less than a second                       ping.4.xrel6v9kp138zme0029d80c8d</span><br><span class="line">468295b3bed0        centos:latest       <span class="string">&quot;ping docker.com&quot;</span>   Less than a second ago   Up Less than a second                       ping.3.zgviw21i3oz39atekofethg34</span><br></pre></td></tr></table></figure>
+<p>扩容后，会发现在manager节点上增加了两个容器，并正在执行<code>ping</code>任务。加上一直在执行的其它两个节点上的任务，数量达到了4个。   </p>
+<h2><span id="总结">总结</span></h2><p>对于swarm集群的玩法，大概就是这些了，可以看出来，比较简单易上手。对于一些小规模的生产环境来说，使用swarm效率会很高，而且运维难度不大。当然，考虑可扩展性的话，可以选择更全面的k8s或者mesos。    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处!</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2017/09/30/docker+swarm/" data-id="clexlgj1k00058myydf4c33h7" data-title="Docker编排工具之Swarm" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/12/26/goon-2017/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          来日方长
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/08/12/what-doing2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">技术杂记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

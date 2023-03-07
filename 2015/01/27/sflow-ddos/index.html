@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>sflow流量监控之ddos防御 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如Floodlight FAQ所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sflow流量监控之ddos防御">
+<meta property="og:url" content="https://liushy.com/2015/01/27/sflow-ddos/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="前言最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如Floodlight FAQ所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/ddos-topo.png">
+<meta property="og:image" content="https://liushy.com/imgs/ddos%E6%B3%9B%E6%B4%AA.png">
+<meta property="og:image" content="https://liushy.com/imgs/ddos%E6%88%AA%E5%8F%96.png">
+<meta property="article:published_time" content="2015-01-26T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:11:56.480Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/ddos-topo.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-sflow-ddos" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/01/27/sflow-ddos/" class="article-date">
+  <time class="dt-published" datetime="2015-01-26T16:00:00.000Z" itemprop="datePublished">2015-01-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      sflow流量监控之ddos防御
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="前言">前言</span></h2><p>最近做的一个实验，需要获取链路接口的实时信息，比如带宽，流量统计等等。起初，我打算从openflow协议中的计数器入手，openflow交换机对每一个流维护一个计数器，控制器可以从这些计数器上查询每条链路的实时流量信息。随着网络规模增大，流量增加时，对计数器管理会变得越来越消耗系统资源，如Floodlight FAQ所提到对控制器而言这样的监控很难准确的，所以就否定了在控制器上实现流量监控的想法，转而考虑通过第三方平台监控每条链路的实时流量信息。<span id="more"></span>sflow可以提供周期性的网络接口统计采样和数据包采样，能够提供各接口的流量信息，且几乎不会对被统计设备造成任何负担，管理成本极低。sflow的部署分为两部分：sflow agent和sflow collector。sflow agent内嵌入网络设备中获取设备的实时信息并封装成sflow报文发送给sflow collector。sflow collector汇总后得出统计数据。初次使用sflow监控流量，做了一个ddos防御的实验。       </p>
+<h2><span id="实验环境">实验环境</span></h2><p>本次实验是在一台物理主机上完成实验拓扑，控制器部署和sflow部署。通过mininet模拟一个switch，三台host。控制器使用Floodlight。由于mininet已经部署了sflow agent，所以只需要部署sflow collector。<br>实验拓扑如下图：<br><img src="/imgs/ddos-topo.png" alt="topo"><br>sflow官网推荐了几款sflow软件如sflow-trend,sflow-rt等，这里我选择的是sflow-rt，安装sflow-rt很简单。<br>1.首先，下载<a target="_blank" rel="noopener" href="https://inmon.com/products/sFlow-RT.php">官方压缩包</a><br>2.然后解压安装：       </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$tar</span> -zxvf sflow.tar.gz   </span><br><span class="line"><span class="variable">$cd</span> sflow/sflow-rt   </span><br><span class="line">$./start.sh</span><br></pre></td></tr></table></figure>
+<p>在ovs交换机上还要配置sflow agent，输入以下命令：      </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$sudo</span> ovs-vsctl -- --id=@sflow create sflow agent=eth0 target=\&quot;192.168.2.233:6343\&quot; header=128 sampling=10 polling=1 -- <span class="built_in">set</span> bridge s1 sflow=@sflow      </span><br></pre></td></tr></table></figure>
+<p>注意：agent是要监听的网卡，这个网卡一定要能监听到我们所需的交换机的流量，target是sflow collector所在的ip地址，bridge设定需要监听的交换机。     </p>
+<h2><span id="实验原理">实验原理</span></h2><p>sflow-rt统计到的每个接口的流量信息，我们可以通过sflow-rt的rest api获取json数据并对json数据进行解析获得。对解析到的数据进行判断分析后即可实施策略。本次实验原理如下：<br>1.首先对sflow-rt进行配置，设定metric=ddos,并设定它的阈值，当监测到的流量超过这个阈值时即判断为ddos；<br><em>定义地址组</em>：     </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -H <span class="string">&quot;Content-Type:application/json&quot;</span> -X PUT --data <span class="string">&quot;&#123;external:[&#x27;0.0.0.0/0&#x27;], internal:[&#x27;10.0.0.0/8&#x27;]&#125;&quot;</span> http://localhost:8008/group/json</span><br></pre></td></tr></table></figure>
+<p><em>定义流</em>:     </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -H <span class="string">&quot;Content-Type:application/json&quot;</span> -X PUT --data <span class="string">&quot;&#123;keys:&#x27;ipsource,ipdestination&#x27;, value:&#x27;frames&#x27;, filter:&#x27;sourcegroup=external&amp;destinationgroup=internal&#x27;&#125;&quot;</span> http://localhost:8008/flow/incoming/json</span><br></pre></td></tr></table></figure>
+<p><em>定义阈值</em>：     </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -H <span class="string">&quot;Content-Type:application/json&quot;</span> -X PUT --data <span class="string">&quot;&#123;metric:&#x27;ddos&#x27;, value:1000&#125;&quot;</span> http://localhost:8008/threshold/incoming/json    </span><br></pre></td></tr></table></figure>
+<p>2.若判断为ddos，即调用Floodlight的staticflowentrypusher对ddos攻击包进行丢弃；<br>由于sflow获取的的openflow信息是使用snmp中定义的ifindex对各接口进行标记，而openflow有它自己的标记方式，所以应该对openflow端口号和ifindex端口号进行映射。本次实验采用nodejs作为应用语言。    </p>
+<h2><span id="实验结果">实验结果</span></h2><p>本次实验ddos攻击采取host1向host2泛洪的方式。命令如下：   </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mininet&gt;h1 ping -f h2</span><br></pre></td></tr></table></figure>
+<p>运行ddos防御应用前：<br><img src="/imgs/ddos%E6%B3%9B%E6%B4%AA.png" alt="ddos-pre"><br>我们可以看到，未运行ddos防御应用时，h1向h2泛洪的数据包达到了大约每秒30k个包。<br>接下来运行ddos防御应用：    </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">nodejs ddosm.js</span><br></pre></td></tr></table></figure>
+<p>运行ddos防御应用后：<br><img src="/imgs/ddos%E6%88%AA%E5%8F%96.png" alt="ddos-post"><br>可以看出，运行ddos防御应用后，h1向h2泛洪的包迅速被完全的丢弃了。     </p>
+<h2><span id="总结">总结</span></h2><p>写这篇文主要目的不是介绍怎么写应用，而是对sflow性能的一个展示。流量监控是sdn中很重要的一环，我们在获取各个接口的实时信息后，可以实现很多的服务，比如负载均衡，QOS，流量工程等。这也是我初次尝试sflow,还有很多不解的地方，我的想法是，做好sflow与控制器的交互，完善流量监控的功能，为以后的各种服务提供帮助。<br><strong>参考网站</strong>：<a target="_blank" rel="noopener" href="http://blog.sflow.com/2013/05/controlling-large-flows-with-openflow.html">sflow官博</a><br><strong>DDOS源码参考</strong>：<a target="_blank" rel="noopener" href="https://github.com/shylou/floodlight-ddos">DDOS源码</a>    </p>
+<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2015/01/27/sflow-ddos/" data-id="clexlgj2z00258myy9eusg5ch" data-title="sflow流量监控之ddos防御" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/02/02/sflow-queue/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          基于floodlight&amp;sflow的队列调整
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2014/11/15/floodlight-twohosts-ping/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">SDN环境下两主机通信过程</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

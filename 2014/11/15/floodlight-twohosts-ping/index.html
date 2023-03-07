@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>SDN环境下两主机通信过程 | liushy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="感悟SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所 以无论是做科研还是学术，我们都应有一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDN环境下两主机通信过程">
+<meta property="og:url" content="https://liushy.com/2014/11/15/floodlight-twohosts-ping/index.html">
+<meta property="og:site_name" content="liushy">
+<meta property="og:description" content="感悟SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所 以无论是做科研还是学术，我们都应有一">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://liushy.com/imgs/topo.png">
+<meta property="og:image" content="https://liushy.com/imgs/ping%E8%BF%87%E7%A8%8B.png">
+<meta property="og:image" content="https://liushy.com/imgs/s1-eth2.png">
+<meta property="og:image" content="https://liushy.com/imgs/s1-eth3.png">
+<meta property="article:published_time" content="2014-11-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-28T15:32:46.669Z">
+<meta property="article:author" content="liushy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://liushy.com/imgs/topo.png">
+  
+    <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">liushy</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/about/">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://liushy.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-floodlight-twohosts-ping" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2014/11/15/floodlight-twohosts-ping/" class="article-date">
+  <time class="dt-published" datetime="2014-11-14T16:00:00.000Z" itemprop="datePublished">2014-11-15</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/network/">network</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      SDN环境下两主机通信过程
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2><span id="感悟">感悟</span></h2><p>SDN看了也有两个月了吧，刚接触时很兴奋呐，感觉就是一控制器加一交换机呗。弄懂里面的函数结构，接下来搞编程应该就可以了吧~~可是这仅仅是我天真的想法。当别人问我为什么是这样的时候，放到最初那会儿，我会干脆的说：SDN就是这样啊；而现在，我会很小心地分析它的协议流程，害怕漏掉或者说错某个细节。越了解越敬畏，一个概念的产生并且盛行是经过许多学者推敲和认证的，所 以无论是做科研还是学术，我们都应有一个严谨的态度。<br>      <span id="more"></span></p>
+<h2><span id="两主机通信过程">两主机通信过程</span></h2><p>本次实验环境Floodlight+Mininet。我们利用mininet仿真出一个switch下三台hosts：h1,h2, h3,然后h2 ping h3;通过wirshark抓包分析openflow的协议流程。（在本文我就不分析不同 switch下不同host的ping包过程了）默认加载了转发模块。拓扑图如下：<br><img src="/imgs/topo.png" alt="topo"><br>1.最初h2会通过将自己和h3的ip地址同子网掩码与运算得知：自己和h3在同一网段，可直接通信；<br>2.h2对数据包二层封装时，发现自己并不知道h3的mac地址，于是发送ARP广播包；<br>3.switch收到arp广播包后，由于没有流表，于是它向控制器发送packet_in消息；<br>4.控制器收到packet_in后，向switch发送packet_out,并下发流表给switch让它将数据包从除2端口以外的其他所有端口发送；<br>5.h3收到arp数据包后，在数据包里添加上自己的mac地址；<br>6.switch收到h3的arp包，由于没有流表项，于是向控制器发送packet_in消息；<br>7.控制器学习到h3的mac和ip地址，向switch发送packet_out消息并下发h3到h2的流表项；<br>8.h2知道了h3的mac地址，完成icmp包的封装，就向h3发包了；<br>9.由于switch没有h2-&gt;h3的流表项，所以它还是会向控制器发送packet_in；<br>10.控制器发送packet_out给switch并下发h2-&gt;h3的流表；至此h2和h3就能不通过控制器只通过switch直接通信啦！      </p>
+<p>下面是寻址阶段抓包截图：（注：抓取的是通过eth0的包，eth0与控制器通信，所以也就是抓的控制器的包）<br><img src="/imgs/ping%E8%BF%87%E7%A8%8B.png" alt="ping"><br>寻址结束后，抓取控制器的包时，没有了h2 ping h3的icmp包,在端口2抓包：<br><img src="/imgs/s1-eth2.png" alt="eth2"><br>在端口3抓包：<br> <img src="/imgs/s1-eth3.png" alt="eth3">    </p>
+<h2><span id="openflow与传统路由的比较">Openflow与传统路由的比较</span></h2><p>Openflow与传统路由一样，在源主机不知道目的主机mac地址的情况下，都会进行arp寻址。但不同之处在于，传统路由没有控制器，所有流表在switch里,转发和控制都由switch负责；而Openflow协议里，switch若没有匹配流表（或者没有流表），它会向控制器发送请求，让控制器下发策略。<br><strong>这是我个人的分析，欢迎指正，大家共同学习，若转载请注明出处！</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://liushy.com/2014/11/15/floodlight-twohosts-ping/" data-id="clexlgj1v000e8myy11xw9sxx" data-title="SDN环境下两主机通信过程" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/01/27/sflow-ddos/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          sflow流量监控之ddos防御
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2014/11/14/openwrt-example/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">openwrt-example</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/code/">code</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/life/">life</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">12</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">23</span></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/03/06/ovn-sec2/">ovn lsp里addresses和port_security的区别</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/18/ovs-del-flows/">ovs删除dp流表后的流量不中断</a>
+          </li>
+        
+          <li>
+            <a href="/2022/12/30/goon-2022/">隐入尘烟</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/26/ovn-vlan-issue2/">ovn vlan南北向流量问题</a>
+          </li>
+        
+          <li>
+            <a href="/2022/06/25/ovn-vlan-issue1/">ovn vlan东西向流量问题</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 liushy<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/about/" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
