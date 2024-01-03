@@ -4,21 +4,19 @@
   <meta charset="utf-8">
   
   
-  <title>解析Floodlight之Forwarding模块 | liushy</title>
+  <title>三大队 | liushy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪doFlood()方法，其它类型数据包执行doForwardFlow()方法。">
+  <meta name="description" content="工作总结今年疫情放开了，感觉整个社会都处于回血的状态。要说咱们干这行的，实际可能没有那么多的项目需要紧急处理的了，整年的工作状态算比较松弛的。春节过后，我们就着手云产品新版本的开发工作，今年的云产品主打优化：用户体验的优化和性能优化。前期调研了ryu，尝试将ryu引入来管理裸金属网关的部分流表（主要流表还是依托ovn-controller），后期不需要了，遂搁置了。花了点时间分析了一下ovs ct">
 <meta property="og:type" content="article">
-<meta property="og:title" content="解析Floodlight之Forwarding模块">
-<meta property="og:url" content="https://liushy.com/2017/02/12/floodlight-forwarding/index.html">
+<meta property="og:title" content="三大队">
+<meta property="og:url" content="https://liushy.com/2023/12/31/goon-2023/index.html">
 <meta property="og:site_name" content="liushy">
-<meta property="og:description" content="Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪doFlood()方法，其它类型数据包执行doForwardFlow()方法。">
+<meta property="og:description" content="工作总结今年疫情放开了，感觉整个社会都处于回血的状态。要说咱们干这行的，实际可能没有那么多的项目需要紧急处理的了，整年的工作状态算比较松弛的。春节过后，我们就着手云产品新版本的开发工作，今年的云产品主打优化：用户体验的优化和性能优化。前期调研了ryu，尝试将ryu引入来管理裸金属网关的部分流表（主要流表还是依托ovn-controller），后期不需要了，遂搁置了。花了点时间分析了一下ovs ct">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://liushy.com/imgs/forwarding.jpg">
-<meta property="article:published_time" content="2017-02-11T16:00:00.000Z">
-<meta property="article:modified_time" content="2021-12-28T15:33:08.891Z">
+<meta property="article:published_time" content="2023-12-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-01-03T12:52:18.894Z">
 <meta property="article:author" content="liushy">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://liushy.com/imgs/forwarding.jpg">
   
     <link rel="alternate" href="/atom.xml" title="liushy" type="application/atom+xml">
   
@@ -75,14 +73,14 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-floodlight-forwarding" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+        <section id="main"><article id="post-goon-2023" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2017/02/12/floodlight-forwarding/" class="article-date">
-  <time class="dt-published" datetime="2017-02-11T16:00:00.000Z" itemprop="datePublished">2017-02-12</time>
+    <a href="/2023/12/31/goon-2023/" class="article-date">
+  <time class="dt-published" datetime="2023-12-30T16:00:00.000Z" itemprop="datePublished">2023-12-31</time>
 </a>
     
   <div class="article-category">
-    <a class="article-category-link" href="/categories/network/">network</a>
+    <a class="article-category-link" href="/categories/life/">life</a>
   </div>
 
   </div>
@@ -93,7 +91,7 @@
         
   
     <h1 class="p-name article-title" itemprop="headline name">
-      解析Floodlight之Forwarding模块
+      三大队
     </h1>
   
 
@@ -101,25 +99,14 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>Floodlight的流表下发模块是Forwarding类。处理Packet-in消息的方法是processPacketInMessage()，该方法根据决策(Decision)或者包的类型决定对Packet-in消息执行动作，对于广播包(BroadCast)或多播包(MutiCast)，执行泛洪doFlood()方法，其它类型数据包执行doForwardFlow()方法。    <span id="more"></span><br>Forwarding类中对数据包的几种操作方法：</p>
-<ul>
-<li><code>doForwardFlow()</code>：转发    </li>
-<li><code>doFlood()</code>：泛洪    </li>
-<li><code>doDropFlow()</code>：丢包<br>接下来重点分析<code>doForwardFlow()</code>方法的实现流程。如图所示：<br><img src="/imgs/forwarding.jpg" alt="forwarding"> </li>
-</ul>
-<p>doForwardFlow方法的工作流程：    </p>
-<ul>
-<li>Step1：首先该方法会获取Packet_in消息中的数据包的匹配域，提取数据包中的交换机信息，依次判断源/目的交换机是否存在，是则继续执行，否则执行泛洪<code>doFlood()</code>；</li>
-<li>Step2：当源、目的交换机均存在，接着会判断两者是否同属一个island(即同一个二层网络)，判断后的操作与前面步骤一样；</li>
-<li>Step3：若同属一个island，然后会判断源目的交换机是否同一端口；</li>
-<li>Step4：如果是在同一个island不同端口，便调取路径引擎(routingEngine)中的<code>getRoute()</code>方法获取源、目的交换机的路径，最后执行<code>pushRoute()</code>方法将路径下发到相应的交换机。      </li>
-</ul>
-<p><strong>个人分析，欢迎指正，若转载请注明出处！</strong></p>
+        <h2><span id="工作总结">工作总结</span></h2><p>今年疫情放开了，感觉整个社会都处于回血的状态。<br>要说咱们干这行的，实际可能没有那么多的项目需要紧急处理的了，整年的工作状态算比较松弛的。<br>春节过后，我们就着手云产品新版本的开发工作，今年的云产品主打优化：用户体验的优化和性能优化。<br>前期调研了ryu，尝试将ryu引入来管理裸金属网关的部分流表（主要流表还是依托ovn-controller），后期不需要了，遂搁置了。<br>花了点时间分析了一下ovs ct和mega flow的一些限制。<br>遇到了一些ovs/ovn的小问题，比如<br><a target="_blank" rel="noopener" href="https://mail.openvswitch.org/pipermail/ovs-discuss/2019-June/048878.html">ovs-dpctl del-flow works strange</a><br><a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/pull/214">[dgw]Avoid snat on reply packets</a><br><a target="_blank" rel="noopener" href="https://github.com/ovn-org/ovn/pull/226">northd: Add option to enable conntrack for router port </a><br>后续会总结一些文章出来。</p>
+<p>除此之外，对于neutron社区，我们也反馈了一些lp，顺便也贴一下：<br><a target="_blank" rel="noopener" href="https://bugs.launchpad.net/neutron/+bug/2012332">[rfe] Add one api support CRUD allowed_address_pairs</a><br><a target="_blank" rel="noopener" href="https://bugs.launchpad.net/neutron/+bug/1982287">[rfe][ovn] Support address group for ovn driver</a><br><a target="_blank" rel="noopener" href="https://bugs.launchpad.net/neutron/+bug/1971958">[rfe][fwaas][OVN]support l3 firewall for ovn driver </a></p>
+<h2><span id="生活杂记">生活杂记</span></h2><p>生活上呢，有幸福也有悲伤。<br>房子总算装完啦，也已经入住小半年。<br>外婆离开了，很庆幸她走得无痛苦，离开前胃口还挺不错，还大声跟姨和妈讲话呢。 我会时常想她。<br>我和翔哥去了很多地方，有远的也有近郊的，喝了茶颜悦色，吃了甜皮鸭儿，当了ppmt赌狗。。<br>23年有很多值得怀念的人和事，很难讲这一年是好或不好。<br>但我会记得今年发生的事，新的一年，希望能多屯点物资和金钱吧。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://liushy.com/2017/02/12/floodlight-forwarding/" data-id="clqxs3ypg0008cjt21cqha7c6" data-title="解析Floodlight之Forwarding模块" class="article-share-link">Share</a>
+      <a data-url="https://liushy.com/2023/12/31/goon-2023/" data-id="clqxs3ypu000rcjt2enuefgyt" data-title="三大队" class="article-share-link">Share</a>
       
       
       
@@ -129,19 +116,10 @@
     
 <nav id="article-nav">
   
-    <a href="/2017/02/12/floodlight-linkdiscovermanager/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          解析Floodlight之LinkDiscoveryManager模块
-        
-      </div>
-    </a>
   
-  
-    <a href="/2017/02/12/floodlight-topoins/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2023/03/06/ovn-sec2/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">解析Floodlight之TopologyInstance模块</div>
+      <div class="article-nav-title">ovn lsp里addresses和port_security的区别</div>
     </a>
   
 </nav>
